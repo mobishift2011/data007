@@ -1,0 +1,84 @@
+/* Global styles */
+body
+{
+    padding-top: 4px;
+}
+
+/* Form customizations */
+form.icon {
+    display: inline;
+}
+
+form.icon button {
+    border: none;
+    background: transparent;
+    text-decoration: none;
+    padding: 0;
+    line-height: normal;
+}
+
+a.icon {
+    text-decoration: none;
+}
+
+/* Model search form */
+form.search-form {
+    margin: 4px 0 0 0;
+}
+
+form.search-form a.clear i {
+    margin: 2px 0 0 0;
+}
+
+/* Filters */
+table.filters {
+    border-collapse: none;
+    border-spacing: 4px;
+}
+
+.filters input
+{
+    margin-bottom: 0;
+}
+
+.filters a.remove-filter {
+    margin-bottom: 0;
+    display: block;
+    text-align: left;
+}
+
+.filters .remove-filter
+{
+    vertical-align: middle;
+}
+
+.filters .remove-filter .close-icon
+{
+    font-size: 16px;
+}
+
+.filters .remove-filter .close-icon:hover
+{
+    color: black;
+    opacity: 0.4;
+}
+
+.filters .filter-op > a {
+    height: 28px;
+    line-height: 28px;
+}
+
+/* Inline forms */
+.fa-inline-field {
+    padding-bottom: 0.5em;
+}
+
+.fa-inline-field-control {
+    float: right;
+}
+
+
+/* Patch Select2 */
+.select2-results li {
+    min-height: 24px !important;
+}

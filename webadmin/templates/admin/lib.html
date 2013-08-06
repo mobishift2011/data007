@@ -1,0 +1,146 @@
+{# ---------------------- Pager -------------------------- #}
+{% macro pager(page, pages, generator) -%}
+{% if pages > 1 %}
+<div class="pagination">
+    <ul>
+    {% set min = page - 3 %}
+    {% set max = page + 3 + 1 %}
+
+    {% if min < 0 %}
+        {% set max = max - min %}
+    {% endif %}
+    {% if max >= pages %}
+        {% set min = min - max + pages %}
+    {% endif %}
+
+    {% if min < 0 %}
+        {% set min = 0 %}
+    {% endif %}
+    {% if max >= pages %}
+        {% set max = pages %}
+    {% endif %}
+
+    {% if min > 0 %}
+    <li>
+        <a href="{{ generator(0) }}">&laquo;</a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="javascript:void(0)">&laquo;</a>
+    </li>
+    {% endif %}
+    {% if page > 0 %}
+    <li>
+        <a href="{{ generator(page-1) }}">&lt;</a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="javascript:void(0)">&lt;</a>
+    </li>
+    {% endif %}
+
+    {% for p in range(min, max) %}
+    {% if page == p %}
+    <li class="active">
+        <a href="javascript:void(0)">{{ p + 1 }}</a>
+    </li>
+    {% else %}
+    <li>
+        <a href="{{ generator(p) }}">{{ p + 1 }}</a>
+    </li>
+    {% endif %}
+    {% endfor %}
+
+    {% if page + 1 < pages %}
+    <li>
+        <a href="{{ generator(page + 1) }}">&gt;</a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="javascript:void(0)">&gt;</a>
+    </li>
+    {% endif %}
+    {% if max < pages %}
+    <li>
+        <a href="{{ generator(pages - 1) }}">&raquo;</a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="javascript:void(0)">&raquo;</a>
+    </li>
+    {% endif %}
+    </ul>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{# ---------------------- Forms -------------------------- #}
+{% macro render_field(form, field, set_focus=False, kwargs={}) %}
+  <div class="control-group{{ ' error' if field.errors else '' }}">
+    <div class="control-label">
+      {{ field.label.text }}
+      {% if h.is_required_form_field(field) %}
+        <strong style="color: red">&#42;</strong>
+      {% else %}
+        &nbsp;
+      {% endif %}
+    </div>
+    <div class="controls">
+    <div>
+      {% if set_focus %}
+      {{ field(autofocus='autofocus', **kwargs)|safe }}
+      {% else %}
+      {{ field(**kwargs)|safe }}
+      {% endif %}
+    </div>
+    {% if field.description %}
+    <p class="help-block">{{ field.description }}</p>
+    {% endif %}
+    {% if field.errors %}
+      <ul class="input-errors">
+      {% for e in field.errors if e is string %}
+        <li>{{ e }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro render_form_fields(form, set_focus=True, widget_args={}) %}
+    {{ form.hidden_tag() if form.hidden_tag is defined }}
+
+    {% for f in form if f.type != 'HiddenField' and f.type != 'CSRFTokenField' %}
+      {% set kwargs = widget_args.get(f.name, {}) %}
+      {{ render_field(form, f, not loop.index0 and set_focus, kwargs) }}
+    {% endfor %}
+{% endmacro %}
+
+{% macro form_tag(form=None) %}
+    <form action="" method="POST" class="form-horizontal" enctype="multipart/form-data">
+      <fieldset>
+        {{ caller() }}
+      </fieldset>
+    </form>
+{% endmacro %}
+
+{% macro render_form_buttons(cancel_url, extra=None) %}
+    <div class="control-group">
+      <div class="controls">
+        <input type="submit" class="btn btn-primary btn-large" value="{{ _gettext('Submit') }}" />
+        {% if extra %}
+        {{ extra }}
+        {% endif %}
+        {% if cancel_url %}
+        <a href="{{ cancel_url }}" class="btn btn-large">{{ _gettext('Cancel') }}</a>
+        {% endif %}
+      </div>
+    </div>
+{% endmacro %}
+
+{% macro render_form(form, cancel_url, extra=None, widget_args={}) -%}
+    {% call form_tag() %}
+        {{ render_form_fields(form, widget_args) }}
+        {{ render_form_buttons(cancel_url, extra) }}
+    {% endcall %}
+{% endmacro %}
