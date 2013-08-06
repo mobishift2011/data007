@@ -19,4 +19,4 @@ if [ "x$1" == "x" ]; then
 fi
 
 pip install -r "$DIR/../requirements.txt"
-legit install
+#legit install

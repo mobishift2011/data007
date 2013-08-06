@@ -11,6 +11,7 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {'DB': 'taobao',
+                                  "HOST": 'oneandone.favbuy.org',
                                   "PORT": 37017}
 
 # Create models
