@@ -1,0 +1,16 @@
+# flask related
+flask
+flask-wtf
+flask-admin
+flask-mongoengine
+
+# better git flow control
+legit
+
+# datastore related
+pymongo
+redis
+
+# framework used
+twisted
+gevent
