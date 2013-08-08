@@ -15,6 +15,21 @@
     {% endblock %}
     {% block head %}
     {% endblock %}
+<style>
+#navi_list-fields input[name*="url_rule"]{
+	width: 90%;
+}
+
+#navi_list-fields textarea[name*="code"]{
+	width: 90%;
+	height: 300px;
+}
+#navi_list-fields hr{
+	color: #DF382C;
+	background-color: #DF382C;
+}
+
+</style>
     {% block head_tail %}
     {% endblock %}
   </head>
@@ -35,16 +50,77 @@
         </div>
       </div>
 
+<div>
+admin_server:&nbsp;&nbsp;&nbsp;
+	<div id="server_admin" style="display:inline;">
+				<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />
+			 </div>
+	<div id="server_admin_info" style="display:inline;">
+	</div>
+</div>
+<hr />
+
       {{ layout.messages() }}
 
       {% block body %}{% endblock %}
     </div>
     {% endblock %}
+    <script src="{{ url_for('static', filename='js/autobahn.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('admin.static', filename='js/jquery-1.8.3.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('admin.static', filename='bootstrap/js/bootstrap.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('admin.static', filename='select2/select2.min.js') }}" type="text/javascript"></script>
 
     {% block tail %}
     {% endblock %}
+<script>
+
+
+$(document).ready(function(){
+	$.ajax({
+	   type: "GET",
+	   url: "/server_admin/?act=status",
+	   dataType:"json",
+	   success: function(json){
+	   		console.log(json);
+	   		if(json.success == 1){
+	   			$("#server_admin").html("<a onclick='server_admin(\"stop\");' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+	   		}else{
+	   			$("#server_admin").html("<a onclick='server_admin(\"start\");' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+	   		}
+	   }
+	});
+	
+//------------------------------------------
+   
+});
+
+        
+function server_admin(act){
+	$("#server_admin").html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+	
+	$.ajax({
+		   type: "GET",
+		   url: "/server_admin/?act="+ act,
+		   dataType:"json",
+		   success: function(json){
+		   		console.log(json);
+		   		if(json.success == 1){
+		   			if(act == "start"){
+		   				$("#server_admin").html("<a onclick='server_admin(\"stop\", this);' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+		   			}else{
+		   				$("#server_admin").html("<a onclick='server_admin(\"start\", this);' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+		   			}
+		   		}else{
+		   			if(act == "start"){
+		   				$("#server_admin").html("<a onclick='server_admin(\"start\", this);' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+		   			}else{
+		   				$("#server_admin").html("<a onclick='server_admin(\"stop\", this);' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+		   			}
+		   		}
+		   }
+	});
+}
+
+</script>
   </body>
 </html>

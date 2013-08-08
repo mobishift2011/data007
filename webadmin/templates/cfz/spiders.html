@@ -1,0 +1,121 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% import 'admin/model/layout.html' as model_layout with context %}
+{% import 'admin/actions.html' as actionlib with context %}
+
+{% block head %}
+    {{ super() }}
+    <link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
+    <link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+    {% block model_menu_bar %}
+
+
+<table class="table table-striped table-bordered model-list">
+        <thead>
+            <tr>
+                    <th class="span1">
+                        <input type="checkbox" name="rowtoggle" class="action-rowtoggle">
+                    </th>
+                    <th class="span1">&nbsp;</th>
+                    <th>
+                            peer
+                    </th>
+                    <th>
+                            sid
+                    </th>
+                    <th>
+                            worker
+                    </th>
+                    <th>
+                            Console
+                    </th>
+            </tr>
+        </thead>
+        
+        <tbody id="spider_list">
+    	</tbody>
+    
+    </table>
+
+
+	{% endblock %}
+{% endblock %}
+
+        
+{% block tail %}
+    {{ super() }}
+    <script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
+    <script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
+    <script src="{{ url_for('admin.static', filename='js/filters.js') }}"></script>
+    
+<script>
+
+var g_session = "";
+
+$(document).ready(function(){
+	
+   // connect to WAMP server
+   ab.connect("ws://oneandone.favbuy.org:9000",
+ 
+      // WAMP session was established
+      function (session) {
+		   g_session = session;
+		   console.log("Connected!");
+		   g_session.subscribe("webadmin", onMessage);
+      },
+      
+      // WAMP session is gone
+      function (code, reason) {
+ 		 
+ 		 console.log("WAMP session is gone");
+ 		 console.log(code);
+ 		 console.log(reason);
+         // things to do once the session fails
+      }
+   );
+});
+
+var html_tr = '<tr id="tr-{sid}">'+
+				  '<td><input type="checkbox" name="rowid" class="action-checkbox" value="{sid}"></td>'+
+			      '<td>'+
+			      '<a class="icon" href="">' +
+                      '<i class="icon-pencil"></i>' +
+                  '</a>'+
+                  '<button onclick="return confirm(\'You sure you want to delete this item?\');">'+
+                       '<i class="icon-trash"></i>'+
+                  '</button>'+
+                  '</td>'+
+			      '<td>{peer}</td>'+
+			      '<td>{sid}</td>'+
+			      '<td>{sid}</td>'+
+			      '<td>stop</td>'+
+			  '</tr>';
+function onMessage(topicUri, event) {
+   if(event.length > 0){
+	   console.log(topicUri);
+	   console.log(event);
+	   console.log("-------------------------------------");
+	   
+	   $("#spider_list").html("");
+	   for(var i=0; i < event.length; i++){
+	   	   var tr = html_tr;
+	   	   tr = tr.replace(/{peer}/g, event[i].peer);
+	   	   tr = tr.replace(/{sid}/g, event[i].sid);
+	   	   $("#spider_list").prepend($(tr));
+	   	   
+	   	   var msg = {};
+	   	   msg.act = "status";
+	   	   g_session.publish('spider', msg, null, [event[i].sid]);
+
+	   }
+   }
+}
+
+
+
+
+</script>
+{% endblock %}

@@ -16,97 +16,58 @@ from bson.json_util import default
 import json
 import re
 import time
+import psutil
+import subprocess
+from multiprocessing import Process
 
 
+FPID = "/tmp/server_admin.pid"
+FLOG = "/var/log/server_admin.log"
+
+RUN_PATH = "/home/cfz/ataobao/daemon"
 # Flask views
-@app.route('/api/query_domain', methods=['GET', 'POST'])
-def query_domain():
-    js = request.get_json(force=True, cache=False)
-    
-#------------------------------------------------------------------------------ 
-    conn = pymongo.Connection("localhost", 37017)
-    conn.admin.authenticate("root", "chenfuzhi")
-    
-    row = conn.coupons.site.find_one({"host":js["domain"]})
-    if row is not None:
-        
-#------------------------------------------------------------------------------ 
-        ret = {}
+@app.route('/server_admin/')
+def server_admin():
+    act = request.args.get('act', '')
+    if act == "status":
         try:
-            ret["url_matchs"] = eval(row["url_matchs"])
-            ret["cart_extr"] = eval(row["cart_extr"])
-            ret["apply_coupon"] = eval(row["apply_coupon"])
-            ret["price_extr"] = eval(row["price_extr"])
+            pid = open(FPID, 'r').read()
+            p = psutil.Process(int(pid))
+            return '{"success":1, "msg":"%s"}' % p.name
         except Exception, e:
-            return '{"success":0, "err":"%s"}' % e
-        ret = {
-               "success": 1,
-               "data": ret
-               }
-        return json.dumps(ret, default=default)
-#------------------------------------------------------------------------------ 
+            return '{"success":0, "msg":"%s"}' % e
         
-    return '{"success":0}'
-
-
-@app.route('/api/monitor_price', methods=['GET', 'POST'])
-def monitor_price():
-    js = request.get_json(force=True, cache=False)
-#------------------------------------------------------------------------------ 
-    conn = pymongo.Connection("localhost", 37017)
-    conn.admin.authenticate("root", "chenfuzhi")
-    
-    js["timestamp"] = time.strftime("%Y-%M-%d %H:%I:%S")
-    ret = conn.coupons.price_monitor.save(js)
-    
-    return '{"success":1, "id": "%s"}' % str(ret)
-#------------------------------------------------------------------------------ 
-
-
-
-
-# Flask views
-@app.route('/api/post_cart', methods=['GET', 'POST'])
-def post_cart():
-    conn = pymongo.Connection("localhost", 37017)
-    conn.admin.authenticate("root", "chenfuzhi")
-    js = request.get_json(force=True, cache=False)
-    
-    print  js
-    
-    if len(js["cart"]) > 0:
-        sum = 0
-        for good in js["cart"]:
-            cnt = int(good["count"])
-            price = float(good["price"])
-            sum += cnt * price
-            print cnt, price, "*****************************"
+    elif act == "start":
         
-        site = conn.coupons.site.find_one({"host":js["domain"]})
+        args = ["/usr/local/bin/twistd",
+                 "-y",
+                 "%s/server.py" % RUN_PATH,
+                 "--pidfile=%s" % FPID,
+                 "--logfile=%s" % FLOG,
+                 "--rundir=%s/" % RUN_PATH,
+                 ]
+        print args
         
-        _find = {"money":{"$lte": int(sum)}, "site":site["_id"]}
-        rows = conn.coupons.coupons.find(_find)
-        rows = list(rows)
-        
-        print "conn.coupons.coupons.find", _find, rows
-        
-        rets = []
-        if len(rows) > 0:
-            for row in rows:
-                rets.append({
-                             "code":row["code"],
-                             "desc":row["desc"],
-                             })
-            data = {
-                    "success":1,
-                    "data":rets
-                    }
-            return json.dumps(data)
-        else:
-            return '{"success":0, "msg":"not find match coupons."}'
+        try:
+            out = subprocess.call(args)
+            if out == 0:
+                return '{"success":1, "msg":"ok"}'
+            elif out == 1:
+                return '{"success":1, "msg":"is seen already running."}'
             
-    return '{"success":0}'
-
+        except Exception, e:
+            log.err()
+            return '{"success":0, "msg":"%s"}' % e
+        
+        
+    elif act == "stop":
+        try:
+            pid = open(FPID, 'r').read()
+            p = psutil.Process(int(pid))
+            p.terminate()
+            return '{"success":1, "msg":"%s"}' % p.name
+        except Exception, e:
+            return '{"success":0, "msg":"%s"}' % e
 
 
 print "medule api s loaded."

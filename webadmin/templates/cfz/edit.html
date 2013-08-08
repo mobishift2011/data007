@@ -6,13 +6,6 @@
     <link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
     <link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
 <style>
-#carts-fields input[type="text"]{
-	width: 90%;
-}
-
-#test_vars-fields input[type="text"]{
-	width: 80%;
-}
 
 
 </style>
@@ -21,34 +14,11 @@
 {% block body %}
 
     {% call lib.form_tag(form) %}
-	    {% if form.model_class.__name__ == "Webkit" %}
-	    	
-	    {% endif %}
     
         {{ lib.render_form_fields(form, widget_args=form_widget_args) }}
         
-	    {% if form.model_class.__name__ == "Webkit" %}
-	    	
-		    <div class="control-group">
-		      <div class="controls">
-		        <input type="submit" class="btn btn-primary btn-large" value="{{ _gettext('Submit') }}" />
-				
-		        {% if return_url %}
-		        <a href="{{ return_url }}" class="btn btn-large">{{ _gettext('Cancel') }}</a>
-		        {% endif %}
-		        
-		        <a href="chenfuzhi:webkit_script={{ request.args.get("id") }}" class="btn btn-large">启动webkit测试</a>
-		      </div>
-		    </div>
-	    	
-	    {% else %}
-	    	{{ lib.render_form_buttons(return_url) }}
-	    {% endif %}
-        
+        {{ lib.render_form_buttons(return_url) }}
     {% endcall %}
-    
-
-    
     
 {% endblock %}
 

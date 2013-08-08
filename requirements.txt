@@ -9,8 +9,11 @@ flask-mongoengine
 
 # datastore related
 pymongo
+txredisapi>=0.1.1
 redis
 
 # framework used
 twisted
 gevent
+
+psutil

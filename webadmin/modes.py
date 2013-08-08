@@ -55,26 +55,40 @@ class MainCategory(db.Document):
     
     def __unicode__(self):
         return self.name
-    
 
 class Spider(db.Document):
-    '''
-    '''
     name = db.StringField(max_length=500)
-    navi_list = db.StringField(max_length=500)
-    
-    datatime = db.DateTimeField()
-    
     def __unicode__(self):
         return self.name
-
-
+    
+    
 class RedisQueue(db.Document):
     '''
     '''
     name = db.StringField(max_length=500)
+    rule = db.StringField(max_length=500)
+    prio = db.IntField(default=0)
+    spider = db.ReferenceField(Spider)
     def __unicode__(self):
         return self.name
     
+
+class Navi(db.EmbeddedDocument):
+    url_rule = db.StringField(max_length=500)
+    code = db.StringField()
+#     ret_type = db.StringField(choices=[("url", "url"), ("item", "item")], max_length=200)
+#     ret_queue = db.ReferenceField(RedisQueue)
+    
+    
+class Spider(db.Document):
+    '''
+    '''
+    name = db.StringField(max_length=500)
+    process = db.IntField(default=1)
+    workers = db.IntField(default=100)
+    navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
+    
+    def __unicode__(self):
+        return self.name
     
     

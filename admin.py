@@ -23,6 +23,6 @@ if __name__ == '__main__':
     # Create admin
     # Start app
     app.debug = True
-    app.run('0.0.0.0', 9991)
+    app.run('0.0.0.0', 9992)
     
     
