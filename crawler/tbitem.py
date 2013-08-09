@@ -248,3 +248,15 @@ def get_tmall_num_reviews(id):
     except:
         traceback.print_exc()
 
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Get item by id')
+    parser.add_argument('--id', '-i', type=int, help='taobao item id, e.g. 21825059650', required=True)
+    option = parser.parse_args()
+    from pprint import pprint
+    print('Item {}:'.format(option.id))
+    pprint(get_item(option.id))
+
+if __name__ == '__main__':
+    main()
