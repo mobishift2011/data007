@@ -20,7 +20,10 @@ class Queue(object):
 
     def put(self, *items):
         """ put item(s) into queue """
-        return conn.rpush(self.key, *[pack(item) for item in items])
+        if items:
+            return conn.rpush(self.key, *[pack(item) for item in items])
+        else:
+            return 0
 
     def get(self, block=True, timeout=None):
         """ get item from queue, block if needed """
@@ -33,10 +36,12 @@ class Queue(object):
 
 def poll(queues, timeout=None):
     """ poll item from queues (order by priority) """
+    #print('polling {}'.format(queues))
     queues = sorted(queues, key=lambda x:x.priority, reverse=True)
     result = conn.blpop([q.key for q in queues], timeout=timeout)
     return unpack(result[1]) if result is not None else None
 
-ai1 = Queue('queue-ataobao-item-1', 3)
-ai2 = Queue('queue-ataobao-item-2', 1)
-as1 = Queue('queue-ataobao-shop-1', 1)
+ai1 = Queue('ataobao-item-queue-1', 3)
+ai2 = Queue('ataobao-item-queue-2', 1)
+as1 = Queue('ataobao-shop-queue-1')
+af1 = Queue('ataobao-fail-queue-1')

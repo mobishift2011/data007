@@ -49,7 +49,7 @@ def get_json(cid, paths=[], page=1, sort=None):
     return data
 
 
-def list_cat(cid=None, on_ids=None, use_pool=False):
+def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
     """ listing category by cid, find all item ids, callback on ``on_ids`` 
        
     :param cid: taobao category id, can be rootcid or leafcid or None(listing all)
@@ -66,7 +66,7 @@ def list_cat(cid=None, on_ids=None, use_pool=False):
     ids = []
     def list_paths(paths, page=1, data=None):
         if data is None:
-            data = get_json(cid, paths, page)
+            data = get_json(cid, paths, page, sort=sort)
        
         iids = get_ids(data)
         ids.extend(iids)
@@ -94,7 +94,7 @@ def list_cat(cid=None, on_ids=None, use_pool=False):
         pathpool.join()
     return list(set(ids))
 
-def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, on_paths=None):
+def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, on_paths=None, sort=None):
     """ try filter category by paths, and list all paths have less than 9500 items
     
     :param cid: category id
@@ -112,7 +112,7 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, o
         else:
             return False
 
-    data = get_json(cid, paths)
+    data = get_json(cid, paths, sort=sort)
     if allpath == []:
         allpath = [ [p2['value'] for p2 in p1['propertyList']] for p1 in data['propertyList'] ]
         allpath = sorted(allpath, key=len, reverse=True)[:num_paths]

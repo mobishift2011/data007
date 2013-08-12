@@ -13,25 +13,37 @@ from settings import QUEUE_URI
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
     
-class ItemLC(object):
+class LC(object):
     """ Item LastCheck Management """
-    hashkey = 'ataobao-item-lastcheck-hash'
+    hashkey = 'ataobao-{}-lastcheck-hash'
 
     @staticmethod
-    def update_item_if_needed(id, on_update):
-        """ try update item by id, update lastcheck if needed """
+    def need_update(type, id):
+        hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
-        lastcheck = conn.hget(ItemLC.hashkey, id)
-        
+        lastcheck = conn.hget(hashkey, id)
+
+        offset = 43200 if type == 'item' else 86400
+
         # if there's no lastcheck, or lastcheck happened an hour ago
         # try call on_update with id, if succeeded, update lastcheck in redis
-        if lastcheck is None or unpack(lastcheck) + 3600 < tsnow:
+        if lastcheck is None or unpack(lastcheck) + offset < tsnow:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def update_if_needed(type, id, on_update):
+        """ try update item by id, update lastcheck if needed """
+        hashkey = LC.hashkey.format(type)
+        tsnow = time.mktime(time.gmtime())
+        if LC.need_update(type, id):
             try:
                 on_update(id)
             except:
                 traceback.print_exc()
             else:
-                conn.hset(ItemLC.hashkey, id, pack(tsnow))
+                conn.hset(hashkey, id, pack(tsnow))
 
 class ItemCT(object):
     """ Item CheckTime Management """
@@ -41,12 +53,15 @@ class ItemCT(object):
     def checktime(id):
         """ checktime, an integer indicates the minute of day the item should be checked """
         # we distribute it randomly in beteen 5th-1435th minute of day
-        return binascii.crc32(id)%1430+5
+        return binascii.crc32(id)%1430+5 if not isinstance(id, int) else id%1430+5
 
     @staticmethod
     def add_items(*ids):
-        setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
-        conn.sadd(setkey, *[pack(id) for id in ids])
+        pipeline = conn.pipeline()
+        for id in ids:
+            setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
+            pipeline.sadd(setkey, pack(id))
+        pipeline.execute()
 
     @staticmethod
     def get_items(self, ct=None):
