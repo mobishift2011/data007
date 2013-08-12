@@ -9,15 +9,18 @@ def test_session():
     without headers and cookie, taobao will return error page
     """
 
-    num_threads = 20
-    num_fetchs_per_thread = 25
+    num_threads = 5
+    num_fetchs_per_thread = 50
     url = 'http://item.taobao.com/item.htm?id=26215464026'
     response_sizes = Counter()
     session = get_session()
 
     def work():
         for _ in range(num_fetchs_per_thread):
-            response_sizes[ len(session.get(url).content) ] += 1
+            try:
+                response_sizes[ len(session.get(url).content) ] += 1
+            except:
+                pass
 
     def joinall(tasks):
         for task in tasks:
