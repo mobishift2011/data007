@@ -60,14 +60,15 @@ class ShopWorker(Worker):
     def work(self):
         shopid = None
 
-        def spawn_shop():
-            self.pool.spawn(list_shop, shopid, on_update)
-            
         def on_update(ids):
             print('updating shop-item of shop {}'.format(shopid))
             ShopItem.add_items(shopid, *ids)
             ItemCT.add_items(*ids)
+            ai2.put(*ids)
 
+        def spawn_shop(shopid):
+            self.pool.spawn(list_shop, shopid, on_update)
+            
         while True:
             shopid = poll([as1], timeout=10)
             if shopid:

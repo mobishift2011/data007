@@ -17,7 +17,7 @@ from gevent import monkey; monkey.patch_all()
 import time
 
 from caches import ItemCT, LC
-from queues import ai1, af1
+from queues import ai1, ai2, af1
 from crawler.tbcat import list_cat, get_json, get_ids
 
 class Scheduler(object):
@@ -47,7 +47,7 @@ class FullScheduler(Scheduler):
 
     def run(self):
         def on_ids(ids):
-            ai1.put(*ids)
+            ai2.put(*ids)
             ItemCT.add_items(*ids)
 
         list_cat(self.cid, on_ids=on_ids)
@@ -78,7 +78,7 @@ class UpdateScheduler(Scheduler):
                         break
                     elif LC.need_update('item', id):
                         print('put {}'.format(id))
-                        ai1.put(id)
+                        ai2.put(id)
                 page += 1
             else:
                 time.sleep(5)
