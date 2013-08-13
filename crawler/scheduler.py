@@ -16,9 +16,9 @@ from gevent import monkey; monkey.patch_all()
 
 import time
 
-from caches import ItemCT
+from caches import ItemCT, LC
 from queues import ai1, af1
-from crawler.tbcat import list_cat, get_json
+from crawler.tbcat import list_cat, get_json, get_ids
 
 class Scheduler(object):
     def start(self):
@@ -55,12 +55,34 @@ class FullScheduler(Scheduler):
 class UpdateScheduler(Scheduler):
     def __init__(self, cid=None):
         self.cid = cid
+        self.itemid = None
 
     def should_run(self):
-        return False
+        return True
 
     def run(self):
-        pass
+        latest_itemid = None
+        page = 1
+        while page < 10:
+            print('fetching page {}'.format(page))
+            data = get_json(self.cid, page=page, sort='_oldstart')
+            ids = get_ids(data)
+            if ids:
+                if page == 1:
+                    latest_itemid = ids[0]
+                    print('last id {}'.format(latest_itemid))
+                print('found {} items'.format(len(ids)))
+                for id in ids:
+                    if id == self.itemid:
+                        page = 9999
+                        break
+                    elif LC.need_update('item', id):
+                        print('put {}'.format(id))
+                        ai1.put(id)
+                page += 1
+            else:
+                time.sleep(5)
+        self.itemid = latest_itemid
     
 class ItemScheduler(Scheduler):
     def __init__(self):

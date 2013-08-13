@@ -38,12 +38,12 @@ class ItemWorker(Worker):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
             d = get_item(itemid)
-            print d
-            item.insert(str(itemid), d)
+            if d:
+                item.insert(str(itemid), d)
 
-            if LC.need_update('shop', d['shopid']):
-                # queue shop jobs
-                as1.put(d['shopid'])
+                if LC.need_update('shop', d['shopid']):
+                    # queue shop jobs
+                    as1.put(d['shopid'])
 
         while True:
             itemid = poll([ai1, ai2], timeout=10)

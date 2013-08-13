@@ -38,6 +38,8 @@ def get_item(id):
         return {}
     else:
         content = r.content
+        if 'error-notice-text' in content:
+            return {}
         if r.url.startswith('http://item.taobao.com'):
             return get_taobao_item(id, content)
         elif r.url.startswith('http://detail.tmall.com'):
@@ -131,6 +133,7 @@ def parse_content(content, patlist, patdict):
             if val is not None:
                 result[name] = val
         except:
+            print content
             traceback.print_exc()
             continue
     
@@ -200,7 +203,10 @@ def get_sold30(url):
         traceback.print_exc()
         
 def get_price(d):
-    return min(float(d.skuMap[key].price) for key in d.skuMap.keys())
+    try:
+        return min(float(d.skuMap[key].price) for key in d.skuMap.keys())
+    except:
+        return None
 
 def get_ump_price(url):
     s = get_session()

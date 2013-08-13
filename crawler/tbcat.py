@@ -28,12 +28,13 @@ def get_ids(data):
 def get_json(cid, paths=[], page=1, sort=None):
     """ given cid and (optional) paths/page/sort, return json """
     s = get_blank_session()
-    url = 'http://list.taobao.com/itemlist/default.htm'
+    url = 'http://list.taobao.com/itemlist/default.htm?'
     params = {
-        'json': 'on',
         'pSize': 95,
-        'cat': cid,
+        'json': 'on',
     }
+    if cid:
+        params['cat'] = cid
     if paths:
         paths = [p for p in paths if p]
         params['ppath'] = ';'.join(paths)
