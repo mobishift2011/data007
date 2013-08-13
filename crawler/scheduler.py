@@ -33,9 +33,10 @@ class Scheduler(object):
 
 class FullScheduler(Scheduler):
     """ listing category id """
-    def __init__(self, cid):
+    def __init__(self, cid, use_pool=False):
         self.cid = cid
         self.day = None
+        self.use_pool = use_pool
 
     def should_run(self):
         day = int(time.mktime(time.gmtime())/86400)
@@ -50,7 +51,7 @@ class FullScheduler(Scheduler):
             ai2.put(*ids)
             ItemCT.add_items(*ids)
 
-        list_cat(self.cid, on_ids=on_ids)
+        list_cat(self.cid, on_ids=on_ids, use_pool=self.use_pool)
 
 class UpdateScheduler(Scheduler):
     def __init__(self, cid=None):
@@ -106,9 +107,10 @@ def main():
     parser = argparse.ArgumentParser(description='Call Scheduler with arguments')
     parser.add_argument('--worker', '-w', choices=['full', 'update', 'item'], help='worker type, can be "full", "update", "item"', required=True)
     parser.add_argument('--cid', '-c', type=int, help='category id if worker type in "full" or "update"')
+    parser.add_argument('--pool', '-p', action='store_true', help='use gevent pool')
     option = parser.parse_args()
     {
-        "full": FullScheduler(option.cid),
+        "full": FullScheduler(option.cid, option.pool),
         "update": UpdateScheduler(option.cid),
         "item": ItemScheduler(),
     }.get(option.worker).start()

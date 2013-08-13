@@ -39,11 +39,10 @@ class LC(object):
         tsnow = time.mktime(time.gmtime())
         if LC.need_update(type, id):
             try:
+                conn.hset(hashkey, id, pack(tsnow))
                 on_update(id)
             except:
                 traceback.print_exc()
-            else:
-                conn.hset(hashkey, id, pack(tsnow))
 
 class ItemCT(object):
     """ Item CheckTime Management """
