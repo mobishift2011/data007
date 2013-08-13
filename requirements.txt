@@ -19,5 +19,7 @@ twisted
 gevent
 
 # others
+nose
+requests
 psutil
 msgpack-python
