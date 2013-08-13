@@ -25,7 +25,7 @@ import operator
 import traceback
 
 from session import get_session    
-from jsctx import get_ctx
+from jsctx import get_ctx, need_decode
 
 
 def get_item(id):
@@ -93,7 +93,8 @@ def get_taobao_item(id, content):
         ],
     } 
     result =  parse_content(content, patlist, patdict)
-    result['pagetype'] = 'taobao'
+    if result:
+        result['pagetype'] = 'taobao'
     return result
 
 def parse_content(content, patlist, patdict):
@@ -137,6 +138,8 @@ def parse_content(content, patlist, patdict):
             traceback.print_exc()
             continue
     
+    if need_decode:
+        content = content.decode('gbk', 'ignore')
     for pat in patdict:
         try:
             # eval pattern using pyv8
@@ -152,7 +155,14 @@ def parse_content(content, patlist, patdict):
                 if isinstance(callback, str):
                     callback = eval(callback)
 
-                val = callback(obj)
+                try:
+                    val = callback(obj)
+                except Exception as e:
+                    # shopid does not exist
+                    if name == 'shopid':
+                        return {}
+                    else:
+                        raise e 
                 if isinstance(val, dict):
                     for key in name.split(','):
                         if key in val and val[key]:
@@ -194,8 +204,11 @@ def get_sold30(url):
     s = get_session()
     ctx = get_ctx()
     try:
+        content = s.get(url+'&callback=jsonp', timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         # eval pattern using pyv8
-        data = ctx.eval('d='+patjsonp.search(s.get(url+'&callback=jsonp', timeout=30).content).group(1))
+        data = ctx.eval('d='+patjsonp.search(content).group(1))
         if not getattr(data, 'quantity', None) and data.postage:
             return 0
         return data.quantity.quanity
@@ -215,6 +228,8 @@ def get_ump_price(url):
     patpromo = re.compile(r';TB.PromoData = ({.+)', re.DOTALL)
     try:
         content = s.get(url, timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         content = re.sub(r';TB.PointData=.*', '', content).strip()
         if content:
             data = ctx.eval('d='+patpromo.search(content).group(1))
@@ -230,6 +245,8 @@ def get_tmall_details(url):
     s.headers['Referer'] = 'http://item.taobao.com/item.htm'
     try:
         content = s.get(url, timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         data = ctx.eval('d='+content)
         # price
         prices = set()
