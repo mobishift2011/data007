@@ -93,7 +93,8 @@ def get_taobao_item(id, content):
         ],
     } 
     result =  parse_content(content, patlist, patdict)
-    result['pagetype'] = 'taobao'
+    if result:
+        result['pagetype'] = 'taobao'
     return result
 
 def parse_content(content, patlist, patdict):
@@ -154,7 +155,14 @@ def parse_content(content, patlist, patdict):
                 if isinstance(callback, str):
                     callback = eval(callback)
 
-                val = callback(obj)
+                try:
+                    val = callback(obj)
+                except Exception as e:
+                    # shopid does not exist
+                    if name == 'shopid':
+                        return {}
+                    else:
+                        raise e 
                 if isinstance(val, dict):
                     for key in name.split(','):
                         if key in val and val[key]:
