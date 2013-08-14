@@ -50,6 +50,8 @@ class LC(object):
             else:
                 queue.task_done(id)
                 conn.hset(hashkey, id, pack(tsnow))
+        else:
+            queue.task_done(id)
 
 class ItemCT(object):
     """ Item CheckTime Management """
