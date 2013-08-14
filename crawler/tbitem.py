@@ -24,9 +24,20 @@ import json
 import operator
 import traceback
 
-from session import get_session    
+from session import get_session, get_blank_session
 from jsctx import get_ctx, need_decode
 
+def is_valid_item(item):
+    """ test if an item dict is valid """
+    if not isinstance(item, dict):
+        return False
+
+    keys = ['id', 'num_reviews', 'num_sold30', 'shopid']
+    for key in keys:
+        if key not in item:
+            return False
+
+    return True
 
 def get_item(id):
     """ given itemid, return item info dict """
@@ -186,7 +197,7 @@ def get_counters(id, sellerid):
         'ICVT_7_{}'.format(id): 'num_views',
     }
     url = 'http://count.tbcdn.cn/counter3?keys={}&callback=jsonp'.format(','.join(counters.keys()))
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     try:
         data = dict(ctx.eval('d='+patjsonp.search(s.get(url, timeout=30).content).group(1)))
@@ -201,7 +212,7 @@ def get_counters(id, sellerid):
 
 def get_sold30(url):
     patjsonp = re.compile(r'jsonp\((.*?)\);', re.DOTALL)
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     try:
         content = s.get(url+'&callback=jsonp', timeout=30).content
@@ -240,7 +251,7 @@ def get_ump_price(url):
         traceback.print_exc()
 
 def get_tmall_details(url):
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     s.headers['Referer'] = 'http://item.taobao.com/item.htm'
     try:
@@ -264,7 +275,7 @@ def get_tmall_details(url):
 
 def get_tmall_num_reviews(id):
     url = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(id)
-    s = get_session()
+    s = get_blank_session()
     try:
         data = '{'+s.get(url, timeout=30).content.strip()+'}'
         return json.loads(data)['dsr']['rateTotal']

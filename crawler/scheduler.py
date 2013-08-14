@@ -100,6 +100,7 @@ class ItemScheduler(Scheduler):
     def run(self):  
         for itemid in ItemCT.get_items(self.ct):
             if LC.need_update('item', itemid):
+                print('putting {}'.format(itemid))
                 ai1.put(itemid)
 
 def main():

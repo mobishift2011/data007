@@ -31,7 +31,7 @@ def _list_shop(id, page=1, on_id=None, on_ids=None):
         re.compile(r'<dl class="item[^"]+" data-id="(\d+)"'),
         re.compile(r'item\.htm\?id=(\d+)'),
     ]
-    url = 'http://shop{}.taobao.com/search.htm?search=y&pageNum={}&orderType=_newOn'.format(id, page)
+    url = 'http://shop{}.taobao.com/search.htm?search=y&pageNum={}&orderType=hotsell_desc'.format(id, page)
 
     try:
         # sometimes taobao will return empty page because of high load
@@ -71,7 +71,7 @@ def _list_shop(id, page=1, on_id=None, on_ids=None):
                     break
             else:
                 return ids
-            for p in range(2, pages+1):
+            for p in range(2, min(100, pages+1)):
                 ids.extend( _list_shop(id, p, on_ids) )
 
             ids = list(set(ids))

@@ -18,6 +18,11 @@ class LC(object):
     hashkey = 'ataobao-{}-lastcheck-hash'
 
     @staticmethod
+    def count(type):
+        hashkey = LC.hashkey.format(type)
+        return conn.hlen(hashkey) 
+
+    @staticmethod
     def need_update(type, id):
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
@@ -33,16 +38,18 @@ class LC(object):
             return False
 
     @staticmethod
-    def update_if_needed(type, id, on_update):
+    def update_if_needed(type, id, on_update, queue):
         """ try update item by id, update lastcheck if needed """
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
         if LC.need_update(type, id):
             try:
-                conn.hset(hashkey, id, pack(tsnow))
                 on_update(id)
             except:
                 traceback.print_exc()
+            else:
+                queue.task_done(id)
+                conn.hset(hashkey, id, pack(tsnow))
 
 class ItemCT(object):
     """ Item CheckTime Management """
@@ -63,7 +70,7 @@ class ItemCT(object):
         pipeline.execute()
 
     @staticmethod
-    def get_items(self, ct=None):
+    def get_items(ct=None):
         if ct is None:
             ct = int(time.mktime(time.gmtime())/86400/60)
          

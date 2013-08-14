@@ -11,11 +11,12 @@ Currently there're two workers:
 from gevent import monkey; monkey.patch_all()
 
 import gevent.pool
+from functools import partial
 
 from models import item
 from caches import LC, ItemCT, ShopItem
 from queues import poll, ai1, ai2, as1, af1
-from crawler.tbitem import get_item
+from crawler.tbitem import get_item, is_valid_item
 from crawler.tbshop import list_shop
 
 class Worker(object):
@@ -25,6 +26,11 @@ class Worker(object):
 
     def work(self):
         raise NotImplementedError('this method should be implemented by subclasses')
+
+class ReQueueWorker(Worker):
+    """ ReQueue Timeouted Jobs """
+    def work(self):
+        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1]])
 
 class ItemWorker(Worker): 
     """ Work on Item Queues
@@ -44,11 +50,12 @@ class ItemWorker(Worker):
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
                     as1.put(d['shopid'])
-
+                
         while True:
-            itemid = poll([ai1, ai2], timeout=10)
-            if itemid:
-                self.pool.spawn(LC.update_if_needed, 'item', itemid, on_update)
+            result = poll([ai1, ai2], timeout=10)
+            if result:
+                queue, itemid = result
+                self.pool.spawn(LC.update_if_needed, 'item', itemid, on_update, queue)
 
 class ShopWorker(Worker):
     """ Work on Shop Queues
@@ -61,28 +68,30 @@ class ShopWorker(Worker):
         shopid = None
 
         def on_update(ids):
-            print('updating shop-item of shop {}'.format(shopid))
             ShopItem.add_items(shopid, *ids)
             ItemCT.add_items(*ids)
             ai2.put(*ids)
 
         def spawn_shop(shopid):
+            print('updating shop-item of shop {}'.format(shopid))
             self.pool.spawn(list_shop, shopid, on_update)
             
         while True:
-            shopid = poll([as1], timeout=10)
-            if shopid:
-                LC.update_if_needed('shop', shopid, spawn_shop)
+            result = poll([as1], timeout=10)
+            if result:
+                queue, shopid = result
+                LC.update_if_needed('shop', shopid, spawn_shop, queue)
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
-    parser.add_argument('--worker', '-w', choices=['item', 'shop'], help='worker type, can be "item", or "shop"', required=True)
+    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
     parser.add_argument('--poolsize', '-p', type=int, default=100, help='gevent pool size for worker (default: %(default)s)')
     option = parser.parse_args()
     {
         "item": ItemWorker(option.poolsize),
         "shop": ShopWorker(option.poolsize),
+        "requeue": ReQueueWorker(),
     }.get(option.worker).work()
 
 if __name__ == '__main__':
