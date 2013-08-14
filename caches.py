@@ -14,7 +14,30 @@ host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups
 conn = redis.Redis(host=host, port=int(port), db=int(db))
     
 class LC(object):
-    """ Item LastCheck Management """
+    """ Item LastCheck Management 
+
+    This is a huge hash table maps:
+        
+        - field -> item id/ shop id
+        - value -> last time checked
+
+    We can test if an item is not updated for a while and thus needs update
+    
+    >>> if LC.need_update('item', 12345):
+    ...     print('item {} need update'.format(12345))
+
+    if we really want to do update, we'd better call ``update_if_needed``
+   
+    >>> def on_update(id):
+    ...     print('updating item {}'.format(id)) 
+    >>>
+    >>> result = queue.get()
+    >>> if result:
+    ...     queue, itemid = result
+    ...     LC.update_if_needed('item', itemid, on_update, queue)
+
+    This will ensure we do cleanups after we done the task
+    """
     hashkey = 'ataobao-{}-lastcheck-hash'
 
     @staticmethod
@@ -54,7 +77,21 @@ class LC(object):
             queue.task_done(id)
 
 class ItemCT(object):
-    """ Item CheckTime Management """
+    """ Item CheckTime Management 
+    
+    this cache abstraction is used for daily item update
+    We divide a day by 1400+ minutes, for each minute we create a set in redis,
+    holding the items to be updated in that minute
+    
+    for each item we see, we calculate the minute bracket it belongs to by calling 
+    ``checktime``, then added the item id into that bracket(set)
+
+    for example, as soon as we see item 1, 2, 3, 4, and 5, we should::
+
+    >>> ItemCT.add_items(1, 2, 3, 4, 5)
+
+    ``item scheduler`` will use ``ItemCT.get_items`` methods to retrieve items to update
+    """
     basekey = 'ataobao-item-checktime-set'
 
     @staticmethod
@@ -81,13 +118,26 @@ class ItemCT(object):
             yield unpack(m)
 
 class ShopItem(object):
-    """ Shop-Item Relation Management """
+    """ Shop-Item Relation Management 
+
+    one-to-many shop-item relation hashes
+
+        - key -> shop
+        - value -> a set of item ids in the shop
+
+    Typical Usage::
+
+    >>> ShopItem.add_items(100, 1,2,3,4,5)
+    >>> ShopItem.get_items(100)
+    set([1, 2, 3, 4, 5])
+    """
     basekey = 'ataobao-shop-item-set'
 
     @staticmethod
     def add_items(shopid, *itemids):
         setkey = '{basekey}-{shopid}'.format(basekey=ShopItem.basekey, shopid=shopid)
-        conn.sadd(setkey, *[pack(id) for id in itemids]) 
+        if itemids:
+            conn.sadd(setkey, *[pack(id) for id in itemids]) 
 
     @staticmethod
     def get_items(shopid):

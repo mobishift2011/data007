@@ -11,11 +11,29 @@ from settings import QUEUE_URI
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
-##################################
-# Current Set Implementation
-##################################
 class Queue(object):
-    """ a simple queue wrapper for redis, provides Queue.Queue like methods """
+    """ a unordered queue wrapper for redis, provides Queue.Queue like methods
+
+    Usage::
+
+    >>> q = Queue('queue-name', priority=1)
+    >>> q.put(1, 2, 3)
+    >>> q.get(block=False)
+    2
+
+    >>> # do something with item id 2
+
+    when an item is poped, we also updated poping timestamp in a ``hash``
+    upon task finish, we should call ``task_done`` to remove that timestamp
+
+    >>> q.task_done(2)
+
+    if a task isn't finished normally, ``task_done`` will not be executed, 
+    thus we can findout items spent too much time in that hash, and have 
+    them requeued in the queue
+
+    see ``Queue.clean_tasks`` method for details
+    """
     def __init__(self, key, priority=1):
         self.key = key
         self.hashkey = '{key}-timehash'.format(key=key)
@@ -82,7 +100,12 @@ class Queue(object):
             time.sleep(60)
         
 def poll(queues, timeout=None):
-    """ poll item from queues (order by priority) """
+    """ poll item from queues (order by priority) 
+    
+    :param queues: instances of queues, can not be empty
+    :param timeout: how much time should be used to wait for results, `None` means not limited
+    :returns: a tuple of (queue, result), the respective queue and result
+    """
     #print('polling {}'.format(queues))
     queues = sorted(queues, key=lambda x:x.priority, reverse=True)
     t = 0
