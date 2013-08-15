@@ -19,7 +19,7 @@
                     <th class="span1">
                         <input type="checkbox" name="rowtoggle" class="action-rowtoggle">
                     </th>
-                    <th class="span1">&nbsp;</th>
+                    <th class="span1">ip</th>
                     <th>
                             peer
                     </th>
@@ -27,7 +27,8 @@
                             sid
                     </th>
                     <th>
-                            worker
+                            process_list<br />
+                            (pid, spider, threads)
                     </th>
                     <th>
                             Console
@@ -40,6 +41,43 @@
     
     </table>
 
+<table id="tr-demo" style="display:none">
+	<tr >
+		<td>
+			<input type="checkbox" name="rowid" class="action-checkbox">
+		</td>
+		<td>
+
+		</td>
+		<td></td>
+		<td></td>
+		<td name="por_list">
+			
+		</td>
+		<td name="console">
+			<div style="display:inline">
+				spider:&nbsp;&nbsp;
+					   <select name="spider" style="width:100px">
+					   		{% for row in rows%}
+					   			<option value="{{row.name}}">{{row.name}}</option>
+					   		{% endfor %}
+					   </select>
+				threads:&nbsp;&nbsp;<input name="threads" style="width:30px" type="text" value="100" />
+				process:&nbsp;&nbsp;<input name="process" style="width:20px" type="text" value="1" />
+				<button onclick="spider_start(this)">start</button>
+			</div>
+		</td>
+	</tr>
+</table>
+
+<div class="process_li" style="display:none;">
+	<span style="color:red;width: 80px;border-right:1px #006DCC solid;" name="pid"></span> 
+	<span style="color:green;width: 80px;border-right:1px #006DCC solid;" name="spider"></span> 
+	<span style="color:black;width: 80px;" name="threads"></span> 
+	<span>
+		<button onclick="spider_stop(this)">stop</button>
+	</span>
+</div>
 
 	{% endblock %}
 {% endblock %}
@@ -56,15 +94,19 @@
 var g_session = "";
 
 $(document).ready(function(){
-	
    // connect to WAMP server
+	server_connect()
+});
+
+function server_connect(){
    ab.connect("ws://oneandone.favbuy.org:9000",
- 
       // WAMP session was established
       function (session) {
+      	   console.log("Connected!");
 		   g_session = session;
-		   console.log("Connected!");
-		   g_session.subscribe("webadmin", onMessage);
+		   
+		   g_session.call("get_spiders").then(on_get_spiders);
+		   g_session.subscribe("webadmin", onEvent);
       },
       
       // WAMP session is gone
@@ -76,46 +118,83 @@ $(document).ready(function(){
          // things to do once the session fails
       }
    );
-});
+}
 
-var html_tr = '<tr id="tr-{sid}">'+
-				  '<td><input type="checkbox" name="rowid" class="action-checkbox" value="{sid}"></td>'+
-			      '<td>'+
-			      '<a class="icon" href="">' +
-                      '<i class="icon-pencil"></i>' +
-                  '</a>'+
-                  '<button onclick="return confirm(\'You sure you want to delete this item?\');">'+
-                       '<i class="icon-trash"></i>'+
-                  '</button>'+
-                  '</td>'+
-			      '<td>{peer}</td>'+
-			      '<td>{sid}</td>'+
-			      '<td>{sid}</td>'+
-			      '<td>stop</td>'+
-			  '</tr>';
-function onMessage(topicUri, event) {
-   if(event.length > 0){
-	   console.log(topicUri);
-	   console.log(event);
-	   console.log("-------------------------------------");
-	   
-	   $("#spider_list").html("");
-	   for(var i=0; i < event.length; i++){
-	   	   var tr = html_tr;
-	   	   tr = tr.replace(/{peer}/g, event[i].peer);
-	   	   tr = tr.replace(/{sid}/g, event[i].sid);
-	   	   $("#spider_list").prepend($(tr));
-	   	   
-	   	   var msg = {};
-	   	   msg.act = "status";
-	   	   g_session.publish('spider', msg, null, [event[i].sid]);
+function onEvent(topic, event){
+	console.log(topic);
+	console.log(event);
+	if(event.msg_type == "broadcast"){
+		g_session.call("get_spiders").then(on_get_spiders);
+	}else if(event.msg_type == "status_change"){
+		update_status(event.sid, event.por_list);
+	}else{
+		
+	}
+}
 
-	   }
+function update_status(sid, por_list){
+	console.log("update_status");
+	var td_por_list = $('tr[name="' + sid + '"] td[name="por_list"]');
+	td_por_list.html("")
+	for(var i=0; i < por_list.length; i++){
+		var pli = $("div.process_li").clone(true).removeAttr("class");
+		pli.find('span[name="pid"]').text(por_list[i].pid);
+		pli.find('span[name="spider"]').text(por_list[i].spider);
+		pli.find('span[name="threads"]').text(por_list[i].threads);
+		pli.show();
+		td_por_list.prepend(pli);
+	}
+}
+
+function on_get_spiders(spider_list) {
+   console.log(spider_list)
+   $("#spider_list").html("");
+   for(var i=0; i < spider_list.length; i++){
+   	   var tr = $("#tr-demo tr").clone().removeAttr("id");
+   	   tr.attr("name", spider_list[i].sid);
+   	   tr.find("td:eq(1)").html(spider_list[i].peer);
+   	   tr.find("td:eq(2)").html(spider_list[i].peer);
+   	   tr.find("td:eq(3)").html(spider_list[i].sid);
+   	   $("#spider_list").prepend(tr);
+   	   var event = {};
+   	   event.act = "status";
+   	   g_session.publish('spider', event, [], [spider_list[i].sid]);
    }
 }
 
+function spider_start(btn){
+	
+	var spider = $(btn).parent().find('select[name="spider"] option:selected').val();
+	var threads = $(btn).parent().find('input[name="threads"]').val();
+	var process = $(btn).parent().find('input[name="process"]').val();
+	
+	var sid = $(btn).parents("tr").attr("name");
+	console.log(sid);
+	var event = {}
+	event.act = "start";
+	event.kw = {
+		spider:spider,
+		threads:parseInt(threads),
+		process:parseInt(process)
+	};
+	
+	g_session.publish('spider', event, [], [sid]);
+}
 
 
+function spider_stop(btn){
+	console.log("spider_stop");
+	
+	
+	var sid = $(btn).parents("tr").attr("name");
+	var pid = $(btn).parent().parent().find('span[name="pid"]').text();
+	var msg = {};
+	msg.act = "stop";
+	msg.pid_list = [pid];
+	g_session.publish('spider', msg, [], [sid]);
+	
+	$(btn).parent().html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+}
 
 </script>
 {% endblock %}

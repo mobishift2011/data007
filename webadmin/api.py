@@ -44,7 +44,7 @@ def server_admin():
                  "%s/server.py" % RUN_PATH,
                  "--pidfile=%s" % FPID,
                  "--logfile=%s" % FLOG,
-                 "--rundir=%s/" % RUN_PATH,
+#                  "--rundir=%s/" % RUN_PATH
                  ]
         print args
         

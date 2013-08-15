@@ -102,7 +102,7 @@ def get_taobao_item(id, content):
             #('valItemInfo', 'get_price', 'price'),
             ('umpStockUrl', 'get_ump_price', 'price'),
         ],
-    } 
+    }
     result =  parse_content(content, patlist, patdict)
     if result:
         result['pagetype'] = 'taobao'

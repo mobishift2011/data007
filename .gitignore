@@ -43,3 +43,6 @@ dump.rdb
 
 # swp
 .swp
+
+#nohup.out
+daemon/nohup.out

@@ -35,15 +35,29 @@ class RepeaterServerProtocol(WampServerProtocol):
         
     def onSessionOpen(self):
         self.registerProcedureForRpc("clients", self.getClients)
-
+        
+        #self.registerProcedureForRpc("get_spiders", self.get_spiders)
+        self.registerForRpc(self)
+        
         self.registerForPubSub("spider")
         self.registerForPubSub("tasker")
         self.registerForPubSub("webadmin")
         
         log.msg("on connection sid:%s, peer:%s" % (self.session_id, self.peerstr))
         
-        self.peerstr
         
+    @exportRpc("get_spiders")
+    def get_spiders(self):
+        channel = "spider"
+        rets = []
+        if self.factory.subscriptions.has_key(channel):
+            for proto in self.factory.subscriptions[channel]:
+                val = {}
+                val.setdefault("sid", proto.session_id)
+                val.setdefault("peer", proto.peerstr)
+                rets.append(val)
+        return rets
+    
     
     def getClients(self, channel):
         rets = []
@@ -94,9 +108,12 @@ class StoreServerFactory(WampServerFactory):
                "topicUri": topicUri,
                "session_id": proto.session_id
                }
+        
+        if topicUri == "spider":
+            self.dispatch("webadmin", msg)
             
-        for k, v in self.subscriptions.iteritems():
-            self.dispatch(k, msg)
+#         for k, v in self.subscriptions.iteritems():
+#             self.dispatch(k, msg)
         
     def register(self, client):
         if not client in self.clients:
