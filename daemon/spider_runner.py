@@ -4,7 +4,7 @@ import sys
 import os
 
 from twisted.python import log
-from twisted.internet import reactor
+from twisted.internet import reactor, defer, protocol, error
 from twisted.web.error import Error
 from twisted.internet.defer import Deferred, \
                                    DeferredList, \
@@ -14,6 +14,7 @@ from twisted.internet.defer import Deferred, \
 from autobahn.websocket import connectWS
 from autobahn.wamp import WampClientFactory, WampClientProtocol
 import pymongo
+import psutil
 from bson.objectid import ObjectId
 from twisted.web.client import getPage
 
@@ -24,34 +25,30 @@ from twisted.web.http_headers import Headers
 import time
 from spider_tx import TxSpiderEngine
 from multiprocessing import Process
+
+from twisted.internet.error import ReactorAlreadyRunning
+
+
 import pymongo
 import setting
 import funs
 
-def por_start(**kw):
-    @defer.inlineCallbacks
-    def start(**kw):
-        log.msg("begin install store")
-        store = funs.Store(setting)
-        ret = yield store.instatll()
-        if ret is False:
-            log.err("store install error !!!")
-            reactor.stop()
-        else:
-            log.msg("install successfully")
-        por = TxSpiderEngine(store, **kw)
-        por.start()
+
+class SubProcessProtocol(protocol.ProcessProtocol):
+    def __init__(self, sptl, spiders, kw):
+        self.sptl = sptl
+        self.spiders = spiders
+        self.kw = kw
+
+    def connectionMade(self):
+        self.pid = self.transport.pid
+        self.spiders[self.pid] = self.kw
+        self.sptl.status_refresh()
         
-    conn = pymongo.Connection(setting.CONF_MONGO_HOST, setting.CONF_MONGO_PORT)
-    conn.admin.authenticate(setting.CONF_MONGO_USER, setting.CONF_MONGO_PWD)
-    row = conn.taobao.spider.find_one({"name":kw["spider"]})
-    queues = conn.taobao.redis_queue.find({"spider":row["_id"]})
-    row = dict(row)
-    row["queue_list"] = list(queues)
-    kw["row"] = row
-    
-    reactor.callWhenRunning(start, **kw)
-    reactor.run()
+    def processExited(self, reason):
+        print "processExited, status %s" % (reason.value.exitCode,)
+        del self.spiders[self.pid]
+        self.sptl.status_refresh()
     
     
 class TaskClientProtocol(WampClientProtocol):
@@ -60,7 +57,6 @@ class TaskClientProtocol(WampClientProtocol):
     """
     def process_msg(self, topic, event):
         '''
-        
         :param topic:
         :param event:
         {
@@ -73,35 +69,56 @@ class TaskClientProtocol(WampClientProtocol):
         }
         '''
         log.msg("topic:%s, event: %s" % (str(topic), str(event)))
+        if not event.has_key("act"): return
+        
         if event["act"] == "start":
             self.spider_start(event["kw"])
+            
         elif event["act"] == "stop":
-            self.spider_stop()
+            self.spider_stop(event["pid_list"])
+
         elif event["act"] == "status":
-            self.spider_status()
+            self.status_refresh()
         
+    def status_refresh(self):
+        ret_msg = {
+                   "sid": self.session_id,
+                   "msg_type":"status_change"
+                   }
+        por_list = []
+        for pid, kw in self.factory.spiders.iteritems():
+            info = {
+                    "pid":pid,
+                    "threads": kw["threads"],
+                    "spider": kw["spider"],
+                    }
+            por_list.append(info)
+        ret_msg["por_list"] = por_list
         
-    def spider_status(self):
-        pass
+        self.publish("webadmin", ret_msg)
     
-        
-    def spider_stop(self):
-        for s in self.factory.spiders:
-            s.terminate()
-    
+    def spider_stop(self, pid_list):
+        for pid in pid_list:
+            try:
+                p = psutil.Process(int(pid))
+                p.terminate()
+            except Exception, e:
+                print e
+            
+            
     def spider_start(self, kw):
         '''
         '''
         for i in range(0, kw["process"]):
-            p = Process(target=por_start, kwargs=kw)
-            p.start()
-            self.factory.spiders.append(p)
-        
+            pp = SubProcessProtocol(self, self.factory.spiders, kw)
+            args = [sys.executable, "spider_tx.py", kw["spider"], str(kw["threads"])]
+            print args
+            reactor.spawnProcess(pp, sys.executable, args=args)
+            
     def onSessionOpen(self):
         log.msg("peerstr: %s" % self.peerstr)
         self.subscribe("spider", self.process_msg)
         log.msg("sub 'spider' channl finish")
-        reactor.callLater(3, self.pub_info)
 
     def connectionLost(self, reason):
         WampClientProtocol.connectionLost(self, reason)
@@ -116,8 +133,7 @@ class TaskClientProtocol(WampClientProtocol):
 class SpiderClientFactory(WampClientFactory):
     def __init__(self, url, debug = False, debugCodePaths = False, debugWamp = False, debugApp = False):
         WampClientFactory.__init__(self, url, debug = debug, debugCodePaths = debugCodePaths)
-        self.spiders = []
-        
+        self.spiders = {}
         
     def clientConnectionFailed(self, connector, reason):
         log.msg("connect fail, wait 3 second.")
@@ -126,6 +142,13 @@ class SpiderClientFactory(WampClientFactory):
     def clientConnectionLost(self, connector, reason):
         log.msg("connect fail, wait 3 second.")
         reactor.callLater(3, connector.connect)
+
+
+
+
+def spider_runner_daemon():
+    pass
+
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -152,9 +175,20 @@ if __name__ == '__main__':
         log.startLogging(sys.stdout)
         
     from twisted.python.logfile import DailyLogFile
-
     log.startLogging(sys.stdout)
     factory = SpiderClientFactory("ws://localhost:9000")
     factory.protocol = TaskClientProtocol
     connectWS(factory)
-    reactor.run()
+    
+    import os, signal
+    
+    def killGroup():
+        for pid, kw in factory.spiders.iteritems():
+            try:
+                p = psutil.Process(int(pid))
+                p.terminate()
+            except Exception, e:
+                print e
+
+    reactor.addSystemEventTrigger('before', 'shutdown', killGroup)
+    reactor.run(1)

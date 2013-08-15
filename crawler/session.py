@@ -37,7 +37,7 @@ def get_session():
         for key in sorted(cookies.keys()):
             if key in required_cookie_keys:
                 session.cookies[key] = cookies[key]
-    
+
         session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=30, max_retries=3))
         
         get_session.session = session

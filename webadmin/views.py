@@ -18,8 +18,6 @@ class CategoryView(ModelView):
     column_filters = ['parentCid', ]
     column_searchable_list = ('parentCid',)
     
-#     form_overrides = dict(desc=wtf.PasswordField)
-
     list_template = '/admin/model/list.html'
     column_list = ("parentCid", "name", "cid", "sortOrder")
     
@@ -40,44 +38,47 @@ class RedisQueueView(ModelView):
     column_list = ("spider", "name", "rule", "prio")
     column_searchable_list = ('rule',)
         
+        
 class SpiderView(ModelView):
-#     form_overrides = dict(desc=wtf.PasswordField)
-    column_list = ("name", "process", "workers", "console")
+    column_list = ("name", "spider_process", "spider_workers")
 
-    list_template = 'cfz/list_category.html'
-    edit_template = 'cfz/edit.html'
-    
+#     list_template = 'cfz/list_category.html'
+#     edit_template = 'cfz/edit.html'
+#     form_widget_args = dict(
+#         code={
+#             'rows': 10,
+#             'cols': 500,
+#             'style': 'width:500px;',
+#         }
+#     )
 
-    form_widget_args = dict(
-        code={
-            'rows': 10,
-            'cols': 500,
-            'style': 'width:500px;',
-        }
-    )
+class TaobaoUserView(ModelView):
+    column_list = ("name", "pwd", "enable", "latest")
 
 
-    
 class MyView(BaseView):
     @expose('/')
     def index(self):
         return self.render('home.html')
     
-class SpidersView(BaseView):
+class SpiderAdminView(BaseView):
     @expose('/')
     def index(self):
-        return self.render('cfz/spiders.html')
+        rows = app.conn.taobao.spider.find({})
+        rows = list(rows)
+        return self.render('cfz/spiders.html', **{"rows":rows})
 
 from flask.ext import admin
 admin = admin.Admin(app,  'taobao')
-admin.add_view(SpidersView())
+admin.add_view(SpiderAdminView())
 
 admin.add_view(MainCategoryView(MainCategory,name="parent", endpoint='MainCategory', category='category'))
 admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='category'))
-
+ 
 admin.add_view(RedisQueueView(RedisQueue,name="queue", endpoint='RedisQueue', category='crawl'))
-admin.add_view(SpiderView(Spider,name="spider", endpoint='Spider', category='crawl'))
+admin.add_view(SpiderView(Spider, name="spider", endpoint='Spider', category='crawl'))
 
+admin.add_view(TaobaoUserView(TaobaoUser))
 
 print "ddddddddd"
 #admin.add_view(SpidersView())

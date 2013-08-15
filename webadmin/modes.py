@@ -9,7 +9,8 @@ from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext import admin, wtf
 from wtforms import widgets
 from webadmin import db
-
+import time
+import datetime
     
 class EmProp(db.EmbeddedDocument):
     
@@ -56,10 +57,21 @@ class MainCategory(db.Document):
     def __unicode__(self):
         return self.name
 
+class Navi(db.EmbeddedDocument):
+    url_rule = db.StringField(max_length=500)
+    code = db.StringField()
+    
+    
 class Spider(db.Document):
+    '''
+    '''
     name = db.StringField(max_length=500)
+    spider_process = db.IntField(min_value=1, max_value=100, default=1)
+    spider_workers = db.IntField(min_value=1, max_value=10000, default=100)
+    navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
     def __unicode__(self):
         return self.name
+    
     
     
 class RedisQueue(db.Document):
@@ -71,24 +83,19 @@ class RedisQueue(db.Document):
     spider = db.ReferenceField(Spider)
     def __unicode__(self):
         return self.name
-    
 
-class Navi(db.EmbeddedDocument):
-    url_rule = db.StringField(max_length=500)
-    code = db.StringField()
-#     ret_type = db.StringField(choices=[("url", "url"), ("item", "item")], max_length=200)
-#     ret_queue = db.ReferenceField(RedisQueue)
-    
-    
-class Spider(db.Document):
+
+class TaobaoUser(db.Document):
     '''
     '''
     name = db.StringField(max_length=500)
-    process = db.IntField(default=1)
-    workers = db.IntField(default=100)
-    navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
+    pwd = db.StringField(max_length=500)
+    email = db.StringField(max_length=500)
+    cookie = db.StringField()
     
+    enable = db.BooleanField(default=True)
+    latest = db.DateTimeField(default=datetime.datetime.utcnow())
+
     def __unicode__(self):
         return self.name
-    
     
