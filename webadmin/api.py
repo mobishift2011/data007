@@ -19,7 +19,7 @@ import time
 import psutil
 import subprocess
 from multiprocessing import Process
-
+from twisted.python import log
 
 FPID = "/tmp/server_admin.pid"
 FLOG = "/var/log/server_admin.log"
@@ -39,12 +39,12 @@ def server_admin():
         
     elif act == "start":
         
-        args = ["/usr/local/bin/twistd",
+        args = ["twistd",
                  "-y",
                  "%s/server.py" % RUN_PATH,
                  "--pidfile=%s" % FPID,
                  "--logfile=%s" % FLOG,
-                 "--rundir=%s/" % RUN_PATH,
+#                  "--rundir=%s/" % RUN_PATH
                  ]
         print args
         
@@ -68,6 +68,15 @@ def server_admin():
             return '{"success":1, "msg":"%s"}' % p.name
         except Exception, e:
             return '{"success":0, "msg":"%s"}' % e
+
+
+
+
+@app.route('/test_python_code/')
+def test_python_code():
+    act = request.args.get('act', '')
+    
+
 
 
 print "medule api s loaded."
