@@ -111,7 +111,7 @@ class ItemCT(object):
     @staticmethod
     def get_items(ct=None):
         if ct is None:
-            ct = int(time.mktime(time.gmtime())/86400/60)
+            ct = int(time.mktime(time.gmtime())%86400/60)
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
         for m in conn.smembers(setkey):

@@ -2,8 +2,7 @@
 ####
 # Set up SO:
 ####
-#apt-get -y update
-#apt-get -y upgrade
+apt-get -y update && apt-get -y upgrade
 
 ####
 # Download and install Redis:
@@ -30,13 +29,11 @@ cp redis.conf /etc/redis
 # Redis correctly installed.
 # Download script for running Redis
 ####
-wget -q https://raw.github.com/saxenap/install-redis-amazon-linux-centos/master/redis-server
+wget -q https://gist.github.com/observerss/6238444/raw/d48b84d89289df39eaddc53f1e9a918f776b3074/redis-server
 mv redis-server /etc/init.d
 chmod 755 /etc/init.d/redis-server
-chkconfig --add redis-server
-chkconfig --level 345 redis-server on
 
 ####
 # To start Redis just uncomment this line
 ####
-#service redis-server start
+service redis-server start

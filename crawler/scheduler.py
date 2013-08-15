@@ -90,7 +90,7 @@ class ItemScheduler(Scheduler):
         self.ct = None
 
     def should_run(self):
-        ct = int(time.mktime(time.gmtime())/86400/60)
+        ct = int(time.mktime(time.gmtime())%86400/60)
         if ct != self.ct:
             self.ct = ct
             return True
