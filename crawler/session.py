@@ -9,16 +9,20 @@ Usage::
     >>> s.get('http://www.taobao.com').status_code
     200
 """
+# this is necessary to prevent page downloading timeout
+import socket
+socket.setdefaulttimeout(30)
 
 import requests
+requests.adapters.DEFAULT_RETRIES = 3
 
 headers = {
-    "Accept":"text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01",
-    "Accept-Encoding":"gzip,deflate,sdch",
+    "Accept":"*/*",
+    "Accept-Encoding":"gzip,deflate",
     "Accept-Language":"en-US,en;q=0.8",
     "Connection":"keep-alive",
-    #"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
     "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36",
+    #"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
     #"X-Requested-With":"XMLHttpRequest",
 }
 
@@ -44,3 +48,13 @@ def get_session():
 
     return get_session.session
     
+
+def get_blank_session():
+    if not hasattr(get_blank_session, 'session'):
+        session = requests.Session()
+
+        session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=30, max_retries=3))
+        
+        get_blank_session.session = session
+
+    return get_blank_session.session

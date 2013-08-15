@@ -4,16 +4,22 @@ flask-wtf
 flask-admin
 flask-mongoengine
 
-# better git flow control
-#legit
+# interactive python
+ipython
 
 # datastore related
+pycassa
 pymongo
-txredisapi>=0.1.1
+mongoengine
 redis
+txredisapi>=0.1.1
 
 # framework used
 twisted
 gevent
 
+# others
+nose
+requests
 psutil
+msgpack-python

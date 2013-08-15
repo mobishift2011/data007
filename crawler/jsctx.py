@@ -13,11 +13,16 @@ Usage::
     {'a': 1, 'b': 2}
 
 """
+import sys
 
 try:
     import PyV8
 except:
     from pyv8 import PyV8
+    if 'linux' in sys.platform:
+        need_decode = True
+    else:
+        need_decode = False
 
 def get_ctx():
     if not hasattr(get_ctx, 'ctx'):

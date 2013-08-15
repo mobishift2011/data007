@@ -24,9 +24,20 @@ import json
 import operator
 import traceback
 
-from session import get_session    
-from jsctx import get_ctx
+from session import get_session, get_blank_session
+from jsctx import get_ctx, need_decode
 
+def is_valid_item(item):
+    """ test if an item dict is valid """
+    if not isinstance(item, dict):
+        return False
+
+    keys = ['id', 'num_reviews', 'num_sold30', 'shopid']
+    for key in keys:
+        if key not in item:
+            return False
+
+    return True
 
 def get_item(id):
     """ given itemid, return item info dict """
@@ -38,6 +49,8 @@ def get_item(id):
         return {}
     else:
         content = r.content
+        if 'error-notice-text' in content:
+            return {}
         if r.url.startswith('http://item.taobao.com'):
             return get_taobao_item(id, content)
         elif r.url.startswith('http://detail.tmall.com'):
@@ -91,7 +104,8 @@ def get_taobao_item(id, content):
         ],
     }
     result =  parse_content(content, patlist, patdict)
-    result['pagetype'] = 'taobao'
+    if result:
+        result['pagetype'] = 'taobao'
     return result
 
 def parse_content(content, patlist, patdict):
@@ -131,9 +145,12 @@ def parse_content(content, patlist, patdict):
             if val is not None:
                 result[name] = val
         except:
+            print content
             traceback.print_exc()
             continue
     
+    if need_decode:
+        content = content.decode('gbk', 'ignore')
     for pat in patdict:
         try:
             # eval pattern using pyv8
@@ -149,7 +166,14 @@ def parse_content(content, patlist, patdict):
                 if isinstance(callback, str):
                     callback = eval(callback)
 
-                val = callback(obj)
+                try:
+                    val = callback(obj)
+                except Exception as e:
+                    # shopid does not exist
+                    if name == 'shopid':
+                        return {}
+                    else:
+                        raise e 
                 if isinstance(val, dict):
                     for key in name.split(','):
                         if key in val and val[key]:
@@ -173,7 +197,7 @@ def get_counters(id, sellerid):
         'ICVT_7_{}'.format(id): 'num_views',
     }
     url = 'http://count.tbcdn.cn/counter3?keys={}&callback=jsonp'.format(','.join(counters.keys()))
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     try:
         data = dict(ctx.eval('d='+patjsonp.search(s.get(url, timeout=30).content).group(1)))
@@ -188,11 +212,14 @@ def get_counters(id, sellerid):
 
 def get_sold30(url):
     patjsonp = re.compile(r'jsonp\((.*?)\);', re.DOTALL)
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     try:
+        content = s.get(url+'&callback=jsonp', timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         # eval pattern using pyv8
-        data = ctx.eval('d='+patjsonp.search(s.get(url+'&callback=jsonp', timeout=30).content).group(1))
+        data = ctx.eval('d='+patjsonp.search(content).group(1))
         if not getattr(data, 'quantity', None) and data.postage:
             return 0
         return data.quantity.quanity
@@ -200,7 +227,10 @@ def get_sold30(url):
         traceback.print_exc()
         
 def get_price(d):
-    return min(float(d.skuMap[key].price) for key in d.skuMap.keys())
+    try:
+        return min(float(d.skuMap[key].price) for key in d.skuMap.keys())
+    except:
+        return None
 
 def get_ump_price(url):
     s = get_session()
@@ -209,6 +239,8 @@ def get_ump_price(url):
     patpromo = re.compile(r';TB.PromoData = ({.+)', re.DOTALL)
     try:
         content = s.get(url, timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         content = re.sub(r';TB.PointData=.*', '', content).strip()
         if content:
             data = ctx.eval('d='+patpromo.search(content).group(1))
@@ -219,11 +251,13 @@ def get_ump_price(url):
         traceback.print_exc()
 
 def get_tmall_details(url):
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     s.headers['Referer'] = 'http://item.taobao.com/item.htm'
     try:
         content = s.get(url, timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
         data = ctx.eval('d='+content)
         # price
         prices = set()
@@ -241,10 +275,22 @@ def get_tmall_details(url):
 
 def get_tmall_num_reviews(id):
     url = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(id)
-    s = get_session()
+    s = get_blank_session()
     try:
         data = '{'+s.get(url, timeout=30).content.strip()+'}'
         return json.loads(data)['dsr']['rateTotal']
     except:
         traceback.print_exc()
 
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Get item by id')
+    parser.add_argument('--id', '-i', type=int, help='taobao item id, e.g. 21825059650', required=True)
+    option = parser.parse_args()
+    from pprint import pprint
+    print('Item {}:'.format(option.id))
+    pprint(get_item(option.id))
+
+if __name__ == '__main__':
+    main()
