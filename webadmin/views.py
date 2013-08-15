@@ -56,6 +56,12 @@ class SpiderView(ModelView):
         }
     )
 
+class SpiderNaviView(ModelView):
+#     form_overrides = dict(desc=wtf.PasswordField)
+    column_list = ("name", "process", "workers", "console")
+    edit_template = 'cfz/code_edit.html'
+    
+
 
     
 class MyView(BaseView):
@@ -78,6 +84,7 @@ admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='
 admin.add_view(RedisQueueView(RedisQueue,name="queue", endpoint='RedisQueue', category='crawl'))
 admin.add_view(SpiderView(Spider,name="spider", endpoint='Spider', category='crawl'))
 
+admin.add_view(SpiderNaviView(SpiderNavi))
 
 print "ddddddddd"
 #admin.add_view(SpidersView())

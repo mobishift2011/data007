@@ -11,19 +11,18 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {'DB': 'taobao',
-                                  "HOST": 'oneandone.favbuy.org',
-                                  "PORT": 37017}
+                                  "HOST": 'localhost',
+                                  "PORT": 27017}
 
 # Create models
 db = MongoEngine()
 db.init_app(app)
-db.connection.admin.authenticate("root", "chenfuzhi")
+#db.connection.admin.authenticate("root", "chenfuzhi")
 
 app.conn = db.connection
 
 __all__ = ["app", "modes", "api", "views"]
 
 from webadmin import *
-
 
 

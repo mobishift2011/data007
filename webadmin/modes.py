@@ -73,12 +73,17 @@ class RedisQueue(db.Document):
         return self.name
     
 
-class Navi(db.EmbeddedDocument):
-    url_rule = db.StringField(max_length=500)
-    code = db.StringField()
-#     ret_type = db.StringField(choices=[("url", "url"), ("item", "item")], max_length=200)
-#     ret_queue = db.ReferenceField(RedisQueue)
-    
+class SpiderNavi(db.Document):
+    name = db.StringField(max_length=500)
+    type = db.StringField(max_length=500)
+    request_seed = db.StringField()
+    request_header = db.StringField()
+    request_timeout = db.StringField()
+    response_header = db.StringField()
+    response_content = db.StringField()
+    process_item = db.StringField()
+    process_url = db.StringField()
+
     
 class Spider(db.Document):
     '''
@@ -86,7 +91,7 @@ class Spider(db.Document):
     name = db.StringField(max_length=500)
     process = db.IntField(default=1)
     workers = db.IntField(default=100)
-    navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
+    #navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
     
     def __unicode__(self):
         return self.name

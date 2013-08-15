@@ -1,0 +1,84 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+
+{% block head %}
+{{ super() }}
+<link href="{{ url_for('static', filename='codemirror/codemirror.css') }}" rel="stylesheet" >
+
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/3024-day.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/3024-night.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/ambiance.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/base16-dark.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/base16-light.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/blackboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/cobalt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/eclipse.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/elegant.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/erlang-dark.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/lesser-dark.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/midnight.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/monokai.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/neat.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/night.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/paraiso-dark.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/paraiso-light.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/rubyblue.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/solarized.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/tomorrow-night-eighties.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/twilight.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/vibrant-ink.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/xq-dark.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/xq-light.css') }}">
+
+<link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
+<link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
+<style>
+</style>
+{% endblock %}
+
+{% block body %}
+{% call lib.form_tag(form) %}
+{{ lib.render_form_fields(form, widget_args=form_widget_args) }}
+{{ lib.render_form_buttons(return_url) }}
+{% endcall %}
+
+{% endblock %}
+
+{% block tail %}
+{{ super() }}
+<script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
+<script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
+<script src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
+<script src="{{ url_for('static', filename='codemirror/python.js') }}"></script>
+
+<script>
+	$(document).ready(function() {
+		var lid = ["request_seed", "request_header", "request_timeout", "response_header", "response_content", "process_item", "process_url"];
+		for (var i = 0; i < lid.length; i++) {
+			var label = $("#" + lid[i]).parents(".control-group").css({
+				"background-color" : "#DDD"
+			});
+			console.log(label.html());
+			ch_textarea(lid[i]);
+		};
+	});
+
+	function ch_textarea(areaId) {
+		var editor = CodeMirror.fromTextArea(document.getElementById(areaId), {
+			mode : {
+				name : "python",
+				version : 2,
+				singleLineStringErrors : false
+			},
+			lineNumbers : true,
+			indentUnit : 4,
+			tabMode : "shift",
+			matchBrackets : true
+		});
+
+		editor.setOption("theme", "solarized dark");
+	}
+
+</script>
+
+{% endblock %}
