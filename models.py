@@ -65,10 +65,10 @@ def get_or_create_cf(pool, name):
             sys.create_column_family(DATABASE, name, comparator_type=UTF8_TYPE)
         cf = ColumnFamily(pool, name)
 
-    for host in DB_HOSTS:  
-        sys = SystemManager(host)
-        for column, value_type in SCHEMA.get(name, {}).iteritems():
-            sys.alter_column(DATABASE, name, column, value_type)
+        for host in DB_HOSTS:  
+            sys = SystemManager(host)
+            for column, value_type in SCHEMA.get(name, {}).iteritems():
+                sys.alter_column(DATABASE, name, column, value_type)
     return cf
 
 pool = get_or_create_cp()
