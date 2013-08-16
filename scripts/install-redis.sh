@@ -20,16 +20,19 @@ make install
 # Set up Redis
 ####
 rm -rf /etc/redis /var/lib/redis
-mkdir /etc/redis /var/lib/redis
+mkdir -p /etc/redis /var/lib/redis /var/log/redis
+useradd redis
+chown redis:redis /var/lib/redis /var/log/redis
 cp src/redis-server src/redis-cli /usr/local/bin
 cp redis.conf /etc/redis
-#sed -e "s/^daemonize no$/daemonize yes/" -e "s/^# bind 127.0.0.1$/bind 127.0.0.1/" -e "s/^dir \.\//dir \/var\/lib\/redis\//" -e "s/^loglevel verbose$/loglevel notice/" -e "s/^logfile stdout$/logfile \/var\/log\/redis.log/" redis.conf > /etc/redis/redis.conf
+sed -e "s/^daemonize no$/daemonize yes/"  -e "s/^dir \.\//dir \/var\/lib\/redis\//" -e "s/^loglevel verbose$/loglevel notice/" -e "s/^logfile stdout$/logfile \/var\/log\/redis.log/" redis.conf > /etc/redis/redis.conf
 
 ####
 # Redis correctly installed.
 # Download script for running Redis
 ####
 wget -q https://gist.github.com/observerss/6238444/raw/d48b84d89289df39eaddc53f1e9a918f776b3074/redis-server
+sed -e "s/^DAEMON=\/usr\/bin\/redis-server$/DAEMON=\/usr\/local\/bin\/redis-server/"
 mv redis-server /etc/init.d
 chmod 755 /etc/init.d/redis-server
 

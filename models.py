@@ -10,7 +10,7 @@ Usage::
 """
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
-from pycassa.system_manager import SystemManager, LONG_TYPE, INT_TYPE, ASCII_TYPE, FLOAT_TYPE, UTF8_TYPE
+from pycassa.system_manager import SystemManager, LONG_TYPE, INT_TYPE, ASCII_TYPE, FLOAT_TYPE, UTF8_TYPE, BYTES_TYPE
 from pycassa.cassandra.ttypes import InvalidRequestException, NotFoundException
 
 from settings import DB_HOSTS
@@ -62,7 +62,7 @@ def get_or_create_cf(pool, name):
     except NotFoundException as e:
         for host in DB_HOSTS:  
             sys = SystemManager(host)
-            sys.create_column_family(DATABASE, name)
+            sys.create_column_family(DATABASE, name, comparator_type=UTF8_TYPE)
         cf = ColumnFamily(pool, name)
 
     for host in DB_HOSTS:  
