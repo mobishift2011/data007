@@ -13,11 +13,15 @@ from pycassa.columnfamily import ColumnFamily
 from pycassa.system_manager import SystemManager, LONG_TYPE, INT_TYPE, ASCII_TYPE, FLOAT_TYPE, UTF8_TYPE, BYTES_TYPE
 from pycassa.cassandra.ttypes import InvalidRequestException, NotFoundException
 
+import time
+
 from settings import DB_HOSTS
+
 
 DATABASE = 'ataobao'
 TABLE_ITEM = 'item'
 TABLE_SHOP = 'shop'
+
 
 SCHEMA = {
     # rowkey = id / id+'-'+YYYYMMDD
@@ -43,6 +47,7 @@ SCHEMA = {
     }
 }
 
+
 def get_or_create_cp():
     try:
         pool = ConnectionPool(DATABASE, DB_HOSTS)
@@ -50,11 +55,16 @@ def get_or_create_cp():
         if 'does not exist' in e.why:
             for host in DB_HOSTS:  
                 sys = SystemManager(host)
-                sys.create_keyspace(DATABASE, strategy_options={"replication_factor": "1"})
+                sys.create_keyspace(DATABASE, strategy_options={"replication_factor": "2"}, durable_writes=False)
+                time.sleep(1)
+                break
+
             pool = ConnectionPool(DATABASE, DB_HOSTS)
         else:
             raise e
+
     return pool
+
 
 def get_or_create_cf(pool, name):
     try:
@@ -63,13 +73,18 @@ def get_or_create_cf(pool, name):
         for host in DB_HOSTS:  
             sys = SystemManager(host)
             sys.create_column_family(DATABASE, name, comparator_type=UTF8_TYPE)
+            time.sleep(1)
+            break
+
         cf = ColumnFamily(pool, name)
 
         for host in DB_HOSTS:  
             sys = SystemManager(host)
             for column, value_type in SCHEMA.get(name, {}).iteritems():
                 sys.alter_column(DATABASE, name, column, value_type)
+
     return cf
+
 
 pool = get_or_create_cp()
 item = get_or_create_cf(pool, TABLE_ITEM)

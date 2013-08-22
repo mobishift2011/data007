@@ -15,6 +15,15 @@ envs = {
         'CACHE_URI': 'redis://localhost:6379/12',
         'DB_HOSTS': ['localhost:9160'],
     },
+    'TEST': {
+        'QUEUE_URI': 'redis://hostname:6379/11',
+        'CACHE_URI': 'redis://hostname:6379/12',
+        'DB_HOSTS': [
+            ':9160',
+            ':9160',
+            ':9160',
+        ],
+    },
 }
 
 for key, value in envs.get(ENV, envs['DEV']).iteritems():
