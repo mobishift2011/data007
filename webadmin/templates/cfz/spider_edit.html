@@ -40,7 +40,6 @@
 {% call lib.form_tag(form) %}
 {{ lib.render_form_fields(form, widget_args=form_widget_args) }}
 
-<input type="button" class="btn btn-primary btn-large" value="save_and_edit">
 {{ lib.render_form_buttons(return_url) }}
 
 {% endcall %}
@@ -54,9 +53,10 @@
 <script src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
 <script src="{{ url_for('static', filename='codemirror/python.js') }}"></script>
 
+
 <script>
 	$(document).ready(function() {
-		var lid = ["python_code"];
+		var lid = ["get_seed"];
 		for (var i = 0; i < lid.length; i++) {
 			var label = $("#" + lid[i]).parents(".control-group").css({
 				"background-color" : "#DDD"
@@ -65,8 +65,10 @@
 			ch_textarea(lid[i]);
 		};
 		
-		$("#python_code").parent().after('<div id="test_result"></div>');
-		$("#python_code").parent().after('<div id="test_btn"><input type="button" onclick="test_get_seed()" value="test" /></div>');
+		$("#get_seed").parent().after('<div id="test_result"></div>');
+		$("#get_seed").parent().after('<div id="test_btn"><input type="button" onclick="test_get_seed()" value="test" /></div>')
+		
+		
 	});
 
 	function test_get_seed(){
@@ -76,7 +78,7 @@
 		$.ajax({
 		   type: "POST",
 		   url: "/test_py/",
-		   data: $("#python_code").val(),
+		   data: $("#get_seed").val(),
 		   contentType: "",
 		   success: function(msg){
 	          $("#test_result").html('<div class="alert"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
@@ -84,7 +86,6 @@
 		   }
 		});
 	}
-
 
 	function ch_textarea(areaId) {
 		var editor = CodeMirror.fromTextArea(document.getElementById(areaId), {
@@ -100,12 +101,13 @@
 		});
 
 		editor.setOption("theme", "solarized dark");
-		editor.setSize("100%", 900);
+		editor.setSize("100%", 500);
 		//editor.cm.setSize({"height":1200});
-
+		
 	    editor.on("change", function(edit, obj) {
 	    	edit.save();
 	    });
+  
 	}
 
 </script>

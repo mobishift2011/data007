@@ -1,0 +1,200 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% import 'admin/model/layout.html' as model_layout with context %}
+{% import 'admin/actions.html' as actionlib with context %}
+
+{% block head %}
+    {{ super() }}
+    <link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
+    <link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+    {% block model_menu_bar %}
+
+
+<table class="table table-striped table-bordered model-list">
+        <thead>
+            <tr>
+                    <th class="span1">
+                        <input type="checkbox" name="rowtoggle" class="action-rowtoggle">
+                    </th>
+                    <th class="span1">ip</th>
+                    <th>
+                            peer
+                    </th>
+                    <th>
+                            sid
+                    </th>
+                    <th>
+                            process_list<br />
+                            (pid, spider, threads)
+                    </th>
+                    <th>
+                            Console
+                    </th>
+            </tr>
+        </thead>
+        
+        <tbody id="spider_list">
+    	</tbody>
+    
+    </table>
+
+<table id="tr-demo" style="display:none">
+	<tr >
+		<td>
+			<input type="checkbox" name="rowid" class="action-checkbox">
+		</td>
+		<td>
+
+		</td>
+		<td></td>
+		<td></td>
+		<td name="por_list">
+			
+		</td>
+		<td name="console">
+			<div style="display:inline">
+				spider:&nbsp;&nbsp;
+					   <select name="spider" style="width:100px">
+					   		{% for row in rows%}
+					   			<option value="{{row.name}}">{{row.name}}</option>
+					   		{% endfor %}
+					   </select>
+				threads:&nbsp;&nbsp;<input name="threads" style="width:30px" type="text" value="100" />
+				process:&nbsp;&nbsp;<input name="process" style="width:20px" type="text" value="1" />
+				<button onclick="spider_start(this)">start</button>
+			</div>
+		</td>
+	</tr>
+</table>
+
+<div class="process_li" style="display:none;">
+	<span style="color:red;width: 80px;border-right:1px #006DCC solid;" name="pid"></span> 
+	<span style="color:green;width: 80px;border-right:1px #006DCC solid;" name="spider"></span> 
+	<span style="color:black;width: 80px;" name="threads"></span> 
+	<span>
+		<button onclick="spider_stop(this)">stop</button>
+	</span>
+</div>
+
+	{% endblock %}
+{% endblock %}
+
+        
+{% block tail %}
+    {{ super() }}
+    <script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
+    <script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
+    <script src="{{ url_for('admin.static', filename='js/filters.js') }}"></script>
+    
+<script>
+
+var g_session = "";
+
+$(document).ready(function(){
+   // connect to WAMP server
+	server_connect()
+});
+
+function server_connect(){
+   ab.connect("ws://192.168.2.201:9000",
+      // WAMP session was established
+      function (session) {
+      	   console.log("Connected!");
+		   g_session = session;
+		   
+		   g_session.call("get_spiders").then(on_get_spiders);
+		   g_session.subscribe("webadmin", onEvent);
+      },
+      
+      // WAMP session is gone
+      function (code, reason) {
+ 		 
+ 		 console.log("WAMP session is gone");
+ 		 console.log(code);
+ 		 console.log(reason);
+         // things to do once the session fails
+      }
+   );
+}
+
+function onEvent(topic, event){
+	console.log(topic);
+	console.log(event);
+	if(event.msg_type == "broadcast"){
+		g_session.call("get_spiders").then(on_get_spiders);
+	}else if(event.msg_type == "status_change"){
+		update_status(event.sid, event.por_list);
+	}else{
+		
+	}
+}
+
+function update_status(sid, por_list){
+	console.log("update_status");
+	var td_por_list = $('tr[name="' + sid + '"] td[name="por_list"]');
+	td_por_list.html("")
+	for(var i=0; i < por_list.length; i++){
+		var pli = $("div.process_li").clone(true).removeAttr("class");
+		pli.find('span[name="pid"]').text(por_list[i].pid);
+		pli.find('span[name="spider"]').text(por_list[i].spider);
+		pli.find('span[name="threads"]').text(por_list[i].threads);
+		pli.show();
+		td_por_list.prepend(pli);
+	}
+}
+
+function on_get_spiders(spider_list) {
+   console.log(spider_list)
+   $("#spider_list").html("");
+   for(var i=0; i < spider_list.length; i++){
+   	   var tr = $("#tr-demo tr").clone().removeAttr("id");
+   	   tr.attr("name", spider_list[i].sid);
+   	   tr.find("td:eq(1)").html(spider_list[i].peer);
+   	   tr.find("td:eq(2)").html(spider_list[i].peer);
+   	   tr.find("td:eq(3)").html(spider_list[i].sid);
+   	   $("#spider_list").prepend(tr);
+   	   var event = {};
+   	   event.act = "status";
+   	   g_session.publish('spider', event, [], [spider_list[i].sid]);
+   }
+}
+
+function spider_start(btn){
+	
+	var spider = $(btn).parent().find('select[name="spider"] option:selected').val();
+	var threads = $(btn).parent().find('input[name="threads"]').val();
+	var process = $(btn).parent().find('input[name="process"]').val();
+	
+	var sid = $(btn).parents("tr").attr("name");
+	console.log(sid);
+	var event = {}
+	event.act = "start";
+	event.kw = {
+		spider:spider,
+		threads:parseInt(threads),
+		process:parseInt(process)
+	};
+	
+	g_session.publish('spider', event, [], [sid]);
+}
+
+
+function spider_stop(btn){
+	console.log("spider_stop");
+	
+	
+	var sid = $(btn).parents("tr").attr("name");
+	var pid = $(btn).parent().parent().find('span[name="pid"]').text();
+	var msg = {};
+	msg.act = "stop";
+	msg.pid_list = [pid];
+	g_session.publish('spider', msg, [], [sid]);
+	
+	$(btn).parent().html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+}
+
+</script>
+{% endblock %}

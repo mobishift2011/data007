@@ -74,37 +74,35 @@ class Spider(db.Document):
     
     
     
-class RedisQueue(db.Document):
-    '''
-    '''
-    name = db.StringField(max_length=500)
-    rule = db.StringField(max_length=500)
-    prio = db.IntField(default=0)
-    spider = db.ReferenceField(Spider)
+class SpiderNavi(db.Document):
+    name = db.StringField(max_length=500, required=True)
+    python_code = db.StringField(default=open("webadmin/code_tpl.py").read())
     def __unicode__(self):
         return self.name
-
-<<<<<<< HEAD
-class SpiderNavi(db.Document):
-    name = db.StringField(max_length=500)
-    type = db.StringField(max_length=500)
-    request_seed = db.StringField()
-    request_header = db.StringField()
-    request_timeout = db.StringField()
-    response_header = db.StringField()
-    response_content = db.StringField()
-    process_item = db.StringField()
-    process_url = db.StringField()
-
+    
     
 class Spider(db.Document):
     '''
     '''
-    name = db.StringField(max_length=500)
-    process = db.IntField(default=1)
-    workers = db.IntField(default=100)
-    #navi_list = db.ListField(db.EmbeddedDocumentField(Navi))
-=======
+    name = db.StringField(max_length=500, required=True)
+    get_seed = db.StringField(required=True, default=open("webadmin/code_tpl_seed.py").read())
+    spider_process = db.IntField(default=1)
+    spider_threads = db.IntField(default=100)
+    navi_list = db.ListField(db.ReferenceField(SpiderNavi))
+    def __unicode__(self):
+        return self.name
+
+class SchdSeed(db.Document):
+    '''
+    '''
+    name = db.StringField(max_length=500, required=True)
+    redis_key = db.StringField(max_length=500, required=True)
+    schd_datetime = db.DateTimeField()
+    schd_times = db.IntField(default=0)
+    seed_list = db.ListField(db.StringField(max_length=500))
+    def __unicode__(self):
+        return self.name
+
 
 class TaobaoUser(db.Document):
     '''
@@ -113,11 +111,28 @@ class TaobaoUser(db.Document):
     pwd = db.StringField(max_length=500)
     email = db.StringField(max_length=500)
     cookie = db.StringField()
->>>>>>> e6b872fce10e2c2e904f364436207455b4522636
-    
     enable = db.BooleanField(default=True)
     latest = db.DateTimeField(default=datetime.datetime.utcnow())
 
     def __unicode__(self):
         return self.name
     
+#------------------------------------------------------------------------------ ec2
+
+class EC2_Schd(db.Document):
+    '''
+    '''
+    name = db.StringField(max_length=500)
+    spider_name = db.ReferenceField(Spider)
+    ec2_region = db.StringField(max_length=500, choices=[(),
+                                                         (),
+                                                         (),
+                                                         (),
+                                                         ])
+    instance_num = db.StringField(max_length=500)
+    cookie = db.StringField()
+    enable = db.BooleanField(default=True)
+    latest = db.DateTimeField(default=datetime.datetime.utcnow())
+
+    def __unicode__(self):
+        return self.name

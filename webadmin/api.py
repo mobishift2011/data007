@@ -20,6 +20,12 @@ import psutil
 import subprocess
 from multiprocessing import Process
 from twisted.python import log
+from bson.objectid import ObjectId
+from flask import Flask,redirect
+from flask import Markup
+
+
+
 
 FPID = "/tmp/server_admin.pid"
 FLOG = "/var/log/server_admin.log"
@@ -79,4 +85,65 @@ def test_python_code():
 
 
 
+@app.route('/del_spider_navi/')
+def del_spider_navi():
+    spider_id = request.args.get('spider_id', '')
+    navi_id = request.args.get('navi_id', '')
+    spider = app.conn.taobao.spider.find_one({"_id":ObjectId(spider_id)})
+    
+    navi_list = []
+    for navi in dict(spider)["navi_list"]:
+        if str(navi) != navi_id:
+            navi_list.append(navi)
+    print navi_list
+    app.conn.taobao.spider.update({"_id":ObjectId(spider_id)}, {"$set":{"navi_list":navi_list}})
+    app.conn.taobao.spider_navi.remove({"_id":ObjectId(navi_id)})
+    
+    return redirect("/admin/Spider/")
+
+@app.route('/schd_seed/')
+def schd_seed():
+    schd_id = request.args.get('schd_id', '')
+    seed = app.conn.taobao.schd_seed.find_one({"_id":ObjectId(schd_id)})
+    seed = dict(seed)
+    
+    for s in seed["seed_list"]:
+        app.redis.lpush(seed["redis_key"], s)
+    
+    return redirect("/admin/SchdSeed/")
+
+
+
+import os
+import subprocess
+import traceback
+import sys
+import thread
+import signal
+
+def monitor_exec(proc):
+    timeout = 10
+    for i in range(0, timeout):
+        print "wait:%s" % i
+        time.sleep(1)
+    proc.kill()
+
+@app.route('/test_py/', methods=['GET', 'POST'])
+def test_py():
+    
+    f_name = "%s/daemon/models/test_py.py" % app.__rootdir__
+    open(f_name, "w").write(request.data)
+    out = subprocess.Popen(["python", f_name], stdout=subprocess.PIPE)
+    td = thread.start_new_thread(monitor_exec, (out,))
+        
+    ret_lines = []
+    for line in out.stdout:
+        print(line)
+        ret_lines.append(line)
+    
+    print td    
+    return "</br>".join(ret_lines)
+
 print "medule api s loaded."
+
+

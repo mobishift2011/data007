@@ -1,4 +1,8 @@
 #coding: utf-8
+
+
+from gevent import monkey; monkey.patch_all()
+
 import sys
 import os
 from twisted.python import log
@@ -24,8 +28,6 @@ from spider_base import SpiderBase
 from funs import *
 import setting
 
-# from twisted.python.compat import nativeString 
-# from twisted.web.client import HTTPClientFactory, _parse
 from twisted.web import client
 
 
@@ -38,7 +40,6 @@ def getPagePrxoy(url, proxy=None, contextFactory=None,
     port:6666
     }
     '''
-    
     kwargs["timeout"] = 60
     if proxy is None:
         scheme, host, port, path = client._parse(url)

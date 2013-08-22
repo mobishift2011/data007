@@ -1,10 +1,14 @@
 {% extends 'admin/master.html' %}
 {% import 'admin/lib.html' as lib with context %}
 
-{% block head %}
-{{ super() }}
-<link href="{{ url_for('static', filename='codemirror/codemirror.css') }}" rel="stylesheet" >
+{% macro extra() %}
+  <input name="_add_another" type="submit" class="btn btn-large" value="{{ _gettext('Save and Add') }}" />
+{% endmacro %}
 
+{% block head %}
+    {{ super() }}
+    
+<link href="{{ url_for('static', filename='codemirror/codemirror.css') }}" rel="stylesheet" >
 <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/3024-day.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/3024-night.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/ambiance.css') }}">
@@ -30,27 +34,24 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/xq-dark.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/xq-light.css') }}">
 
+
 <link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
 <link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
-<style>
-</style>
+
 {% endblock %}
 
 {% block body %}
-{% call lib.form_tag(form) %}
-{{ lib.render_form_fields(form, widget_args=form_widget_args) }}
 
-<input type="button" class="btn btn-primary btn-large" value="save_and_edit">
-{{ lib.render_form_buttons(return_url) }}
-
-{% endcall %}
-
+  {% call lib.form_tag(form) %}
+      {{ lib.render_form_fields(form, widget_args=form_widget_args) }}
+      {{ lib.render_form_buttons(return_url) }}
+  {% endcall %}
 {% endblock %}
 
 {% block tail %}
-{{ super() }}
-<script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
-<script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
+  {{ super() }}
+  <script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
+  <script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
 <script src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
 <script src="{{ url_for('static', filename='codemirror/python.js') }}"></script>
 
@@ -64,27 +65,7 @@
 			console.log(label.html());
 			ch_textarea(lid[i]);
 		};
-		
-		$("#python_code").parent().after('<div id="test_result"></div>');
-		$("#python_code").parent().after('<div id="test_btn"><input type="button" onclick="test_get_seed()" value="test" /></div>');
 	});
-
-	function test_get_seed(){
-
-		$("#test_btn").html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
-
-		$.ajax({
-		   type: "POST",
-		   url: "/test_py/",
-		   data: $("#python_code").val(),
-		   contentType: "",
-		   success: function(msg){
-	          $("#test_result").html('<div class="alert"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
-	          $("#test_btn").html('<input type="button" onclick="test_get_seed()" value="test" />');
-		   }
-		});
-	}
-
 
 	function ch_textarea(areaId) {
 		var editor = CodeMirror.fromTextArea(document.getElementById(areaId), {
@@ -101,13 +82,7 @@
 
 		editor.setOption("theme", "solarized dark");
 		editor.setSize("100%", 900);
-		//editor.cm.setSize({"height":1200});
-
-	    editor.on("change", function(edit, obj) {
-	    	edit.save();
-	    });
 	}
 
 </script>
-
 {% endblock %}

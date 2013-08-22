@@ -48,6 +48,35 @@ def wait(second=1):
     return d
         
 
+def getPagePrxoy(url, proxy=None, contextFactory=None,
+                       *args, **kwargs):
+    '''
+    proxy=
+    {
+    host:192.168.1.111,
+    port:6666
+    }
+    '''
+    
+    kwargs["timeout"] = 60
+    if proxy is None:
+        scheme, host, port, path = client._parse(url)
+        factory = client.HTTPClientFactory(url, *args, **kwargs)
+        if scheme == b'https':
+            from twisted.internet import ssl
+            if contextFactory is None:
+                contextFactory = ssl.ClientContextFactory()
+            reactor.connectSSL(client.nativeString(host), port, factory, contextFactory)
+        else:
+            reactor.connectTCP(client.nativeString(host), port, factory)
+        return factory.deferred
+    else:
+        factory = client.HTTPClientFactory(url, *args, **kwargs)
+        reactor.connectTCP(proxy["host"], proxy["port"], factory)
+        return factory.deferred
+
+
+
                             
 import urllib2
 if __name__ == "__main__":
