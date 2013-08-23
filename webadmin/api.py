@@ -29,7 +29,8 @@ from flask import Markup
 FPID = "/tmp/server_admin.pid"
 FLOG = "/var/log/server_admin.log"
 
-RUN_PATH = "/home/cfz/ataobao/daemon"
+RUN_PATH = "{}/daemon".format(app.__rootdir__)
+
 # Flask views
 @app.route('/server_admin/')
 def server_admin():
@@ -185,7 +186,6 @@ def test_py():
     for line in out.stdout:
         print(line)
         ret_lines.append(line)
-    
     print td    
     return "</br>".join(ret_lines)
 
