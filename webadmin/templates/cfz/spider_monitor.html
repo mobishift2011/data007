@@ -55,7 +55,7 @@
 			
 		</td>
 		<td name="console">
-			<div style="display:inline">
+			<div style="display:none">
 				spider:&nbsp;&nbsp;
 					   <select name="spider" style="width:100px">
 					   		{% for row in rows%}
@@ -66,6 +66,10 @@
 				process:&nbsp;&nbsp;<input name="process" style="width:20px" type="text" value="1" />
 				<button onclick="spider_start(this)">start</button>
 			</div>
+			<div style="display:inline">
+				python:&nbsp;&nbsp;<input name="cmd" style="width:250px" type="text" value="crawler/tbcat.py -c 16" />
+				<button onclick="spider_start2(this)">start</button>
+			</div>			
 		</td>
 	</tr>
 </table>
@@ -74,6 +78,7 @@
 	<span style="color:red;width: 80px;border-right:1px #006DCC solid;" name="pid"></span> 
 	<span style="color:green;width: 80px;border-right:1px #006DCC solid;" name="spider"></span> 
 	<span style="color:black;width: 80px;" name="threads"></span> 
+	<span style="color:black;width: 80px;" name="cmd"></span> 
 	<span>
 		<button onclick="spider_stop(this)">stop</button>
 	</span>
@@ -141,6 +146,8 @@ function update_status(sid, por_list){
 		pli.find('span[name="pid"]').text(por_list[i].pid);
 		pli.find('span[name="spider"]').text(por_list[i].spider);
 		pli.find('span[name="threads"]').text(por_list[i].threads);
+		
+		pli.find('span[name="cmd"]').text(por_list[i].cmd);
 		pli.show();
 		td_por_list.prepend(pli);
 	}
@@ -161,7 +168,20 @@ function on_get_spiders(spider_list) {
    	   g_session.publish('spider', event, [], [spider_list[i].sid]);
    }
 }
-
+function spider_start2(btn){
+	
+	var cmd = $(btn).parent().find('input[name="cmd"]').val();
+	
+	var sid = $(btn).parents("tr").attr("name");
+	console.log(sid);
+	var event = {}
+	event.act = "start";
+	event.kw = {
+		cmd:cmd
+	};
+	
+	g_session.publish('spider', event, [], [sid]);
+}
 function spider_start(btn){
 	
 	var spider = $(btn).parent().find('select[name="spider"] option:selected').val();

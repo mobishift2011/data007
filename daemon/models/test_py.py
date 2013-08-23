@@ -8,8 +8,6 @@ import gzip
 from urlparse import urlparse, parse_qs
 import urllib
 from twisted.web.client import getPage
-from pyquery import PyQuery
-
 
 
 class SpiderBase:
@@ -76,46 +74,12 @@ class SpiderBase:
 
         ups = urlparse(request["url"])
         body = body.decode("gbk").encode("utf-8")
+        print body[:200]
         
-        pq = PyQuery(body)
-        print pq.find('#deal-record .tb-rmb-num').text()
+        result = yield self.my_getpage("http://www.51job.com")        
+        print result[:200]
 
-        #print len(body), body.find('J_PromoPrice')
-        
-        #pq = PyQuery(body)
-        #print pq.find('#J_PromoPrice')
-        #price = pq.find("li#J_PromoPrice strong.tb-rmb-num")
-        #print price.text()
-        #price = PyQuery(price)
-        #price.find("em").remove()
-        #print price.text()
-
-        price_url = "http://ajax.tbcdn.cn/json/umpStock.htm?itemId=17865120992&u=1&p=1&rcid=16&sts=202993680,1179947689471639620,216524763307212928,13585569974322179&chnl=pc&price=10600&sellerId=35643535&shopId=&cna=ZdqRChJTkToCAXTn19EnUyDw&ref=http://list.taobao.com/itemlist/default.htm?cat=1629"
-        price_url = "http://item.taobao.com/item.htm?id=17659199226"
-        price_body = yield self.my_getprice(price_url)
-        
-        pq = PyQuery(price_body)
-        #print pq.find('#deal-record .tb-rmb-num').text()
-        #print price_body
         defer.returnValue(rets)
-
-    @defer.inlineCallbacks
-    def my_getprice(self, url):
-        agent = self.process_agent()
-        headers = yield self.process_headers()
-        headers['Referer'] = "http://item.taobao.com/item.htm"
-        cookies = yield self.process_cookies()
-        proxyip = yield self.process_proxyip()
-        result = yield getPage(url, 
-                                     headers=headers,
-                                     agent=agent,
-                                     cookies=cookies)
-        buf = StringIO(result)
-        f = gzip.GzipFile(fileobj=buf)
-        result = f.read()            
-        defer.returnValue(result)
-
-
         
     @defer.inlineCallbacks
     def my_getpage(self, url):
@@ -124,12 +88,12 @@ class SpiderBase:
         cookies = yield self.process_cookies()
         proxyip = yield self.process_proxyip()
         result = yield getPage(url, 
-                                     headers=headers,
-                                     agent=agent,
-                                     cookies=cookies)
+                                   headers=headers,
+                                   agent=agent,
+                                   cookies=cookies)
         buf = StringIO(result)
         f = gzip.GzipFile(fileobj=buf)
-        result = f.read()    
+        result = f.read()
         defer.returnValue(result)
 
     @defer.inlineCallbacks
@@ -150,16 +114,7 @@ if __name__ == "__main__":
     def main():
         s = SpiderBase()
         ret = yield s.check_seed("21910055103")
-        print ret
-        ret = yield s.my_getpage("http://item.taobao.com/item.htm?id=14951965934")
-        print "check_seed:", len(ret)
-        body = ret.decode('gbk').encode('utf-8')
-        
-        print len(body), body[:20]
-        #print body[:300]
-        #pq = PyQuery(body)
-        #price = pq.find("html")
-        #print len(price.text()), 'aaaaaaaaaaaaa'
+        print "check_seed:", ret
         reactor.stop()
         
     reactor.callLater(0, main)
