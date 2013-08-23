@@ -16,12 +16,12 @@ envs = {
         'DB_HOSTS': ['localhost:9160'],
     },
     'TEST': {
-        'QUEUE_URI': 'redis://hostname:6379/11',
-        'CACHE_URI': 'redis://hostname:6379/12',
+        'QUEUE_URI': 'redis://ec2-107-21-68-149.compute-1.amazonaws.com:6379/11',
+        'CACHE_URI': 'redis://ec2-107-21-68-149.compute-1.amazonaws.com:6379/12',
         'DB_HOSTS': [
-            ':9160',
-            ':9160',
-            ':9160',
+            'ec2-54-226-12-188.compute-1.amazonaws.com:9160',
+            'ec2-23-22-143-204.compute-1.amazonaws.com:9160',
+            'ec2-23-22-40-46.compute-1.amazonaws.com:9160',
         ],
     },
 }
