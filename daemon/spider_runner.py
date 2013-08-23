@@ -89,12 +89,12 @@ class TaskClientProtocol(WampClientProtocol):
         for pid, kw in self.factory.spiders.iteritems():
             info = {
                     "pid":pid,
-                    "threads": kw["threads"],
-                    "spider": kw["spider"],
+                    'cmd':kw["cmd"]
+                    #"threads": kw["threads"],
+                    #"spider": kw["spider"],
                     }
             por_list.append(info)
         ret_msg["por_list"] = por_list
-        
         self.publish("webadmin", ret_msg)
     
     def spider_stop(self, pid_list):
@@ -109,11 +109,16 @@ class TaskClientProtocol(WampClientProtocol):
     def spider_start(self, kw):
         '''
         '''
-        for i in range(0, kw["process"]):
-            pp = SubProcessProtocol(self, self.factory.spiders, kw)
-            args = [sys.executable, "spider_tx.py", kw["spider"], str(kw["threads"])]
-            print args
-            reactor.spawnProcess(pp, sys.executable, args=args)
+        pp = SubProcessProtocol(self, self.factory.spiders, kw)
+        args = [sys.executable] + kw['cmd'].split(' ')
+        reactor.spawnProcess(pp, sys.executable, args=args)
+#         for i in range(0, kw["process"]):
+#             pp = SubProcessProtocol(self, self.factory.spiders, kw)
+#             args = [sys.executable, "spider_tx.py", kw["spider"], str(kw["threads"])]
+#             args = [sys.executable, "crawler/worker.py", "-w", "shop", "-p", "10"]
+#             args = [sys.executable, "crawler/tbcat.py", "-c", "16"]
+#             print args
+#             reactor.spawnProcess(pp, sys.executable, args=args)
             
     def onSessionOpen(self):
         log.msg("peerstr: %s" % self.peerstr)
@@ -142,7 +147,6 @@ class SpiderClientFactory(WampClientFactory):
     def clientConnectionLost(self, connector, reason):
         log.msg("connect fail, wait 3 second.")
         reactor.callLater(3, connector.connect)
-
 
 
 

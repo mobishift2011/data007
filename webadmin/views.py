@@ -80,6 +80,19 @@ class TaobaoUserView(ModelView):
     column_list = ("name", "pwd", "enable", "latest")
 
 
+
+class EC2_SchdView(ModelView):
+    column_list = ("name", "ec2_region", "instance_num", "instance_type", "live_time", "enable", "schd_time", "latest_schd")
+    
+
+
+class EC2_InstanceView(ModelView):
+    column_list = ("tag", "ip_address", "instance_id", "ec2_region", "instance_type", "launch_time", "state")
+    column_filters = ['tag', 'ec2_region', 'instance_type', 'state']
+    column_searchable_list = ('tag', 'ec2_region', 'instance_type', 'state')
+    
+    
+
 class MyView(BaseView):
     @expose('/')
     def index(self):
@@ -97,9 +110,13 @@ from flask.ext import admin
 admin = admin.Admin(app,  'taobao')
 admin.add_view(SpiderAdminView())
 
-admin.add_view(MainCategoryView(MainCategory,name="parent", endpoint='MainCategory', category='category'))
-admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='category'))
- 
+# admin.add_view(MainCategoryView(MainCategory,name="parent", endpoint='MainCategory', category='category'))
+# admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='category'))
+
+admin.add_view(EC2_SchdView(EC2_Schd, name="EC2_Schd", endpoint='EC2_Schd', category='EC'))
+admin.add_view(EC2_InstanceView(EC2_Instance, name="EC2_Instance", endpoint='EC2_Instance', category='EC'))
+
+
 admin.add_view(SchdSeedView(SchdSeed, name="SchdSeed", endpoint='SchdSeed', category='crawl'))
 admin.add_view(SpiderView(Spider, name="spider", endpoint='Spider', category='crawl'))
 admin.add_view(SpiderNaviView(SpiderNavi, name="spider_navi", endpoint='SpiderNavi', category='crawl'))

@@ -58,6 +58,18 @@ admin_server:&nbsp;&nbsp;&nbsp;
 	<div id="server_admin_info" style="display:inline;">
 	</div>
 </div>
+
+
+<div>
+ec2_schd:&nbsp;&nbsp;&nbsp;
+	<div id="ec2_schd" style="display:inline;">
+				<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />
+			 </div>
+	<div id="ec2_schd_info" style="display:inline;">
+	</div>
+</div>
+
+
 <hr />
 
       {{ layout.messages() }}
@@ -91,6 +103,20 @@ $(document).ready(function(){
 	});
 	
 //------------------------------------------
+
+	$.ajax({
+	   type: "GET",
+	   url: "/ec2_schd/?act=status",
+	   dataType:"json",
+	   success: function(json){
+	   		console.log(json);
+	   		if(json.success == 1){
+	   			$("#ec2_schd").html("<a onclick='ec2_schd(\"stop\");' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+	   		}else{
+	   			$("#ec2_schd").html("<a onclick='ec2_schd(\"start\");' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+	   		}
+	   }
+	});
    
 });
 
@@ -120,6 +146,36 @@ function server_admin(act){
 		   }
 	});
 }
+
+
+function ec2_schd(act){
+	$("#ec2_schd").html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+	
+	console.log("/ec2_schd/?act="+ act);
+	
+	$.ajax({
+		   type: "GET",
+		   url: "/ec2_schd/?act="+ act,
+		   dataType:"json",
+		   success: function(json){
+		   		console.log(json);
+		   		if(json.success == 1){
+		   			if(act == "start"){
+		   				$("#ec2_schd").html("<a onclick='ec2_schd(\"stop\", this);' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+		   			}else{
+		   				$("#ec2_schd").html("<a onclick='ec2_schd(\"start\", this);' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+		   			}
+		   		}else{
+		   			if(act == "start"){
+		   				$("#ec2_schd").html("<a onclick='ec2_schd(\"start\", this);' href='#' style='display:inline;cursor:pointer;color:green;'>start</a>")
+		   			}else{
+		   				$("#ec2_schd").html("<a onclick='ec2_schd(\"stop\", this);' href='#' style='display:inline;cursor:pointer;color:red;'>stop</a>")
+		   			}
+		   		}
+		   }
+	});
+}
+
 
 </script>
   </body>

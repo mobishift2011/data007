@@ -26,7 +26,6 @@ from flask import Markup
 
 
 
-
 FPID = "/tmp/server_admin.pid"
 FLOG = "/var/log/server_admin.log"
 
@@ -64,18 +63,64 @@ def server_admin():
         except Exception, e:
             log.err()
             return '{"success":0, "msg":"%s"}' % e
-        
-        
+
+
     elif act == "stop":
         try:
             pid = open(FPID, 'r').read()
             p = psutil.Process(int(pid))
             p.terminate()
+            #os.system("kill -9 {}".format(pid))
             return '{"success":1, "msg":"%s"}' % p.name
         except Exception, e:
             return '{"success":0, "msg":"%s"}' % e
 
 
+EC2PID = "/tmp/ec2_schd.pid"
+EC2LOG = "/var/log/ec2_schd.log"
+
+# Flask views
+@app.route('/ec2_schd/')
+def ec2_schd():
+    act = request.args.get('act', '')
+    if act == "status":
+        try:
+            pid = open(EC2PID, 'r').read()
+            p = psutil.Process(int(pid))
+            return '{"success":1, "msg":"%s"}' % p.name
+        except Exception, e:
+            return '{"success":0, "msg":"%s"}' % e
+        
+    elif act == "start":
+        args = ["twistd",
+                 "-y",
+                 "%s/ec2_schd.py" % RUN_PATH,
+                 "--pidfile=%s" % EC2PID,
+                 "--logfile=%s" % EC2LOG,
+#                  "--rundir=%s/" % RUN_PATH
+                 ]
+        try:
+            out = subprocess.call(args)
+            if out == 0:
+                return '{"success":1, "msg":"ok"}'
+            elif out == 1:
+                return '{"success":1, "msg":"is seen already running."}'
+            
+        except Exception, e:
+            log.err()
+            return '{"success":0, "msg":"%s"}' % e
+
+        
+    elif act == "stop":
+        try:
+            pid = open(EC2PID, 'r').read()
+            p = psutil.Process(int(pid))
+            p.terminate()
+            os.system("kill -9 %s" % pid)
+            
+            return '{"success":1, "msg":"%s"}' % p.name
+        except Exception, e:
+            return '{"success":0, "msg":"%s"}' % e
 
 
 @app.route('/test_python_code/')

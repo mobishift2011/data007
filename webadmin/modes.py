@@ -123,16 +123,93 @@ class EC2_Schd(db.Document):
     '''
     '''
     name = db.StringField(max_length=500)
-    spider_name = db.ReferenceField(Spider)
-    ec2_region = db.StringField(max_length=500, choices=[(),
-                                                         (),
-                                                         (),
-                                                         (),
+    script_code = db.StringField()
+    ec2_region = db.StringField(max_length=500, choices=[
+                                                         ('us-east-1', 'us-east-1'),
+                                                         ('us-west-2', 'us-west-2'),
+                                                         ('us-west-1', 'us-west-1'),
+                                                         ('eu-west-1', 'eu-west-1'),
+                                                         ('ap-southeast-1', 'ap-southeast-1'),
+                                                         ('ap-northeast-1', 'ap-northeast-1'),
+                                                         ('ap-southeast-2', 'ap-southeast-2'),
+                                                         ('sa-east-1', 'sa-east-1'),
                                                          ])
-    instance_num = db.StringField(max_length=500)
-    cookie = db.StringField()
-    enable = db.BooleanField(default=True)
-    latest = db.DateTimeField(default=datetime.datetime.utcnow())
-
+    instance_num = db.IntField(default=1)
+    instance_type = db.StringField(max_length=500, default='t1.micro', 
+                                                choices=[
+                                                        ("t1.micro", "t1.micro"), 
+                                                        ("m1.small", "m1.small"),
+                                                        ("m1.medium", "m1.medium"),
+                                                        ("m1.large", "m1.large"), 
+                                                        ("m1.xlarge", "m1.xlarge"), 
+                                                        ("m3.xlarge", "m3.xlarge"),
+                                                        ("m3.2xlarge", "m3.2xlarge"),
+                                                        ("c1.medium", "c1.medium"),
+                                                        ("c1.xlarge", "c1.xlarge"), 
+                                                        ("m2.xlarge", "m2.xlarge"), 
+                                                        ("m2.2xlarge", "m2.2xlarge"),
+                                                        ("m2.4xlarge", "m2.4xlarge"),
+                                                        ("cr1.8xlarge", "cr1.8xlarge"), 
+                                                        ("hi1.4xlarge", "hi1.4xlarge"), 
+                                                        ("hs1.8xlarge", "hs1.8xlarge"), 
+                                                        ("cc1.4xlarge", "cc1.4xlarge"), 
+                                                        ("cg1.4xlarge", "cg1.4xlarge"), 
+                                                        ("cc2.8xlarge", "cc2.8xlarge"),
+                                                         ])
+    image_id = db.StringField(max_length=500)
+    live_time = db.IntField(default=-1)
+    
+    enable = db.BooleanField(default=False)
+    
+    schd_time = db.IntField(default=60)
+    latest_schd = db.DateTimeField(default=datetime.datetime.utcnow())
     def __unicode__(self):
         return self.name
+    
+
+class EC2_Instance(db.Document):
+    '''
+    '''
+    tag = db.StringField(max_length=500)
+    instance_id = db.StringField(max_length=500)
+    image_id = db.StringField(max_length=500)
+    ec2_region = db.StringField(max_length=500, choices=[
+                                                         ('us-east-1', 'us-east-1'),
+                                                         ('us-west-2', 'us-west-2'),
+                                                         ('us-west-1', 'us-west-1'),
+                                                         ('eu-west-1', 'eu-west-1'),
+                                                         ('ap-southeast-1', 'ap-southeast-1'),
+                                                         ('ap-northeast-1', 'ap-northeast-1'),
+                                                         ('ap-southeast-2', 'ap-southeast-2'),
+                                                         ('sa-east-1', 'sa-east-1'),
+                                                         ])
+    instance_type = db.StringField(max_length=500, default='t1.micro', 
+                                                choices=[
+                                                        ("t1.micro", "t1.micro"), 
+                                                        ("m1.small", "m1.small"),
+                                                        ("m1.medium", "m1.medium"),
+                                                        ("m1.large", "m1.large"), 
+                                                        ("m1.xlarge", "m1.xlarge"), 
+                                                        ("m3.xlarge", "m3.xlarge"),
+                                                        ("m3.2xlarge", "m3.2xlarge"),
+                                                        ("c1.medium", "c1.medium"),
+                                                        ("c1.xlarge", "c1.xlarge"), 
+                                                        ("m2.xlarge", "m2.xlarge"), 
+                                                        ("m2.2xlarge", "m2.2xlarge"),
+                                                        ("m2.4xlarge", "m2.4xlarge"),
+                                                        ("cr1.8xlarge", "cr1.8xlarge"), 
+                                                        ("hi1.4xlarge", "hi1.4xlarge"), 
+                                                        ("hs1.8xlarge", "hs1.8xlarge"), 
+                                                        ("cc1.4xlarge", "cc1.4xlarge"), 
+                                                        ("cg1.4xlarge", "cg1.4xlarge"), 
+                                                        ("cc2.8xlarge", "cc2.8xlarge"),
+                                                         ])
+    ip_address = db.StringField(max_length=500)
+    launch_time = db.DateTimeField(default=datetime.datetime.utcnow())
+    state = db.StringField(max_length=500)
+
+    def __unicode__(self):
+        return self.instance_id
+    
+    
+    

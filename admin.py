@@ -22,7 +22,10 @@ def index():
 if __name__ == '__main__':
     # Create admin
     # Start app
+    import os
+    import sys
+    
+    app.__rootdir__ = os.getcwd()
     app.debug = True
     app.run('0.0.0.0', 9992)
-    
-    
+
