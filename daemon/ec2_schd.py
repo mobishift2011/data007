@@ -94,6 +94,10 @@ class EC2Monitor(threading.Thread):
                                     
                             if i.state in ["running", "pending"]:
                                 running_ids.append(i.id)
+
+                            if not i.tags.has_key('Name'):
+                                i.add_tag("Name","taobao_spider:%s" % i.id)
+                
                                 
                     log.msg('finish##,get instances:'.format(len(instance_ids)))
                     
@@ -107,7 +111,7 @@ class EC2Monitor(threading.Thread):
                             max_count = run_instances,
                             #key_name='favbuykey', 
                             #security_groups=['sg-5d0b7d5c'], 
-                            security_group_ids = ['sg-5d0b7d5c'], 
+                            security_group_ids = map(str, row['security_group_ids']), 
                             #instance_profile_name = "aa",
                             instance_type = row['instance_type'], 
                             user_data = row['script_code']
@@ -119,7 +123,6 @@ class EC2Monitor(threading.Thread):
                         if len(term_ids) > 0:
                             ret = conn.terminate_instances(instance_ids=term_ids)
                             log.msg("terminate_instances:{}".format(ret))
-                        
                         
 
                     if len(terminate_ids) > 0:

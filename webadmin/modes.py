@@ -123,7 +123,7 @@ class EC2_Schd(db.Document):
     '''
     '''
     name = db.StringField(max_length=500)
-    script_code = db.StringField()
+    script_code = db.StringField(default=open("webadmin/script_tpl").read())
     ec2_region = db.StringField(max_length=500, choices=[
                                                          ('us-east-1', 'us-east-1'),
                                                          ('us-west-2', 'us-west-2'),
@@ -157,6 +157,8 @@ class EC2_Schd(db.Document):
                                                         ("cc2.8xlarge", "cc2.8xlarge"),
                                                          ])
     image_id = db.StringField(max_length=500)
+    security_group_ids = db.ListField(db.StringField(max_length=500))
+    
     live_time = db.IntField(default=-1)
     
     enable = db.BooleanField(default=False)

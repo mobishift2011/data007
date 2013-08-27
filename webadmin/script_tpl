@@ -1,0 +1,28 @@
+#!/bin/bash
+setup()
+{
+    sudo mkdir -p /srv/dealpick/src
+    #cd /srv/dealpick && sudo git clone git@repo.favbuy.org:dealpick.git src
+    #cd /srv/dealpick/src && sudo git fetch --all && sudo git checkout master && sudo git pull origin master
+    #sudo cp -r /srv/dealpick/src/* /srv/dealpick/
+    #bash /srv/dealpick/scripts/setupenv.sh
+    rsync -avze ssh root@dpm-test.favbuy.org:/srv/dealpick/ /srv/dealpick/
+    echo 'I just executed install!' >> /tmp/runspot
+}
+
+run()
+{
+    PYTHONPATH=/srv/dealpick ENV={{env}} /srv/dealpick/bin/rqworker {{burst}} CRAWLER*{{num_crawlers}} CLEANER*{{num_cleaners}}
+    echo 'I just executed run!' >> /tmp/runspot
+}
+
+shutdown()
+{
+    echo 'I just executed exit!' >> /tmp/runspot
+    echo "sudo shutdown -h now" | at now + 5min
+    #sudo shutdown -h now
+}
+
+setup
+run
+shutdown
