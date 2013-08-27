@@ -6,6 +6,8 @@ from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext import admin, wtf
 from wtforms import widgets
 import redis
+import os
+
 
 
 app = Flask(__name__)
@@ -14,6 +16,10 @@ app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {'DB': 'taobao',
                                   "HOST": 'localhost',
                                   "PORT": 27017}
+
+app.__rootdir__ = os.getcwd()
+
+
 
 # Create models
 db = MongoEngine()

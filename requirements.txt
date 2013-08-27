@@ -23,3 +23,7 @@ nose
 requests
 psutil
 msgpack-python
+autobahn
+txmongo
+txredisapi
+

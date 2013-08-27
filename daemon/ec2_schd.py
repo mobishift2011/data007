@@ -17,7 +17,7 @@ import sys
 import datetime
 
 
-mongo_conn = pymongo.Connection('192.168.2.201', 27017)
+mongo_conn = pymongo.Connection('localhost', 27017)
 
 AWS_ACCESS_KEY = 'AKIAIQC5UD4UWIJTBB2A'
 AWS_SECRET_KEY = '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'

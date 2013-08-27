@@ -13,6 +13,9 @@ from webadmin.modes import *
 from webadmin.views import *
 
 
+
+
+
 # Flask views
 @app.route('/')
 def index():
@@ -25,7 +28,10 @@ if __name__ == '__main__':
     import os
     import sys
     
-    app.__rootdir__ = os.getcwd()
-    app.debug = True
+    try:
+        if sys.argv[1] == 'debug':
+            app.debug = True
+    except:
+        pass
     app.run('0.0.0.0', 9992)
 
