@@ -104,19 +104,21 @@ class EC2Monitor(threading.Thread):
                     print int(row['instance_num']), len(instance_ids)
                     run_instances = int(row['instance_num']) - len(running_ids)
                     if run_instances > 0:
-                        print "run_instances", run_instances
-                        ret = conn.run_instances(
-                            row['image_id'],
-                            min_count = run_instances,
-                            max_count = run_instances,
-                            #key_name='favbuykey', 
-                            #security_groups=['sg-5d0b7d5c'], 
-                            security_group_ids = map(str, row['security_group_ids']), 
-                            #instance_profile_name = "aa",
-                            instance_type = row['instance_type'], 
-                            user_data = row['script_code']
-                        )
-                        log.msg("run_instances:{}".format(ret))
+                        
+                        for i in range(0, run_instances):
+                            print "run_instances", run_instances
+                            ret = conn.run_instances(
+                                row['image_id'],
+                                min_count = 1,
+                                max_count = 1,
+                                #key_name='favbuykey', 
+                                #security_groups=['sg-5d0b7d5c'], 
+                                security_group_ids = map(str, row['security_group_ids']), 
+                                #instance_profile_name = "aa",
+                                instance_type = row['instance_type'], 
+                                user_data = row['script_code']
+                            )
+                            log.msg("run_instances:{}".format(ret))
                     else:
                         print running_ids[int(row['instance_num']):]
                         term_ids = running_ids[int(row['instance_num']):]
