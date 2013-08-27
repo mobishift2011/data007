@@ -28,7 +28,7 @@ from multiprocessing import Process
 
 from twisted.internet.error import ReactorAlreadyRunning
 
-
+from twisted.application import internet, service
 import pymongo
 import setting
 import funs
@@ -150,49 +150,31 @@ class SpiderClientFactory(WampClientFactory):
 
 
 
-def spider_runner_daemon():
-    pass
+import os, signal
 
-
-if __name__ == '__main__':
-    from optparse import OptionParser
-    
-    parser = OptionParser(usage='usage: %prog [options]')
-    parser.add_option('--daemon', dest='daemon', action="store_true", help='run deamon', default=False)
-    parser.add_option('--num', dest='num', help='run workers default:10', type=int, default=1)
-
-    options, args = parser.parse_args()
-    print options, args
-
-        
-    if options.daemon:
+def killGroup():
+    for pid, kw in factory.spiders.iteritems():
         try:
-            pid = os.fork()
-            if pid > 0:
-                print 'PID: %d' % pid
-                os._exit(0)
-            log.startLogging(open('/var/log/spider.log', 'a'))
-        except OSError, error:
-            print 'Unable to fork. Error: %d (%s)' % (error.errno, error.strerror)
-            os._exit(1)
-    else:
-        log.startLogging(sys.stdout)
-        
-    from twisted.python.logfile import DailyLogFile
+            p = psutil.Process(int(pid))
+            p.terminate()
+        except Exception, e:
+            print e
+                
+
+def start():
     log.startLogging(sys.stdout)
     factory = SpiderClientFactory("ws://localhost:9000")
     factory.protocol = TaskClientProtocol
     connectWS(factory)
-    
-    import os, signal
-    
-    def killGroup():
-        for pid, kw in factory.spiders.iteritems():
-            try:
-                p = psutil.Process(int(pid))
-                p.terminate()
-            except Exception, e:
-                print e
-
     reactor.addSystemEventTrigger('before', 'shutdown', killGroup)
-    reactor.run(1)
+    
+if __name__ == "__main__":
+    reactor.callWhenRunning(start)
+    reactor.run()
+    
+    
+if __name__ == "__builtin__":
+    reactor.callWhenRunning(start)
+    application = service.Application('spider_runner')
+    
+    
