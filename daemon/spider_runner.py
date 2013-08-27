@@ -157,7 +157,7 @@ def start():
     
     
     log.startLogging(sys.stdout)
-    factory = SpiderClientFactory("ws://localhost:9000")
+    factory = SpiderClientFactory("ws://23.20.92.211:9000")
     factory.protocol = TaskClientProtocol
     connectWS(factory)
     
