@@ -152,20 +152,22 @@ class SpiderClientFactory(WampClientFactory):
 
 import os, signal
 
-def killGroup():
-    for pid, kw in factory.spiders.iteritems():
-        try:
-            p = psutil.Process(int(pid))
-            p.terminate()
-        except Exception, e:
-            print e
-                
 
 def start():
+    
+    
     log.startLogging(sys.stdout)
     factory = SpiderClientFactory("ws://localhost:9000")
     factory.protocol = TaskClientProtocol
     connectWS(factory)
+    
+    def killGroup():
+        for pid, kw in factory.spiders.iteritems():
+            try:
+                p = psutil.Process(int(pid))
+                p.terminate()
+            except Exception, e:
+                print e
     reactor.addSystemEventTrigger('before', 'shutdown', killGroup)
     
 if __name__ == "__main__":
