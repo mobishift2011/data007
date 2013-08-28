@@ -111,7 +111,13 @@ class TaskClientProtocol(WampClientProtocol):
         '''
         pp = SubProcessProtocol(self, self.factory.spiders, kw)
         args = [sys.executable] + kw['cmd'].split(' ')
-        reactor.spawnProcess(pp, sys.executable, args=args)
+        reactor.spawnProcess(pp, 
+                             sys.executable, args=args,
+                             env={
+                                  'PYTHONPATH':'/root/ataobao:$PYTHONPATH',
+                                  'ENV':'TEST',
+                                  },
+                             path='/root/ataobao/crawler')
 #         for i in range(0, kw["process"]):
 #             pp = SubProcessProtocol(self, self.factory.spiders, kw)
 #             args = [sys.executable, "spider_tx.py", kw["spider"], str(kw["threads"])]

@@ -135,6 +135,7 @@ class EC2_Schd(db.Document):
                                                          ('sa-east-1', 'sa-east-1'),
                                                          ])
     instance_num = db.IntField(default=1)
+    price = db.FloatField(default=0.02)
     instance_type = db.StringField(max_length=500, default='t1.micro', 
                                                 choices=[
                                                         ("t1.micro", "t1.micro"), 

@@ -98,27 +98,29 @@ class EC2Monitor(threading.Thread):
                             if not i.tags.has_key('Name'):
                                 i.add_tag("Name","taobao_spider:%s" % i.id)
                 
-                                
+                    req_ids = []
+                    for req in conn.get_all_spot_instance_requests(filters={'state':'open'}):
+                        req_ids.append(req.id)
+                    
                     log.msg('finish##,get instances:'.format(len(instance_ids)))
                     
                     print int(row['instance_num']), len(instance_ids)
-                    run_instances = int(row['instance_num']) - len(running_ids)
+                    run_instances = int(row['instance_num']) - len(running_ids) - len(req_ids)
                     if run_instances > 0:
+                        print "run_instances", run_instances
+                        rets = conn.request_spot_instances(
+                            row['price'],
+                            row['image_id'],
+                            count=run_instances,
+                            #key_name='favbuykey', 
+                            #security_groups=['sg-5d0b7d5c'], 
+                            #security_group_ids = map(str, row['security_group_ids']), 
+                            security_groups = ['general'],
+                            instance_type = row['instance_type'], 
+                            user_data = row['script_code']
+                        )
+                        log.msg("run_instances:{}".format(rets))
                         
-                        for i in range(0, run_instances):
-                            print "run_instances", run_instances
-                            ret = conn.run_instances(
-                                row['image_id'],
-                                min_count = 1,
-                                max_count = 1,
-                                #key_name='favbuykey', 
-                                #security_groups=['sg-5d0b7d5c'], 
-                                security_group_ids = map(str, row['security_group_ids']), 
-                                #instance_profile_name = "aa",
-                                instance_type = row['instance_type'], 
-                                user_data = row['script_code']
-                            )
-                            log.msg("run_instances:{}".format(ret))
                     else:
                         print running_ids[int(row['instance_num']):]
                         term_ids = running_ids[int(row['instance_num']):]
@@ -132,7 +134,7 @@ class EC2Monitor(threading.Thread):
                         log.msg("terminate_instances:{}".format(ret))
             
             log.msg("sleep is 3 second.")
-            time.sleep(3)
+            time.sleep(10)
         
         
 def start():

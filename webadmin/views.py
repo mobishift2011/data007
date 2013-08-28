@@ -82,7 +82,7 @@ class TaobaoUserView(ModelView):
 
 
 class EC2_SchdView(ModelView):
-    column_list = ("name", "ec2_region", "instance_num", "instance_type", "live_time", "enable", "schd_time", "latest_schd")
+    column_list = ("name", "ec2_region", "instance_num", "instance_type", "price", "live_time", "security_group_ids", "enable", "schd_time", "latest_schd")
     form_widget_args = dict(
         script_code={
             'rows': 20,
