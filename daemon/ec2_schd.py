@@ -37,6 +37,16 @@ class EC2Monitor(threading.Thread):
                 traceback.print_exc()
                 time.sleep(3)
 
+    def check_live_time(self, live_time, instance):
+        if (live_time > -1):
+            launch_time = int(time.mktime(time.strptime(instance.launch_time, "%Y-%M-%dT%H:%I:%S.000Z")))
+            now_time = int(time.time())
+            log.msg("check live_time,now:{}, launch_time:{}".format(now_time, launch_time))
+            if (int(time.time()) - instance.launch_time) > live_time:
+                return True
+        return False
+    
+                
     def run(self):
         global mongo_conn
         global AWS_ACCESS_KEY, AWS_SECRET_KEY
@@ -48,6 +58,8 @@ class EC2Monitor(threading.Thread):
             
             for row in rows:
                 log.msg("begin schd %s" % row)
+                
+                tag_name = "%s-%s" % (str(row['_id']), row['name'])
                 
                 now = int(time.time())
                 schd_time = int(row['schd_time'])
@@ -62,16 +74,13 @@ class EC2Monitor(threading.Thread):
                     rows = mongo_conn.taobao.e_c2__instance.find({"ec2_region" : row['ec2_region']})
                     for rrr in rows:
                         mongo_conn.taobao.e_c2__instance.remove({"_id":rrr["_id"]})
-                            
-                    running_ids = []
-                    terminate_ids = []
-                    instance_ids = []
-                        
-                    for res in conn.get_all_instances(filters={'image-id':row['image_id']}):
+#------------------------------------------------------------------------------ 
+                    req_list = []
+                    instance_list = []
+                    for res in conn.get_all_instances(filters={'tag:Name': tag_name, 'image-id':row['image_id']}):
                         log.msg("get res:{}".format(res))
                         for i in res.instances:
                             log.msg("get instances:{}".format(i.id))
-                            instance_ids.append(i.id)
                             dict_i = {
                                       'state':i.state,
                                       'ip_address':i.ip_address,
@@ -83,29 +92,25 @@ class EC2Monitor(threading.Thread):
                             mongo_conn.taobao.e_c2__instance.update({'instance_id': i.id}, 
                                                                    {'$set':dict_i},
                                                                    upsert=True)
-                            
-                            if (row['live_time'] > -1):
-                                launch_time = int(time.mktime(time.strptime(i.launch_time, "%Y-%M-%dT%H:%I:%S.000Z")))
-                                now_time = int(time.time())
-                                log.msg("check live_time,now:{}, launch_time:{}".format(now_time, launch_time))
-                                
-                                if (int(time.time()) - i.launch_time) > row['live_time']:
-                                    terminate_ids.append(i.id)
-                                    
-                            if i.state in ["running", "pending"]:
-                                running_ids.append(i.id)
-
-                            if not i.tags.has_key('Name'):
-                                i.add_tag("Name","taobao_spider:%s" % i.id)
-                
-                    req_ids = []
-                    for req in conn.get_all_spot_instance_requests(filters={'state':'open'}):
-                        req_ids.append(req.id)
+                            instance_list.append(i)
                     
-                    log.msg('finish##,get instances:'.format(len(instance_ids)))
+                    for req in conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name}):
+                        print req.id, req.state
+                        req_list.append(req)
                     
-                    print int(row['instance_num']), len(instance_ids)
-                    run_instances = int(row['instance_num']) - len(running_ids) - len(req_ids)
+                    for res in conn.get_all_instances(filters={'spot-instance-request-id':[x.id for x in req_list],
+                                                                'image-id':row['image_id']}):
+                        for i in res.instances:
+                            if i.id not in [x.id for x in instance_list]:
+                                instance_list.append(i)
+                                i.add_tag("Name", tag_name)
+                                print "add_tag", i.id
+                        
+                    
+                    log.msg('finish##,get instance_list:'.format(len(instance_list)))
+                    
+                    print "running-set:", int(row['instance_num']), "instance_list:", len(instance_list)
+                    run_instances = int(row['instance_num']) - len([x.id for x in instance_list if x.state in ["running", "pending"]]) - len([x.id for x in req_list if x.state == "open"])
                     if run_instances > 0:
                         print "run_instances", run_instances
                         rets = conn.request_spot_instances(
@@ -115,25 +120,42 @@ class EC2Monitor(threading.Thread):
                             #key_name='favbuykey', 
                             #security_groups=['sg-5d0b7d5c'], 
                             #security_group_ids = map(str, row['security_group_ids']), 
-                            security_groups = ['general'],
+                            #instance_profile_name = row['name'],
+                            #instance_profile_name = "aa",
+                            #security_groups = ['general'],
+                            security_group_ids = map(str, row['security_group_ids']), 
                             instance_type = row['instance_type'], 
                             user_data = row['script_code']
                         )
                         log.msg("run_instances:{}".format(rets))
+                        for ret in rets:
+                            ret.add_tag('Name', tag_name)
                         
+                        while 1:
+                            reqs = conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name,
+                                                                                'spot-instance-request-id':[x.id for x in rets]
+                                                                                })
+                            if len(rets) == len(reqs):
+                                break
+                            else:
+                                log.msg('wait to request finish!!')
+                                time.sleep(1)
+                            
                     else:
+                        #instance is more then setting.
+                        running_ids = [x.id for x in instance_list if x.state in ["running", "pending"]]
                         print running_ids[int(row['instance_num']):]
                         term_ids = running_ids[int(row['instance_num']):]
                         if len(term_ids) > 0:
                             ret = conn.terminate_instances(instance_ids=term_ids)
                             log.msg("terminate_instances:{}".format(ret))
-                        
-
-                    if len(terminate_ids) > 0:
-                        ret = conn.terminate_instances(instance_ids=terminate_ids)
-                        log.msg("terminate_instances:{}".format(ret))
+                            
+                    term_ids = [x.id for x in instance_list if self.check_live_time(row['live_time'], x)]
+                    log.msg("terminate_instances:{}".format(term_ids)) 
+                    if len(term_ids) > 0:
+                        conn.terminate_instances(instance_ids=term_ids)
             
-            log.msg("sleep is 3 second.")
+            log.msg("sleep is 10 second.")
             time.sleep(10)
         
         

@@ -32,7 +32,7 @@ from twisted.application import internet, service
 import pymongo
 import setting
 import funs
-
+import json
 
 class SubProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, sptl, spiders, kw):
@@ -69,6 +69,7 @@ class TaskClientProtocol(WampClientProtocol):
         }
         '''
         log.msg("topic:%s, event: %s" % (str(topic), str(event)))
+        
         if not event.has_key("act"): return
         
         if event["act"] == "start":
@@ -131,6 +132,33 @@ class TaskClientProtocol(WampClientProtocol):
         self.subscribe("spider", self.process_msg)
         log.msg("sub 'spider' channl finish")
 
+        try:
+            self.call("set_schd_name", open('/tmp/schd_name.conf').read().strip('\r\n'))
+        except Exception, e:
+            log.msg('set_schd_name err:%s' % e)
+                
+                
+        reactor.callLater(3, self.init_session)
+        
+    def init_session(self):
+        
+        if self.factory.is_first == 0:
+                
+            try:
+                for line in open('/tmp/init_cmd.conf').readlines():
+                    cmd = line.strip('\n')
+                    event = {
+                             'act':'start',
+                             'kw':{'cmd':cmd}
+                             }
+                    print event
+                    
+                    self.process_msg('init_cmd', event)
+            except Exception, e:
+                log.msg('init_cmd err:%s' % e)
+            self.factory.is_first = 1
+            
+
     def connectionLost(self, reason):
         WampClientProtocol.connectionLost(self, reason)
             
@@ -141,10 +169,13 @@ class TaskClientProtocol(WampClientProtocol):
             print msg
             reactor.callLater(3, self.pub_info)
       
+      
+
 class SpiderClientFactory(WampClientFactory):
     def __init__(self, url, debug = False, debugCodePaths = False, debugWamp = False, debugApp = False):
         WampClientFactory.__init__(self, url, debug = debug, debugCodePaths = debugCodePaths)
         self.spiders = {}
+        self.is_first = 0
         
     def clientConnectionFailed(self, connector, reason):
         log.msg("connect fail, wait 3 second.")

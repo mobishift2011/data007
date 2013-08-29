@@ -22,6 +22,7 @@ from daemon import funs
 
 
 class RepeaterServerProtocol(WampServerProtocol):
+    schd_name = None
     def onOpen(self):
         self.factory.register(self)
         WampServerProtocol.onOpen(self)
@@ -55,9 +56,35 @@ class RepeaterServerProtocol(WampServerProtocol):
                 val = {}
                 val.setdefault("sid", proto.session_id)
                 val.setdefault("peer", proto.peerstr)
+                val.setdefault("schd_name", proto.schd_name)
                 rets.append(val)
         return rets
     
+    @exportRpc("set_schd_name")
+    def set_schd_name(self, name):
+        self.schd_name = name
+        return 'ok'
+    
+#     @exportRpc("init_cmd")
+#     def init_cmd(self, cmd):
+# #     var event = {}
+# #     event.act = "start";
+# #     event.kw = {
+# #         spider:spider,
+# #         threads:parseInt(threads),
+# #         process:parseInt(process)
+# #     };
+#         event = {
+#                  'act':'start',
+#                  'kw':{'cmd':cmd}
+#                  }
+#         print event
+#         reactor.callLater(3, self.init_cmd_cb, (event,))
+#         return 'init_cmd', self.session_id
+    
+    
+    def init_cmd_cb(self, event):
+        self.factory.dispatch("spider", event)
     
     def getClients(self, channel):
         rets = []
@@ -78,20 +105,20 @@ class StoreServerFactory(WampServerFactory):
        self.clients = []
 
        
-    @defer.inlineCallbacks
-    def bcWebAdmin(self):
-        while 1:
-            yield funs.wait(3)
-            channel = "spider"
-            rets = []
-            if self.subscriptions.has_key(channel):
-                for proto in self.subscriptions[channel]:
-                    val = {}
-                    val.setdefault("sid", proto.session_id)
-                    val.setdefault("peer", proto.peerstr)
-                    rets.append(val)
-                    
-            self.dispatch("webadmin", rets)
+#     @defer.inlineCallbacks
+#     def bcWebAdmin(self):
+#         while 1:
+#             yield funs.wait(3)
+#             channel = "spider"
+#             rets = []
+#             if self.subscriptions.has_key(channel):
+#                 for proto in self.subscriptions[channel]:
+#                     val = {}
+#                     val.setdefault("sid", proto.session_id)
+#                     val.setdefault("peer", proto.peerstr)
+#                     rets.append(val)
+#                     
+#             self.dispatch("webadmin", rets)
        
     def onClientSubscribed(self, proto, topicUri):
         self.bcClients(proto, topicUri, "open")
