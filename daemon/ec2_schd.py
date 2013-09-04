@@ -38,11 +38,15 @@ class EC2Monitor(threading.Thread):
                 time.sleep(3)
 
     def check_live_time(self, live_time, instance):
+        import dateutil.parser
+        print type(instance.launch_time), instance.launch_time
         if (live_time > -1):
-            launch_time = int(time.mktime(time.strptime(instance.launch_time, "%Y-%M-%dT%H:%I:%S.000Z")))
+            dt = dateutil.parser.parse(instance.launch_time)
+            launch_time = int(time.mktime(dt.timetuple()))
             now_time = int(time.time())
             log.msg("check live_time,now:{}, launch_time:{}".format(now_time, launch_time))
-            if (int(time.time()) - instance.launch_time) > live_time:
+            if (now_time - launch_time) > int(live_time):
+                log.msg('%s:running time is longer then live_time.' % instance.id)
                 return True
         return False
     
@@ -94,7 +98,7 @@ class EC2Monitor(threading.Thread):
                                                                    upsert=True)
                             instance_list.append(i)
                     
-                    for req in conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name}):
+                    for req in conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name, 'state':['open', 'active', 'cancelled', 'failed']}):
                         print req.id, req.state
                         req_list.append(req)
                     
@@ -113,6 +117,8 @@ class EC2Monitor(threading.Thread):
                     run_instances = int(row['instance_num']) - len([x.id for x in instance_list if x.state in ["running", "pending"]]) - len([x.id for x in req_list if x.state == "open"])
                     if run_instances > 0:
                         print "run_instances", run_instances
+                        if run_instances > 10:
+                            run_instances = 10
                         rets = conn.request_spot_instances(
                             row['price'],
                             row['image_id'],
@@ -150,7 +156,8 @@ class EC2Monitor(threading.Thread):
                             ret = conn.terminate_instances(instance_ids=term_ids)
                             log.msg("terminate_instances:{}".format(ret))
                             
-                    term_ids = [x.id for x in instance_list if self.check_live_time(row['live_time'], x)]
+                    active_list = [x for x in instance_list if x.state in ['running']]
+                    term_ids = [x.id for x in active_list if self.check_live_time(row['live_time'], x)]
                     log.msg("terminate_instances:{}".format(term_ids)) 
                     if len(term_ids) > 0:
                         conn.terminate_instances(instance_ids=term_ids)
@@ -196,7 +203,10 @@ if __name__ == "__main__":
     reactor.run()
     
 if __name__ == "__builtin__":
+    from twisted.python.log import ILogObserver, FileLogObserver
+    from twisted.python.logfile import DailyLogFile, LogFile
     reactor.callWhenRunning(start)
     application = service.Application('ec2_schd')
-    
+    logfile = LogFile("ec2_schd.log", "/var/log/", rotateLength=100000000000)
+    application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
     

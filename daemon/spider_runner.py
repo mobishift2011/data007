@@ -138,7 +138,7 @@ class TaskClientProtocol(WampClientProtocol):
             log.msg('set_schd_name err:%s' % e)
                 
                 
-        reactor.callLater(3, self.init_session)
+        reactor.callLater(30, self.init_session)
         
     def init_session(self):
         

@@ -167,5 +167,10 @@ if __name__ == "__main__":
     reactor.run()
     
 if __name__ == "__builtin__":
+    from twisted.python.log import ILogObserver, FileLogObserver
+    from twisted.python.logfile import DailyLogFile, LogFile
+    
     reactor.callWhenRunning(start)
     application = service.Application('server_admin')
+    logfile = LogFile("server_admin.log", "/var/log/", rotateLength=100000000000)
+    application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
