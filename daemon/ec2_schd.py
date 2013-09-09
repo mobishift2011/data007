@@ -116,9 +116,11 @@ class EC2Monitor(threading.Thread):
                     print "running-set:", int(row['instance_num']), "instance_list:", len(instance_list)
                     run_instances = int(row['instance_num']) - len([x.id for x in instance_list if x.state in ["running", "pending"]]) - len([x.id for x in req_list if x.state == "open"])
                     if run_instances > 0:
-                        print "run_instances", run_instances
-                        if run_instances > 10:
-                            run_instances = 10
+                        print "run_instances,need", run_instances
+                        if run_instances > 3:
+                            run_instances = 3
+                        
+                        print "run_instances,real", run_instances
                         rets = conn.request_spot_instances(
                             row['price'],
                             row['image_id'],
