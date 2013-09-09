@@ -51,7 +51,7 @@ class LC(object):
         tsnow = time.mktime(time.gmtime())
         lastcheck = conn.hget(hashkey, id)
 
-        offset = 43200 if type == 'item' else 86400
+        offset = 43200 if type == 'item' else 86400*7
 
         # if there's no lastcheck, or lastcheck happened an hour ago
         # try call on_update with id, if succeeded, update lastcheck in redis
