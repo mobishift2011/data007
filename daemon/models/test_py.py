@@ -7,9 +7,7 @@ from StringIO import StringIO
 import gzip
 from urlparse import urlparse, parse_qs
 import urllib
-from twisted.web.client import getPage
-
-
+        
 class SpiderBase:
     def __init__(self):
         pass
@@ -17,7 +15,7 @@ class SpiderBase:
     @defer.inlineCallbacks
     def check_seed(self, seed):
         yield
-        if re.match(r"\d", str(seed)):
+        if re.match(r"http://list.taobao.com/itemlist/default.htm.*", seed):
             defer.returnValue(True)
         else:
             defer.returnValue(False)
@@ -25,8 +23,7 @@ class SpiderBase:
     @defer.inlineCallbacks
     def process_seed(self, seed):
         yield
-        url = "http://item.taobao.com/item.htm?id=%s" % seed
-        defer.returnValue(url)
+        defer.returnValue(seed)
     
     def process_agent(self):
         return "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36"
@@ -74,27 +71,43 @@ class SpiderBase:
 
         ups = urlparse(request["url"])
         body = body.decode("gbk").encode("utf-8")
-        print body[:200]
+        jobj = json.loads(body)
         
-        result = yield self.my_getpage("http://www.51job.com")        
-        print result[:200]
-
+        total = jobj['selectedCondition']['totalNumber']
+        
+        if u'万' in total or int(total)>9500:
+            if jobj['cat'] is None:
+                has_explod = False
+                for prop in jobj['propertyList']:
+                    for p in prop['propertyList']:
+                        params = parse_qs(ups.query)
+                        if params.has_key("ppath"):
+                            if p["value"].split(':')[0] in [x.split(':')[0] for x in params["ppath"][0].split(";")]:
+                                break
+                            has_explod = True
+                            params["ppath"] = "%s;%s" % (params["ppath"][0], p["value"])
+                        else:
+                            params["ppath"] = p["value"]
+                        url = "http://list.taobao.com/itemlist/default.htm?%s" %  urllib.urlencode(params, doseq=True)
+                        rets["urls"].append(url)
+                    if has_explod is True:
+                        break
+            else:
+                for cat in jobj['cat']['catList']:
+                    url = "http://list.taobao.com/itemlist/default.htm?json=on&cat=%s" % cat["value"]
+                    rets["urls"].append(url)
+                    
+                for glist in jobj['cat']['catGroupList']:
+                    if not glist.has_key("catList"): continue
+                    for l in glist["catList"]:
+                        url = "http://list.taobao.com/itemlist/default.htm?json=on&cat=%s" % l["value"]
+                        rets["urls"].append(url)
+        else:
+            rets["count"] = int(total)
+            rets["list_urls"].append(request["url"])
+        print rets
         defer.returnValue(rets)
-        
-    @defer.inlineCallbacks
-    def my_getpage(self, url):
-        agent = self.process_agent()
-        headers = yield self.process_headers()
-        cookies = yield self.process_cookies()
-        proxyip = yield self.process_proxyip()
-        result = yield getPage(url, 
-                                   headers=headers,
-                                   agent=agent,
-                                   cookies=cookies)
-        buf = StringIO(result)
-        f = gzip.GzipFile(fileobj=buf)
-        result = f.read()
-        defer.returnValue(result)
+
 
     @defer.inlineCallbacks
     def process_rets_pipeline(self, self_obj, rets):
@@ -113,8 +126,9 @@ if __name__ == "__main__":
     @defer.inlineCallbacks
     def main():
         s = SpiderBase()
-        ret = yield s.check_seed("21910055103")
+        ret = yield s.check_seed("http://list.taobao.com/itemlist/default.htm?json=on&cat=16")
         print "check_seed:", ret
+
         reactor.stop()
         
     reactor.callLater(0, main)

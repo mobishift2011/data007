@@ -19,9 +19,9 @@
                     <th class="span1">
                         <input type="checkbox" name="rowtoggle" class="action-rowtoggle">
                     </th>
-                    <th class="span1">ip</th>
+                    <th class="span1">peer</th>
                     <th>
-                            peer
+                            schd_name
                     </th>
                     <th>
                             sid
@@ -67,7 +67,7 @@
 				<button onclick="spider_start(this)">start</button>
 			</div>
 			<div style="display:inline">
-				python:&nbsp;&nbsp;<input name="cmd" style="width:250px" type="text" value="../crawler/tbcat.py -c 16" />
+				sh:&nbsp;&nbsp;<input name="cmd" style="width:350px" type="text" value="tbcat.py -c 16" />
 				<button onclick="spider_start2(this)">start</button>
 			</div>			
 		</td>
@@ -160,7 +160,7 @@ function on_get_spiders(spider_list) {
    	   var tr = $("#tr-demo tr").clone().removeAttr("id");
    	   tr.attr("name", spider_list[i].sid);
    	   tr.find("td:eq(1)").html(spider_list[i].peer);
-   	   tr.find("td:eq(2)").html(spider_list[i].peer);
+   	   tr.find("td:eq(2)").html(spider_list[i].schd_name);
    	   tr.find("td:eq(3)").html(spider_list[i].sid);
    	   $("#spider_list").prepend(tr);
    	   var event = {};

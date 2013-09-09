@@ -123,7 +123,7 @@ class EC2_Schd(db.Document):
     '''
     '''
     name = db.StringField(max_length=500)
-    script_code = db.StringField()
+    script_code = db.StringField(default=open("webadmin/script_tpl").read())
     ec2_region = db.StringField(max_length=500, choices=[
                                                          ('us-east-1', 'us-east-1'),
                                                          ('us-west-2', 'us-west-2'),
@@ -135,6 +135,7 @@ class EC2_Schd(db.Document):
                                                          ('sa-east-1', 'sa-east-1'),
                                                          ])
     instance_num = db.IntField(default=1)
+    price = db.FloatField(default=0.02)
     instance_type = db.StringField(max_length=500, default='t1.micro', 
                                                 choices=[
                                                         ("t1.micro", "t1.micro"), 
@@ -157,6 +158,8 @@ class EC2_Schd(db.Document):
                                                         ("cc2.8xlarge", "cc2.8xlarge"),
                                                          ])
     image_id = db.StringField(max_length=500)
+    security_group_ids = db.ListField(db.StringField(max_length=500))
+    
     live_time = db.IntField(default=-1)
     
     enable = db.BooleanField(default=False)
