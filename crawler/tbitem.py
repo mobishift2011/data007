@@ -85,25 +85,25 @@ def get_taobao_item(id, content):
     patlist = [
         (r'<title>(.*?)</title>', lambda x: x.decode('gbk', 'ignore').split('-',1)[0], 'title'),
     ]
-    patdict = {
-        r'g_config = ({.*?});': [
+    patdict = [
+        (r'g_config = ({.*?});', [
             ('itemId', int, 'id'),
             ('shopId', int, 'shopid'),
-        ],  
-        r'g_config.idata=({.*?})}\)': [
+        ]),  
+        (r'g_config.idata=({.*?})}\)', [
             ('seller.id', int, 'sellerid'),
             ('item.cid', int, 'cid'),
             ('item.rcid', int, 'rcid'),
             ('item.price', float, 'price'),
             ('item.virtQuantity', int, 'num_instock'),
-        ],
-        r"Hub.config.set\('sku',({.*?})\)": [
+        ]),
+        (r"Hub.config.set\('sku',({.*?})\)", [
             ('apiItemInfo', 'get_sold30', 'num_sold30'),
             #('valItemInfo', 'get_price', 'price'),
             ('umpStockUrl', 'get_ump_price', 'price'),
-        ],
-    }
-    result =  parse_content(content, patlist, patdict)
+        ]),
+    ]
+    result = parse_content(content, patlist, patdict)
     if result:
         result['pagetype'] = 'taobao'
     return result
@@ -151,11 +151,11 @@ def parse_content(content, patlist, patdict):
     
     if need_decode:
         content = content.decode('gbk', 'ignore')
-    for pat in patdict:
+    for pat, patlist in patdict:
         try:
             # eval pattern using pyv8
             data = ctx.eval('d='+re.compile(pat, re.DOTALL).search(content).group(1))
-            for field, callback, name in patdict[pat]:
+            for field, callback, name in patlist:
                 obj = data
                 if field == 'umpStockUrl' and not getattr(obj, field, None):
                     continue 
@@ -233,7 +233,7 @@ def get_price(d):
         return None
 
 def get_ump_price(url):
-    s = get_session()
+    s = get_blank_session()
     ctx = get_ctx()
     s.headers['Referer'] = 'http://item.taobao.com/item.htm'
     patpromo = re.compile(r';TB.PromoData = ({.+)', re.DOTALL)
