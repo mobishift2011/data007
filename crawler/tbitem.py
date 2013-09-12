@@ -72,7 +72,7 @@ def get_tmall_item(id, content):
             ('valItemInfo', 'get_price', 'price'),
             ('initApi', 'get_tmall_details', 'price,num_sold30'),
         ]),
-    }
+    ]
     result = parse_content(content, patlist, patdict)
     result['pagetype'] = 'tmall'
     val = get_tmall_num_reviews(id)
