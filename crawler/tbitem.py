@@ -62,8 +62,8 @@ def get_tmall_item(id, content):
         (r'<title>(.*?)</title>', lambda x: x.decode('gbk', 'ignore').split('-',1)[0], 'title'),
         (r'name="rootCatId" value="(\d+)"', int, 'rcid'),
     ]
-    patdict = {
-        r'TShop.Setup\(({.*?})\)': [
+    patdict = [
+        (r'TShop.Setup\(({.*?})\)', [
             ('itemDO.itemId', int, 'id'),
             ('itemDO.userId', int, 'sellerid'),
             ('itemDO.categoryId', int, 'cid'), 
@@ -71,9 +71,9 @@ def get_tmall_item(id, content):
             ('rstShopId', int, 'shopid'),
             ('valItemInfo', 'get_price', 'price'),
             ('initApi', 'get_tmall_details', 'price,num_sold30'),
-        ],
+        ]),
     }
-    result =  parse_content(content, patlist, patdict)
+    result = parse_content(content, patlist, patdict)
     result['pagetype'] = 'tmall'
     val = get_tmall_num_reviews(id)
     if val is not None:
