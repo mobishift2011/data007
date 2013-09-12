@@ -44,13 +44,12 @@ class ItemWorker(Worker):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
             d = get_item(itemid)
-            if d and 'shopid' in d:
-                # for connection errors, we simply raise exception here
-                # the exceptions will be captured in LC.update_if_needed
-                # the task will not clean up and will be requeued by requeue worker
-                if 'num_instock' not in d:
-                    raise ValueError('num_instock error')
-
+            # for connection errors, we simply raise exception here
+            # the exceptions will be captured in LC.update_if_needed
+            # the task will not clean up and will be requeued by requeue worker
+            if d == {} or 'num_instock' not in d or 'num_sold30' not in d:
+                raise ValueError('item incomplete error')
+            elif d and 'shopid' in d:
                 item.insert(str(itemid), d)
 
                 if LC.need_update('shop', d['shopid']):

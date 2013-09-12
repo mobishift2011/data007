@@ -69,6 +69,7 @@ class LC(object):
             try:
                 on_update(id)
             except:
+                print('we do not set task_done for id {}, so we will pick them up in requeue'.format(id))
                 traceback.print_exc()
             else:
                 queue.task_done(id)

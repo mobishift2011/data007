@@ -145,7 +145,7 @@ def parse_content(content, patlist, patdict):
             if val is not None:
                 result[name] = val
         except:
-            print content
+            print('parse content critical error')
             traceback.print_exc()
             continue
     
@@ -185,6 +185,8 @@ def parse_content(content, patlist, patdict):
             continue
 
     result.update( get_counters(result.get('id'), result.get('sellerid')) )
+    if 'num_sold30' not in result:
+        return {}
     return result
 
 def get_counters(id, sellerid):
