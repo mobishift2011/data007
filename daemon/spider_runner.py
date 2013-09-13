@@ -33,6 +33,8 @@ import pymongo
 import setting
 import funs
 import json
+import subprocess
+import urllib2
 
 class SubProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, sptl, spiders, kw):
@@ -80,6 +82,9 @@ class TaskClientProtocol(WampClientProtocol):
 
         elif event["act"] == "status":
             self.status_refresh()
+        
+        elif event["act"] == "shutdown":
+            os.system("init 0")
         
     def status_refresh(self):
         ret_msg = {
@@ -133,10 +138,20 @@ class TaskClientProtocol(WampClientProtocol):
         log.msg("sub 'spider' channl finish")
 
         try:
-            self.call("set_schd_name", open('/tmp/schd_name.conf').read().strip('\r\n'))
+            burl = "http://169.254.169.254/latest/meta-data"
+            
+            runner_info = {}
+            runner_info["spider_name"] = open('/tmp/schd_name.conf').read().strip('\r\n')
+            runner_info["uptime"] = subprocess.check_output(["uptime"])
+            runner_info["hostname"] = urllib2.urlopen("%s/public-hostname" % burl).read()
+            runner_info["instance_id"] = urllib2.urlopen("%s/instance-id" % burl).read()
+            
+            log.msg(json.dumps(runner_info))
+            
+            self.call("set_info", json.dumps(runner_info))
+            
         except Exception, e:
             log.msg('set_schd_name err:%s' % e)
-                
                 
         reactor.callLater(30, self.init_session)
         
@@ -168,7 +183,8 @@ class TaskClientProtocol(WampClientProtocol):
             self.publish("webadmin", msg)
             print msg
             reactor.callLater(3, self.pub_info)
-      
+
+
       
 
 class SpiderClientFactory(WampClientFactory):

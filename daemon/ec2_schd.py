@@ -102,6 +102,8 @@ class EC2Monitor(threading.Thread):
                         print req.id, req.state
                         req_list.append(req)
                     
+                    print "!!!!!!!!!!!!aaaaaaaaaaaaa", [x.id for x in req_list], u"sir-fd741435" in  [x.id for x in req_list], len(req_list)
+                    
                     for res in conn.get_all_instances(filters={'spot-instance-request-id':[x.id for x in req_list],
                                                                 'image-id':row['image_id']}):
                         for i in res.instances:
@@ -136,8 +138,13 @@ class EC2Monitor(threading.Thread):
                             user_data = row['script_code']
                         )
                         log.msg("run_instances:{}".format(rets))
-                        for ret in rets:
-                            ret.add_tag('Name', tag_name)
+                        
+                        try:
+                            for ret in rets:
+                                ret.add_tag('Name', tag_name)
+                        except:
+                            pass
+                        
                         
                         while 1:
                             reqs = conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name,

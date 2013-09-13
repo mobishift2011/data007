@@ -19,13 +19,13 @@
                     <th class="span1">
                         <input type="checkbox" name="rowtoggle" class="action-rowtoggle">
                     </th>
-                    <th class="span1">peer</th>
-                    <th>
-                            schd_name
-                    </th>
-                    <th>
-                            sid
-                    </th>
+                    <th class="span1">shutdown</th>
+                    <th>name</th>
+                    <th>peer</th>
+                    <th style="width:200px;">uptime</th>
+                    <th style="width:100px;">instance-id</th>
+                    <th style="width:300px;">hostname</th>
+                    
                     <th>
                             process_list<br />
                             (pid, spider, threads)
@@ -46,16 +46,21 @@
 		<td>
 			<input type="checkbox" name="rowid" class="action-checkbox">
 		</td>
-		<td>
-
+		<td name="shutdown">
+			<button onclick="if(confirm('You sure you want to shutdown this instance?'))spider_shutdown(this);" style="color:red">shutdown</button>
 		</td>
-		<td></td>
-		<td></td>
+		
+		<td name="name"></td>
+		<td name="peer"></td>
+		<td name="uptime"></td>
+		<td name="instance-id" ></td>
+		<td name="hostname"></td>
+		
 		<td name="por_list">
 			
 		</td>
 		<td name="console">
-			<div style="display:none">
+			<!--div style="display:none">
 				spider:&nbsp;&nbsp;
 					   <select name="spider" style="width:100px">
 					   		{% for row in rows%}
@@ -65,7 +70,8 @@
 				threads:&nbsp;&nbsp;<input name="threads" style="width:30px" type="text" value="100" />
 				process:&nbsp;&nbsp;<input name="process" style="width:20px" type="text" value="1" />
 				<button onclick="spider_start(this)">start</button>
-			</div>
+			</div-->
+			
 			<div style="display:inline">
 				sh:&nbsp;&nbsp;<input name="cmd" style="width:350px" type="text" value="tbcat.py -c 16" />
 				<button onclick="spider_start2(this)">start</button>
@@ -159,9 +165,14 @@ function on_get_spiders(spider_list) {
    for(var i=0; i < spider_list.length; i++){
    	   var tr = $("#tr-demo tr").clone().removeAttr("id");
    	   tr.attr("name", spider_list[i].sid);
-   	   tr.find("td:eq(1)").html(spider_list[i].peer);
-   	   tr.find("td:eq(2)").html(spider_list[i].schd_name);
-   	   tr.find("td:eq(3)").html(spider_list[i].sid);
+   	   
+   	   tr.find('td[name="name"]').html(spider_list[i].spider_name);
+   	   tr.find('td[name="peer"]').html(spider_list[i].peer);
+   	   tr.find('td[name="uptime"]').html(spider_list[i].uptime);
+   	   tr.find('td[name="instance-id"]').html(spider_list[i].instance_id);
+   	   tr.find('td[name="hostname"]').html(spider_list[i].hostname);
+   	   
+   	   
    	   $("#spider_list").prepend(tr);
    	   var event = {};
    	   event.act = "status";
@@ -215,6 +226,20 @@ function spider_stop(btn){
 	
 	$(btn).parent().html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
 }
+
+function spider_shutdown(btn){
+	console.log("spider_shutdown");
+	
+	var sid = $(btn).parents("tr").attr("name");
+	var pid = $(btn).parent().parent().find('span[name="pid"]').text();
+	var msg = {};
+	msg.act = "shutdown";
+	msg.pid_list = [pid];
+	g_session.publish('spider', msg, [], [sid]);
+	
+	$(btn).parent().html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+}
+
 
 </script>
 {% endblock %}

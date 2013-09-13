@@ -35,6 +35,8 @@ class RepeaterServerProtocol(WampServerProtocol):
         WampServerProtocol.onMessage(self, msg, binary)
         
     def onSessionOpen(self):
+        self.runner_info = {}
+        
         self.registerProcedureForRpc("clients", self.getClients)
         
         #self.registerProcedureForRpc("get_spiders", self.get_spiders)
@@ -46,7 +48,6 @@ class RepeaterServerProtocol(WampServerProtocol):
         
         log.msg("on connection sid:%s, peer:%s" % (self.session_id, self.peerstr))
         
-        
     @exportRpc("get_spiders")
     def get_spiders(self):
         channel = "spider"
@@ -56,13 +57,15 @@ class RepeaterServerProtocol(WampServerProtocol):
                 val = {}
                 val.setdefault("sid", proto.session_id)
                 val.setdefault("peer", proto.peerstr)
-                val.setdefault("schd_name", proto.schd_name)
+                
+                for k, v in proto.runner_info.iteritems():
+                    val.setdefault(k, v)
                 rets.append(val)
         return rets
     
-    @exportRpc("set_schd_name")
-    def set_schd_name(self, name):
-        self.schd_name = name
+    @exportRpc("set_info")
+    def set_runner_info(self, info):
+        self.runner_info = json.loads(info)
         return 'ok'
     
 #     @exportRpc("init_cmd")
@@ -104,21 +107,6 @@ class StoreServerFactory(WampServerFactory):
        WampServerFactory.__init__(self, url, debugWamp = debugWamp)
        self.clients = []
 
-       
-#     @defer.inlineCallbacks
-#     def bcWebAdmin(self):
-#         while 1:
-#             yield funs.wait(3)
-#             channel = "spider"
-#             rets = []
-#             if self.subscriptions.has_key(channel):
-#                 for proto in self.subscriptions[channel]:
-#                     val = {}
-#                     val.setdefault("sid", proto.session_id)
-#                     val.setdefault("peer", proto.peerstr)
-#                     rets.append(val)
-#                     
-#             self.dispatch("webadmin", rets)
        
     def onClientSubscribed(self, proto, topicUri):
         self.bcClients(proto, topicUri, "open")
