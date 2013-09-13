@@ -187,6 +187,7 @@ def parse_content(content, patlist, patdict):
     result.update( get_counters(result.get('id'), result.get('sellerid')) )
     if 'num_sold30' not in result:
         return {}
+    result['attributes'] = get_attributes(content)
     return result
 
 def get_counters(id, sellerid):
@@ -284,6 +285,34 @@ def get_tmall_num_reviews(id):
     except:
         traceback.print_exc()
 
+def get_attributes(content):
+    try:
+        # never mind, a digusting encode/decode hell
+        if need_decode is False:
+            content = content.decode('gbk', 'ignore')
+        al = re.compile(r'<ul class="attributes-list">(.*?)</ul>', re.DOTALL).search(content).group(1)
+    except:
+        return []
+    else:
+        return [ x.replace('&nbsp;', '').replace(u'\uff1a', ':').split(':') 
+                for x in re.compile(r'>([^<]*)</li', re.DOTALL).findall(al) ] 
+
+def get_buyhistory(content):
+    """ get buy history, first page only, not used """
+    url = re.compile(r'detail:params="(.*?),showBuyerList').search(content).group(1)
+    url += '&callback=jsonp'
+    patjsonp = re.compile(r'jsonp\((.*?)\);?', re.DOTALL)
+    s = get_blank_session()
+    ctx = get_ctx()
+    try:
+        content = s.get(url+'&callback=jsonp', timeout=30).content
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
+        # eval pattern using pyv8
+        data = ctx.eval('d='+patjsonp.search(content).group(1))
+        return re.compile('<em class="tb-rmb-num">(\d+)</em>.*?<td class="tb-amount">(\d+)</td>.*?<td class="tb-time">([^>]+)</td>', re.DOTALL).findall(data.html)
+    except:
+        traceback.print_exc()
 
 def main():
     import argparse

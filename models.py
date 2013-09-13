@@ -12,6 +12,7 @@ from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pycassa.system_manager import SystemManager, LONG_TYPE, INT_TYPE, ASCII_TYPE, FLOAT_TYPE, UTF8_TYPE, BYTES_TYPE
 from pycassa.cassandra.ttypes import InvalidRequestException, NotFoundException
+from pycassa.types import CompositeType, DateType, UTF8Type
 
 import time
 
@@ -24,7 +25,7 @@ TABLE_SHOP = 'shop'
 
 
 SCHEMA = {
-    # rowkey = id / id+'-'+YYYYMMDD
+    # rowkey = id
     'item': {
         'id': LONG_TYPE,
         'rcid': INT_TYPE,
@@ -44,7 +45,7 @@ SCHEMA = {
     },
     'shop': {
         'id': LONG_TYPE,
-    }
+    },
 }
 
 
