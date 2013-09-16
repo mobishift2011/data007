@@ -56,7 +56,7 @@ def get_service_info(rateid):
         # promise can be 'xiaofei', 'seven', 'fake', 'ZPBZ', 'TGFP', 'QTTH'
         # 消费保障, 七天退换, 假一罚三, 正品保障, 提供发票, 七天退换
         promise = {}
-        if 'xiaobao-box' not in rateresp: # it's a tmall store
+        if 'xiaobao1' not in rateresp: # it's a tmall store
             promise['ZPBZ'] = 'promise.php#ZPBZ' in rateresp
             promise['TGFP'] = 'promise.php#TGFP' in rateresp
             promise['QTTH'] = 'promise.php#QTTH' in rateresp
@@ -69,9 +69,11 @@ def get_service_info(rateid):
             charge = re.compile(r'class="charge".*?([0-9,.]+)').search(rateresp).group(1)
         except:
             charge = ''
+       
+        rating = re.compile(r'class="count">([^<]*).*?class="percent ([a-z]*)[^>]*>([^<]*)', re.DOTALL).findall(rateresp)
         rates = re.compile(r'class="small-star-no[45]".*?(\d+\.\d+)%', re.DOTALL).findall(rateresp)
         good_rating = sum(float(r) for r in rates)/3
-        return {'promise':promise, 'charge':charge, 'good_rating':good_rating}
+        return {'promise':promise, 'charge':charge, 'good_rating':good_rating, 'rating':rating}
     except:
         return {}
 
