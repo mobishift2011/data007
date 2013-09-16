@@ -4,89 +4,65 @@
 
 Usage::
 
-    >>> from models import pool, item, shop
-    >>> item.insert(12345: {'id':12345, 'num_reviews':34})
+    >>> from models import db
+    >>> db.execute('CQL QUERY')
+
+See more details in ``ConnectionPool``'s doc
 
 """
-from pycassa.pool import ConnectionPool
-from pycassa.columnfamily import ColumnFamily
-from pycassa.system_manager import SystemManager, LONG_TYPE, INT_TYPE, ASCII_TYPE, FLOAT_TYPE, UTF8_TYPE, BYTES_TYPE
-from pycassa.cassandra.ttypes import InvalidRequestException, NotFoundException
-from pycassa.types import CompositeType, DateType, UTF8Type
-
-import time
+from cqlutils import ConnectionPool
 
 from settings import DB_HOSTS
+from datetime import datetime
+
+# see schema
+DATABASE = 'ataobao2'
+TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item']
+
+db = ConnectionPool(DB_HOSTS)
+
+def update_item(item):
+    # Item Fields:
+    #   id, cid, rcid, shopid, pagetype, title, price, rating, 
+    #   num_collects, num_instock, num_reviews, num_sold30, num_views 
+    # Item_by_date Fields:
+    #   id, date, title, price, num_collects, num_instock, num_reviews, num_sold30, num_views
+    d = item
+    d['date'] = datetime.utcnow()
+
+    insert_into_item =  \
+        ('''INSERT INTO ataobao2.item
+                (id, cid, rcid, shopid, pagetype, title, price, rating,
+                 num_collects, num_instock, num_reviews, num_sold30, num_views)
+            VALUES
+                (:id, :cid, :rcid, :shopid, :pagetype, :title, :price, :rating,
+                 :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
+
+    insert_into_item_by_date = \
+        ('''INSERT INTO ataobao2.item_by_date
+                (id, date, title, price, num_collects, num_instock, num_reviews, num_sold30, num_views)
+            VALUES
+                (:id, :date, :title, :price, :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
+
+    # Here we use :v1, :v2, :v3 instead of :id, :date, :iid
+    # because in batch mode, arguments are passed in batch, 
+    # we must avoid different variables using same name
+    # though we can improve ``batch`` mechanism to avoid this problem,
+    # I think it may cost too much time, and may be too inefficient to do so
+    insert_into_shop_by_item = \
+        ('''INSERT INTO ataobao2.shop_by_item
+                (id, date, iid) 
+            VALUES 
+                (:v1, :v2, :v3)''', dict(v1=d['shopid'], v2=d['date'], v3=d['id']))
+
+    db.batch([
+            insert_into_item,
+            insert_into_item_by_date,
+            insert_into_shop_by_item])
 
 
-DATABASE = 'ataobao'
-TABLE_ITEM = 'item'
-TABLE_SHOP = 'shop'
 
-
-SCHEMA = {
-    # rowkey = id
-    'item': {
-        'id': LONG_TYPE,
-        'rcid': INT_TYPE,
-        'cid': INT_TYPE,
-        'sellerid': LONG_TYPE,
-        'shopid': LONG_TYPE,
-        'pagetype': ASCII_TYPE,
-        'title': UTF8_TYPE,
-        'rating': FLOAT_TYPE,
-        'price': FLOAT_TYPE,
-        'num_reviews': INT_TYPE,
-        'num_collects': INT_TYPE,
-        'num_instock': INT_TYPE,
-        'num_reviews': INT_TYPE,
-        'num_sold30': INT_TYPE,
-        'num_views': INT_TYPE,
-    },
-    'shop': {
-        'id': LONG_TYPE,
-    },
-}
-
-
-def get_or_create_cp():
-    try:
-        pool = ConnectionPool(DATABASE, DB_HOSTS)
-    except InvalidRequestException as e:
-        if 'does not exist' in e.why:
-            for host in DB_HOSTS:  
-                sys = SystemManager(host)
-                sys.create_keyspace(DATABASE, strategy_options={"replication_factor": "2"}, durable_writes=False)
-                time.sleep(1)
-                break
-
-            pool = ConnectionPool(DATABASE, DB_HOSTS)
-        else:
-            raise e
-
-    return pool
-
-
-def get_or_create_cf(pool, name):
-    try:
-        cf = ColumnFamily(pool, name)
-    except NotFoundException as e:
-        for host in DB_HOSTS:  
-            sys = SystemManager(host)
-            sys.create_column_family(DATABASE, name, comparator_type=UTF8_TYPE)
-            time.sleep(1)
-            break
-
-        cf = ColumnFamily(pool, name)
-
-        for host in DB_HOSTS:  
-            sys = SystemManager(host)
-            for column, value_type in SCHEMA.get(name, {}).iteritems():
-                sys.alter_column(DATABASE, name, column, value_type)
-
-    return cf
-
-
-pool = get_or_create_cp()
-item = get_or_create_cf(pool, TABLE_ITEM)
-shop = get_or_create_cf(pool, TABLE_SHOP)
+if __name__ == '__main__':
+    from crawler.tbitem import get_item
+    item = get_item(15337257913) 
+    update_item(item)

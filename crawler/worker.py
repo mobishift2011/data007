@@ -13,7 +13,7 @@ from gevent import monkey; monkey.patch_all()
 import gevent.pool
 from functools import partial
 
-from models import item
+from models import db, update_item
 from caches import LC, ItemCT, ShopItem
 from queues import poll, ai1, ai2, as1, af1
 from crawler.tbitem import get_item, is_valid_item
@@ -50,12 +50,12 @@ class ItemWorker(Worker):
             if d == {} or 'num_instock' not in d or 'num_sold30' not in d:
                 raise ValueError('item incomplete error')
             elif d and 'shopid' in d:
-                item.insert(str(itemid), d)
+                update_item(d)
 
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
                     as1.put(d['shopid'])
-                
+
         while True:
             result = poll([ai1, ai2], timeout=10)
             if result:
