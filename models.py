@@ -17,7 +17,7 @@ from datetime import datetime
 
 # see schema
 DATABASE = 'ataobao2'
-TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item']
+TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item', 'item_attr']
 
 db = ConnectionPool(DB_HOSTS)
 
@@ -60,9 +60,21 @@ def update_item(item):
             insert_into_item_by_date,
             insert_into_shop_by_item])
 
+    # batch insert attributes
+    insert_into_item_attr = \
+        [ ('''INSERT INTO ataobao2.item_attr
+                (id, attr_name, attr_value)
+              VALUES
+                (?, ?, ?)''', (d['id'], a[0], ':'.join(a[1:]))) for a in d['attributes'] ]
+
+    if insert_into_item_attr:
+        db.batch(insert_into_item_attr)
+
 
 
 if __name__ == '__main__':
     from crawler.tbitem import get_item
-    item = get_item(15337257913) 
+    item = get_item(20234093898) 
+    from pprint import pprint
+    pprint(item)
     update_item(item)

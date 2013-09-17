@@ -44,13 +44,19 @@ class ItemWorker(Worker):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
             d = get_item(itemid)
+            if 'notfound' in d or 'error' in d:
+                return
+
             # for connection errors, we simply raise exception here
             # the exceptions will be captured in LC.update_if_needed
             # the task will not clean up and will be requeued by requeue worker
             if d == {} or 'num_instock' not in d or 'num_sold30' not in d:
-                raise ValueError('item incomplete error')
+                raise ValueError('item incomplete error: {}'.format(d))
             elif d and 'shopid' in d:
-                update_item(d)
+                try:
+                    update_item(d)
+                except:
+                    raise ValueError('item update failed: {}'.format(d))
 
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
