@@ -7,7 +7,22 @@ performance metrics
 http://www.slideshare.net/davegardnerisme/running-cassandra-on-amazon-ec2
 
 *datastax tutorial - we use this*
-http://www.datastax.com/documentation/cassandra/1.2/webhelp/#cassandra/install/installAMI.html
+http://www.datastax.com/documentation/cassandra/2.0/webhelp/#cassandra/install/installAMI.html
+
+- install java7::
+
+    add-apt-repository ppa:webupd8team/java
+    apt-get update && sudo apt-get install oracle-jdk7-installer
+    update-alternatives --set java /usr/lib/jvm/java-7-oracle/jre/bin/java 
+
+- edit ``/etc/casssandra/cassandra-env.sh``
+    minimum stack size: 180k -> 256k
+
+- edit ``/etc/cassandra/cassandra.yaml``
+    list_address
+    snicth
+    seeds
+    ...
 
 data modeling best practices
 http://www.ebaytechblog.com/2012/07/16/cassandra-data-modeling-best-practices-part-1/

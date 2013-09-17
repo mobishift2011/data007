@@ -39,22 +39,29 @@ def is_valid_item(item):
 
     return True
 
-def get_item(id):
+def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
     """ given itemid, return item info dict """
     s = get_session()
     try:
-        r = s.get('http://item.taobao.com/item.htm?id={}'.format(id), timeout=30)
+        r = s.get(prefix.format(id), timeout=30)
     except:
         traceback.print_exc()
         return {}
     else:
         content = r.content
-        if 'error-notice-text' in content:
-            return {}
+        open('test.html', 'w').write(content)
+        if 'error-notice-text' in content or 'errorDetail' in content or 'tb-off-sale' in content:
+            return {'error':True}
+        if 'http://s.tongcheng.taobao.com/detail.htm' in content:
+            return get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 
+
         if r.url.startswith('http://item.taobao.com'):
             return get_taobao_item(id, content)
         elif r.url.startswith('http://detail.tmall.com'):
             return get_tmall_item(id, content)
+        else:
+            # we will ignore products in i.life.taobao.com
+            return {'notfound':True}
 
 def get_tmall_item(id, content):
     """ get tmall item info by id and content """
@@ -145,7 +152,7 @@ def parse_content(content, patlist, patdict):
             if val is not None:
                 result[name] = val
         except:
-            print('parse content critical error')
+            print('parse content critical error, pat:{}'.format(pat))
             traceback.print_exc()
             continue
     
@@ -176,7 +183,7 @@ def parse_content(content, patlist, patdict):
                         raise e 
                 if isinstance(val, dict):
                     for key in name.split(','):
-                        if key in val and val[key]:
+                        if key in val and val[key] is not None:
                             result[key] = val[key]
                 elif val is not None:
                     result[name] = val
@@ -274,7 +281,12 @@ def get_tmall_details(url):
             'num_sold30': data.defaultModel.sellCountDO.sellCount,
         }
     except:
-        traceback.print_exc()
+        try:
+            return {
+                'num_sold30': data.defaultModel.sellCountDO.sellCount,
+            }
+        except:
+            traceback.print_exc()
 
 def get_tmall_num_reviews(id):
     url = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(id)
@@ -283,6 +295,7 @@ def get_tmall_num_reviews(id):
         data = '{'+s.get(url, timeout=30).content.strip()+'}'
         return json.loads(data)['dsr']['rateTotal']
     except:
+        print('review for id {} failed'.format(id))
         traceback.print_exc()
 
 def get_attributes(content):
