@@ -8,6 +8,7 @@ flask-mongoengine
 ipython
 
 # datastore related
+cql
 pycassa
 pymongo
 mongoengine
