@@ -48,7 +48,7 @@ class LC(object):
     @staticmethod
     def need_update(type, *ids):
         if len(ids) == 0:
-            return False
+            return []
         elif len(ids) == 1:
             ids = list(ids)
 	    ids.append(ids[0])
