@@ -49,6 +49,9 @@ class LC(object):
     def need_update(type, *ids):
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
+        if len(ids) <= 1:
+            ids = list(ids)
+	    ids.append(1)
         lastchecks = conn.hmget(hashkey, *ids)
 
         offset = 43200 if type == 'item' else 86400*7
