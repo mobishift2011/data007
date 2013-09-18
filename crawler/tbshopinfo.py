@@ -1,22 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Shop Info:
-    rating           [('4.6', 'lower', '2.79%'), ('4.7', 'lower', '2.15%'), ('4.6', 'lower', '3.46%')]
-    rateid           20604171
-    created          2004-10-21 12:19:05
-    cid              14
-    modified         2013-09-16 15:42:28
-    rank             s_crown_2
-    nick             ◎妞妞◎
-    charge           1,504.88
-    promise          ['xiaofei', 'seven']
-    num_collects     569394
-    sid              33003356
-    title            ★妞妞旺铺★女装专家  T恤 雪纺 衬衫 裙子 裤子 每周一海量上新
-    pic_path         /ae/98/T1mN4EXdFpXXartXjX.gif
-    good_rating      92.4466666667
-"""
 import re
 import json
 import urllib
@@ -54,6 +37,14 @@ def get_shop(id_or_url):
         info.update(get_collects_info(info['sid']))
         info.update(get_service_info(rateid))
 
+#get logo 
+    try:
+        url = "%s/dongtai.htm" % url
+        content = requests.get(url).content
+        logo = re.compile(r'<img src="http://logo.taobao.com/shop-logo/(.*?)" width="60" height="60"/>').search(content).group(1)
+        info['logo'] = "http://logo.taobao.com/shop-logo/%s" % logo
+    except:
+        traceback.print_exc()
     return info
 
 
