@@ -99,14 +99,11 @@ class ItemScheduler(Scheduler):
         
     def run(self):  
         ids = ItemCT.get_items(self.ct)
-        print('scheduled {} items for lastcheck'.format(len(ids)))
-        ids = LC.need_update(*ids)
-        print('putting {} items in queue'.format(len(ids)))
-        ai1.put(ids)
-        #for itemid in ItemCT.get_items(self.ct):
-        #    if LC.need_update('item', itemid):
-        #        print('putting {}'.format(itemid))
-        #        ai1.put(itemid)
+        if ids:
+            print('scheduled {} items for lastcheck'.format(len(ids)))
+            ids = LC.need_update(*ids)
+            print('putting {} items in queue'.format(len(ids)))
+            ai1.put(*ids)
 
 def main():
     import argparse
