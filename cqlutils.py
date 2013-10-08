@@ -74,7 +74,7 @@ class ConnectionPool(object):
                  maxretries=5,
                  username=None, 
                  password=None, 
-                 consistency='ONE'):
+                 consistency='ANY'):
         self.hosts = hosts
         self.username = username
         self.password = password
