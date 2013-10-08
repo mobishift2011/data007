@@ -49,8 +49,8 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
         return {}
     else:
         content = r.content
-        open('test.html', 'w').write(content)
-        if 'error-notice-text' in content or 'errorDetail' in content or 'tb-off-sale' in content:
+        if 'error-notice-text' in content or 'errorDetail' in content \
+            or 'tb-off-sale' in content or 'sold-out-tit' in content:
             return {'error':True}
         if 'http://s.tongcheng.taobao.com/detail.htm' in content:
             return get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 

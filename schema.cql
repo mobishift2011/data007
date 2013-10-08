@@ -1,5 +1,5 @@
 CREATE KEYSPACE IF NOT EXISTS ataobao2
-    WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
+    WITH replication = {'class':'SimpleStrategy', 'replication_factor':2};
 
 USE ataobao2;
 
