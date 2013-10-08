@@ -27,4 +27,4 @@ msgpack-python
 autobahn
 txmongo
 txredisapi
-
+pyquery
