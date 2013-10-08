@@ -37,24 +37,14 @@ def get_shop(id_or_url):
         info.update(get_collects_info(info['sid']))
         info.update(get_service_info(rateid))
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 59a4180dc53b1264fe6b12f5de0ceae67d3d7469
-#get logo 
-    try:
-        url = "%s/dongtai.htm" % url
-        content = requests.get(url).content
-        logo = re.compile(r'<img src="http://logo.taobao.com/shop-logo/(.*?)" width="60" height="60"/>').search(content).group(1)
-        info['logo'] = "http://logo.taobao.com/shop-logo/%s" % logo
-    except:
-        traceback.print_exc()
-<<<<<<< HEAD
-=======
-        
-    
->>>>>>> 59a4180dc53b1264fe6b12f5de0ceae67d3d7469
-    return info
+        try:
+            url = "%s/dongtai.htm" % url
+            content = requests.get(url).content
+            logo = re.compile(r'<img src="http://logo.taobao.com/shop-logo/(.*?)" width="60" height="60"/>').search(content).group(1)
+            info['logo'] = "http://logo.taobao.com/shop-logo/%s" % logo
+        except:
+            traceback.print_exc()
+        return info
 
 
 def get_collects_info(sid):
