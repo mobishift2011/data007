@@ -10,6 +10,8 @@ Currently there're two workers:
 """
 from gevent import monkey; monkey.patch_all()
 
+import traceback
+
 import gevent.pool
 from functools import partial
 
@@ -56,6 +58,7 @@ class ItemWorker(Worker):
                 try:
                     update_item(d)
                 except:
+                    traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
 
                 if LC.need_update('shop', d['shopid']):
