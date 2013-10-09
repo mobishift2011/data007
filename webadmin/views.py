@@ -112,10 +112,19 @@ class SpiderAdminView(BaseView):
         rows = list(rows)
         return self.render('cfz/spider_monitor.html', **{"rows":rows})
 
+class TestMonitorView(BaseView):
+    @expose('/')
+    def index(self):
+
+        return self.render('cfz/spider_monitor_pid.html')
+    
+    
 
 from flask.ext import admin
 admin = admin.Admin(app,  'taobao')
 admin.add_view(SpiderAdminView())
+
+admin.add_view(TestMonitorView())
 
 # admin.add_view(MainCategoryView(MainCategory,name="parent", endpoint='MainCategory', category='category'))
 # admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='category'))

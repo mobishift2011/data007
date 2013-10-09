@@ -1,0 +1,59 @@
+
+        
+<script src="{{ url_for('static', filename='js/autobahn.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('admin.static', filename='js/jquery-1.8.3.min.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('admin.static', filename='bootstrap/js/bootstrap.min.js') }}" type="text/javascript"></script>
+    
+<script>
+
+var g_session = "";
+
+$(document).ready(function(){
+   // connect to WAMP server
+	server_connect()
+});
+
+function server_connect(){
+   ab.connect("ws://23.20.92.211:9000",
+      // WAMP session was established
+      function (session) {
+      	   console.log("Connected!");
+		   g_session = session;
+		   
+		   g_session.subscribe("psmonitor", onEvent);
+		   
+		   msg = {};
+		   msg.pid = 916;
+		   msg.sid = g_session._session_id;
+		   
+		   console.log(msg);
+		   
+		   g_session.publish('spider', msg, [], ['3NdTsxQoaYMk7rys']);
+      },
+      
+      // WAMP session is gone
+      function (code, reason) {
+ 		 
+ 		 console.log("WAMP session is gone");
+ 		 console.log(code);
+ 		 console.log(reason);
+         // things to do once the session fails
+      }
+   );
+}
+
+function onEvent(topic, event){
+	console.log(topic);
+	console.log(event);
+	
+}
+
+
+function spider_shutdown(btn){
+	console.log("spider_shutdown");
+	g_session.publish('spider', msg, [], [sid]);
+	
+}
+
+
+</script>
