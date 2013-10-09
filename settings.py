@@ -19,11 +19,11 @@ envs = {
         'QUEUE_URI': 'redis://ec2-107-21-68-149.compute-1.amazonaws.com:6379/11',
         'CACHE_URI': 'redis://ec2-107-21-68-149.compute-1.amazonaws.com:6379/12',
         'DB_HOSTS': [
-            'ec2-107-21-167-122.compute-1.amazonaws.com:9160',
-            'ec2-50-16-109-195.compute-1.amazonaws.com:9160',
-            'ec2-75-101-172-166.compute-1.amazonaws.com:9160',
-            'ec2-54-211-56-82.compute-1.amazonaws.com:9160',
-            'ec2-50-16-97-89.compute-1.amazonaws.com:9160',
+            'ec2-184-73-76-122.compute-1.amazonaws.com:9160',
+            'ec2-54-242-246-205.compute-1.amazonaws.com:9160',
+            'ec2-54-243-22-85.compute-1.amazonaws.com:9160',
+            'ec2-54-242-235-179.compute-1.amazonaws.com:9160',
+            'ec2-54-226-75-112.compute-1.amazonaws.com:9160',
         ],
     },
 }
