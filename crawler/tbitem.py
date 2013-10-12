@@ -50,7 +50,8 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
     else:
         content = r.content
         if 'error-notice-text' in content or 'errorDetail' in content \
-            or 'tb-off-sale' in content or 'sold-out-tit' in content:
+            or 'tb-off-sale' in content or 'sold-out-tit' in content \
+            or 'pageType:"auction"' in content or 'status:-9' in content:
             return {'error':True}
         if 'http://s.tongcheng.taobao.com/detail.htm' in content:
             return get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 
