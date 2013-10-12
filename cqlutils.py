@@ -176,8 +176,14 @@ class ConnectionPool(object):
 
     def execute(self, query, bindings=None, result=False):
         with self.connection() as cur:
-            query, bindings = self.setup_bindings(query, bindings)
+            if query.strip().startswith('select '):
+                consistency_level = 'ONE'
+            else:
+                consistency_level = 'ANY'
+
+            query, bindings = self.setup_bindings(query, bindings, consistency_level=consistency_level)
             resp = cur.execute(query, bindings)
+
 
             if result is False:
                 return resp
