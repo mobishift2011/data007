@@ -42,6 +42,20 @@ class SubProcessProtocol(protocol.ProcessProtocol):
         self.spiders = spiders
         self.kw = kw
 
+    def childDataReceived(self, childFD, data):
+        
+        #self.sptl.monitor
+        try:
+            for pid, sid in self.sptl.monitor_ps.iteritems():
+                print pid, sid
+                if pid == self.pid:
+                    self.sptl.publish("psmonitor", data, eligible=[sid])
+        except Exception, e:
+            print e
+            
+        protocol.ProcessProtocol.childDataReceived(self, childFD, data)
+        
+        
     def connectionMade(self):
         self.pid = self.transport.pid
         self.spiders[self.pid] = self.kw
@@ -50,9 +64,16 @@ class SubProcessProtocol(protocol.ProcessProtocol):
     def processExited(self, reason):
         print "processExited, status %s" % (reason.value.exitCode,)
         del self.spiders[self.pid]
+        
+        try:
+            del self.sptl.monitor_ps[self.pid]
+        except:
+            pass
+        
         self.sptl.status_refresh()
+        
     
-    
+
 class TaskClientProtocol(WampClientProtocol):
     """
     Demonstrates simple Publish & Subscribe (PubSub) with Autobahn WebSockets.
@@ -82,7 +103,10 @@ class TaskClientProtocol(WampClientProtocol):
 
         elif event["act"] == "status":
             self.status_refresh()
-        
+
+        elif event["act"] == "monitor":
+            self.monitor_ps[event["pid"]] = event["sid"]
+            
         elif event["act"] == "shutdown":
             os.system("init 0")
         
@@ -116,6 +140,7 @@ class TaskClientProtocol(WampClientProtocol):
         '''
         '''
         pp = SubProcessProtocol(self, self.factory.spiders, kw)
+        
         args = [sys.executable] + kw['cmd'].split(' ')
         reactor.spawnProcess(pp, 
                              sys.executable, args=args,
@@ -137,6 +162,7 @@ class TaskClientProtocol(WampClientProtocol):
         self.subscribe("spider", self.process_msg)
         log.msg("sub 'spider' channl finish")
 
+        self.monitor_ps = {}
         try:
             burl = "http://169.254.169.254/latest/meta-data"
             

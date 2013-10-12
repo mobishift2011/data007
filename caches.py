@@ -46,19 +46,26 @@ class LC(object):
         return conn.hlen(hashkey) 
 
     @staticmethod
-    def need_update(type, id):
+    def need_update(type, *ids):
+        if len(ids) == 0:
+            return []
+        elif len(ids) == 1:
+            ids = list(ids)
+	    ids.append(ids[0])
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
-        lastcheck = conn.hget(hashkey, id)
+        lastchecks = conn.hmget(hashkey, *ids)
 
         offset = 80000 if type == 'item' else 86400*7
 
-        # if there's no lastcheck, or lastcheck happened an hour ago
-        # try call on_update with id, if succeeded, update lastcheck in redis
-        if lastcheck is None or unpack(lastcheck) + offset < tsnow:
-            return True
-        else:
-            return False
+        needs = []
+        for i, lastcheck in enumerate(lastchecks): 
+            # if there's no lastcheck, or lastcheck happened some time ago
+            # try call on_update with id, if succeeded, update lastcheck in redis
+            if lastcheck is None or unpack(lastcheck) + offset < tsnow:
+                needs.append(ids[i])
+
+        return needs
 
     @staticmethod
     def update_if_needed(type, id, on_update, queue):
@@ -115,8 +122,7 @@ class ItemCT(object):
             ct = int(time.mktime(time.gmtime())%86400/60)
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
-        for m in conn.smembers(setkey):
-            yield unpack(m)
+        return [unpack(m) for m in conn.smembers(setkey)]
 
 class ShopItem(object):
     """ Shop-Item Relation Management 

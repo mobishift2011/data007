@@ -112,6 +112,15 @@ class SpiderAdminView(BaseView):
         rows = list(rows)
         return self.render('cfz/spider_monitor.html', **{"rows":rows})
 
+@app.route('/admin/testmonitorview/')
+def testmonitorview():
+    from flask import request, render_template
+    data = {}
+    data['pid'] = request.args.get('pid')
+    data['sid'] = request.args.get('sid')
+    
+    return render_template('cfz/spider_monitor_pid.html', **data)
+    
 
 from flask.ext import admin
 admin = admin.Admin(app,  'taobao')

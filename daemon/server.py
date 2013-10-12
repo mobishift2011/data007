@@ -36,6 +36,8 @@ class RepeaterServerProtocol(WampServerProtocol):
         
     def onSessionOpen(self):
         self.runner_info = {}
+        self.monitor_info = {}
+        
         
         self.registerProcedureForRpc("clients", self.getClients)
         
@@ -46,8 +48,11 @@ class RepeaterServerProtocol(WampServerProtocol):
         self.registerForPubSub("tasker")
         self.registerForPubSub("webadmin")
         
-        log.msg("on connection sid:%s, peer:%s" % (self.session_id, self.peerstr))
+        self.registerForPubSub("psmonitor")
         
+        log.msg("on connection sid:%s, peer:%s" % (self.session_id, self.peerstr))
+
+    
     @exportRpc("get_spiders")
     def get_spiders(self):
         channel = "spider"

@@ -8,6 +8,7 @@ flask-mongoengine
 ipython
 
 # datastore related
+cql
 pycassa
 pymongo
 mongoengine
@@ -26,4 +27,4 @@ msgpack-python
 autobahn
 txmongo
 txredisapi
-
+pyquery
