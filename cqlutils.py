@@ -213,11 +213,12 @@ class ConnectionPool(object):
             return resp
 
     def build_validators(self, columns):
+        import struct
         import datetime
         validators = []
         for coltype in columns:
-            if coltype == 'DateType':
-                validators.append(lambda x: datetime.datetime.utcfromtimestamp(x))
+            if coltype == 'org.apache.cassandra.db.marshal.TimestampType':
+                validators.append(lambda x: datetime.datetime.utcfromtimestamp(struct.unpack('!q', x)[0]/1000))
             else:
                 validators.append(lambda x: x)
         return validators
