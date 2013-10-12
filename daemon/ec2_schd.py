@@ -146,7 +146,9 @@ class EC2Monitor(threading.Thread):
                             pass
                         
                         
+                        rcnd = 0
                         while 1:
+                            rcnd += 1
                             reqs = conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name,
                                                                                 'spot-instance-request-id':[x.id for x in rets]
                                                                                 })
@@ -155,6 +157,9 @@ class EC2Monitor(threading.Thread):
                             else:
                                 log.msg('wait to request finish!!')
                                 time.sleep(1)
+                            if rcnd > 3600:
+                                break
+                            
                             
                     else:
                         #instance is more then setting.
