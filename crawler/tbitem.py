@@ -252,6 +252,11 @@ def get_ump_price(url):
         if need_decode:
             content = content.decode('gbk', 'ignore')
         content = re.sub(r';TB.PointData=.*', '', content).strip()
+
+        # no idea why this happens, but we can ignore it
+        if 'g_config.vdata.asyncViewer' in content:
+            return
+
         if content:
             data = ctx.eval('d='+patpromo.search(content).group(1))
             if data['def'].length > 0:
