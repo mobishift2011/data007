@@ -23,12 +23,11 @@ function server_connect(){
 		   g_session.subscribe("psmonitor", onEvent);
 		   
 		   msg = {};
-		   msg.pid = 916;
+		   msg.act = "monitor"
+		   msg.pid = {{pid}};
 		   msg.sid = g_session._session_id;
-		   
 		   console.log(msg);
-		   
-		   g_session.publish('spider', msg, [], ['3NdTsxQoaYMk7rys']);
+		   g_session.publish('spider', msg, [], ['{{sid}}']);
       },
       
       // WAMP session is gone
@@ -43,17 +42,12 @@ function server_connect(){
 }
 
 function onEvent(topic, event){
-	console.log(topic);
 	console.log(event);
-	
-}
-
-
-function spider_shutdown(btn){
-	console.log("spider_shutdown");
-	g_session.publish('spider', msg, [], [sid]);
-	
+	var base = $("#monitor").val();
+	$("#monitor").val(base + event);
 }
 
 
 </script>
+
+<textarea style="width: 100%; height: 100%;background-color:#000000;color:#FFFFFF;" id="monitor"></textarea>

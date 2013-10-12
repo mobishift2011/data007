@@ -52,7 +52,7 @@ def server_admin():
                  "--logfile=%s" % FLOG,
 #                  "--rundir=%s/" % RUN_PATH
                  ]
-        print args
+        print args, "".join(args)
         
         try:
             out = subprocess.call(args)

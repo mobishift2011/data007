@@ -10,16 +10,62 @@ Currently there're two workers:
 """
 from gevent import monkey; monkey.patch_all()
 
+import time
 import traceback
-
 import gevent.pool
 from functools import partial
+from collections import deque
 
 from models import db, update_item
 from caches import LC, ItemCT, ShopItem
 from queues import poll, ai1, ai2, as1, af1
 from crawler.tbitem import get_item, is_valid_item
 from crawler.tbshop import list_shop
+
+def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
+    """ calling a func with throttling
+    
+    Throttling the function call with ``threshold_per_minute`` calls per minute. This is useful 
+    in case where the func calls a remote service having their throttling policy. We must honor 
+    their throttling, otherwise we will be banned shortly.
+
+    :param func: the function to be called
+    :param args: args of that function
+    :param kwargs: kwargs of that function
+    :param threshold_per_minute: defines how many calls can be made to the function per minute 
+    """
+    if not hasattr(call_with_throttling, 'logs'):
+        call_with_throttling.logs = deque()
+    logs = call_with_throttling.logs
+
+    def remove_outdated():
+        # remove outdated from logs
+        t = time.time()
+        while True:
+            if logs and logs[0] < t - 60:
+                logs.popleft()
+            else:
+                break
+
+    def wait_for_threshold():
+        while len(logs) > threshold_per_minute:
+            remove_outdated()
+            time.sleep(0.3)
+
+    def smoothen_calling_interval():
+        average_processing_time = (time.time() - logs[0]) / len(logs)
+        expected_processing_time = 60. / threshold_per_minute
+        if expected_processing_time > average_processing_time:
+            time.sleep((len(logs)+0.8)*expected_processing_time - len(logs)*average_processing_time)
+    
+    if logs and len(logs) < threshold_per_minute:
+        smoothen_calling_interval()
+    else:
+        wait_for_threshold()
+
+    logs.append(time.time())
+    
+    return func(*args, **kwargs)
 
 class Worker(object):
     """ General Worker """
@@ -41,6 +87,8 @@ class ItemWorker(Worker):
     2. check update, if yes, go on
     3. update item info, update daily summary 
     4. put shopid into queue if needed
+
+    implement throttling
     """
     def work(self):
         def on_update(itemid):
@@ -56,7 +104,8 @@ class ItemWorker(Worker):
                 raise ValueError('item incomplete error: {}'.format(d))
             elif d and 'shopid' in d:
                 try:
-                    update_item(d)
+                    #update_item(d)
+                    call_with_throttling(update_item, args=(d,), threshold_per_minute=600)
                 except:
                     traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
@@ -107,6 +156,18 @@ def main():
         "shop": ShopWorker(option.poolsize),
         "requeue": ReQueueWorker(),
     }.get(option.worker).work()
+
+
+def test_throttling():
+    def printget():
+        print time.time(), get_item(22183623058) 
+        
+    import gevent.pool
+    pool = gevent.pool.Pool(20)
+    while True:
+        pool.spawn(call_with_throttling, printget, threshold_per_minute=600) 
+    pool.join()
+
 
 if __name__ == '__main__':
     main()

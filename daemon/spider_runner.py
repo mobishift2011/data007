@@ -46,7 +46,8 @@ class SubProcessProtocol(protocol.ProcessProtocol):
         
         #self.sptl.monitor
         try:
-            for pid, sid in self.sptl.monitor.iteritems():
+            for pid, sid in self.sptl.monitor_ps.iteritems():
+                print pid, sid
                 if pid == self.pid:
                     self.sptl.publish("psmonitor", data, eligible=[sid])
         except Exception, e:
@@ -63,7 +64,11 @@ class SubProcessProtocol(protocol.ProcessProtocol):
     def processExited(self, reason):
         print "processExited, status %s" % (reason.value.exitCode,)
         del self.spiders[self.pid]
-        del self.sptl.monitor_ps[self.pid]
+        
+        try:
+            del self.sptl.monitor_ps[self.pid]
+        except:
+            pass
         
         self.sptl.status_refresh()
         
