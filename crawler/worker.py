@@ -93,7 +93,7 @@ class ItemWorker(Worker):
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=300)
             #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
                 return
