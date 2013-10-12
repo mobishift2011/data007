@@ -87,12 +87,17 @@ class Queue(object):
                 items.append(field)
 
         # we call sadd directly because we don't want to unpack then pack fields
-        if items:
-            print('requeuing {} to {}'.format([unpack(item) for item in items], self.key))
-            pipeline = conn.pipeline()
-            pipeline.hdel(self.hashkey, *items)
-            pipeline.sadd(self.key, *items)
-            pipeline.execute()
+        items, items_tail = items[:50000], items[50000:]
+        while items:
+            try:
+                print('requeuing {} items(e.g. ... {}) to {}'.format(len(items), [unpack(item) for item in items[-10:]], self.key))
+                pipeline = conn.pipeline()
+                pipeline.hdel(self.hashkey, *items)
+                pipeline.sadd(self.key, *items)
+                pipeline.execute()
+                items, items_tail = items_tail[:50000], items_tail[50000:]
+            except:
+                pass
 
     def background_cleaning(self):
         while True:

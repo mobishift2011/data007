@@ -93,7 +93,8 @@ class ItemWorker(Worker):
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = get_item(itemid)
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
+            #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
                 return
 
@@ -104,8 +105,7 @@ class ItemWorker(Worker):
                 raise ValueError('item incomplete error: {}'.format(d))
             elif d and 'shopid' in d:
                 try:
-                    #update_item(d)
-                    call_with_throttling(update_item, args=(d,), threshold_per_minute=600)
+                    update_item(d)
                 except:
                     traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
