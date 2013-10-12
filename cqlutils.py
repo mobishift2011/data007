@@ -181,8 +181,8 @@ class ConnectionPool(object):
             else:
                 consistency_level = 'ANY'
 
-            query, bindings = self.setup_bindings(query, bindings, consistency_level=consistency_level)
-            resp = cur.execute(query, bindings)
+            query, bindings = self.setup_bindings(query, bindings)
+            resp = cur.execute(query, bindings, consistency_level=consistency_level)
 
 
             if result is False:
