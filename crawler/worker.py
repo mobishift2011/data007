@@ -11,6 +11,7 @@ Currently there're two workers:
 from gevent import monkey; monkey.patch_all()
 
 import time
+import traceback
 import gevent.pool
 from functools import partial
 from collections import deque
@@ -106,6 +107,7 @@ class ItemWorker(Worker):
                     #update_item(d)
                     call_with_throttling(update_item, args=(d,), threshold_per_minute=600)
                 except:
+                    traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
 
                 if LC.need_update('shop', d['shopid']):

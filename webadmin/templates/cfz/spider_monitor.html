@@ -87,6 +87,7 @@
 	<span style="color:black;width: 80px;" name="cmd"></span> 
 	<span>
 		<button onclick="spider_stop(this)">stop</button>
+		<button onclick="spider_monitor(this)">monitor</button>
 	</span>
 </div>
 
@@ -225,6 +226,19 @@ function spider_stop(btn){
 	g_session.publish('spider', msg, [], [sid]);
 	
 	$(btn).parent().html('<img src="http://www.favbuy.com/static/img/common/loader-bg-gray.gif" />');
+}
+
+function spider_monitor(btn){
+	console.log("spider_monitor");
+	
+	var sid = $(btn).parents("tr").attr("name");
+	var pid = $(btn).parent().parent().find('span[name="pid"]').text();
+	var msg = {};
+	msg.act = "monitor";
+	msg.pid_list = [pid];
+	//g_session.publish('spider', msg, [], [sid]);
+	
+	window.open ('/admin/testmonitorview/?sid=' + sid + '&pid=' + pid,'newwindow','height=400,width=600,top=100,left=100,toolbar=no,menubar=no,scrollbars=no, resizable=no,location=no, status=no');
 }
 
 function spider_shutdown(btn){

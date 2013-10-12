@@ -102,15 +102,22 @@ class EC2Monitor(threading.Thread):
                         print req.id, req.state
                         req_list.append(req)
                     
-                    print "!!!!!!!!!!!!aaaaaaaaaaaaa", [x.id for x in req_list], u"sir-fd741435" in  [x.id for x in req_list], len(req_list)
+                    print "!!!!!!!!!!!!aaaaaaaaaaaaa", [x.id for x in req_list], len(req_list)
+                    print len(req_list)
                     
-                    for res in conn.get_all_instances(filters={'spot-instance-request-id':[x.id for x in req_list],
-                                                                'image-id':row['image_id']}):
-                        for i in res.instances:
-                            if i.id not in [x.id for x in instance_list]:
-                                instance_list.append(i)
-                                i.add_tag("Name", tag_name)
-                                print "add_tag", i.id
+                    count = len(req_list)
+                    page_size = 50
+                    page_num = (count / page_size) + (1 if (count % page_size) else 0)
+                    for page in range(page_num):
+                        print page_size, page_num, count, page, page*page_size, page_size
+                        for res in conn.get_all_instances(filters={'spot-instance-request-id':[x.id for x in req_list[(page*page_size):(page + 1)*page_size]],
+                                                                    'image-id':row['image_id']}):
+                            print res
+                            for i in res.instances:
+                                if i.id not in [x.id for x in instance_list]:
+                                    instance_list.append(i)
+                                    i.add_tag("Name", tag_name)
+                                    print "add_tag", i.id
                         
                     
                     log.msg('finish##,get instance_list:'.format(len(instance_list)))
@@ -123,21 +130,25 @@ class EC2Monitor(threading.Thread):
                             run_instances = 3
                         
                         print "run_instances,real", run_instances
-                        rets = conn.request_spot_instances(
-                            row['price'],
-                            row['image_id'],
-                            count=run_instances,
-                            #key_name='favbuykey', 
-                            #security_groups=['sg-5d0b7d5c'], 
-                            #security_group_ids = map(str, row['security_group_ids']), 
-                            #instance_profile_name = row['name'],
-                            #instance_profile_name = "aa",
-                            #security_groups = ['general'],
-                            security_group_ids = map(str, row['security_group_ids']), 
-                            instance_type = row['instance_type'], 
-                            user_data = row['script_code']
-                        )
-                        log.msg("run_instances:{}".format(rets))
+                        try:
+                            rets = conn.request_spot_instances(
+                                row['price'],
+                                row['image_id'],
+                                count=run_instances,
+                                #key_name='favbuykey', 
+                                #security_groups=['sg-5d0b7d5c'], 
+                                #security_group_ids = map(str, row['security_group_ids']), 
+                                #instance_profile_name = row['name'],
+                                #instance_profile_name = "aa",
+                                #security_groups = ['general'],
+                                security_group_ids = map(str, row['security_group_ids']), 
+                                instance_type = row['instance_type'], 
+                                user_data = row['script_code']
+                            )
+                            log.msg("run_instances:{}".format(rets))
+                        except Exception, e:
+                            print e
+                            continue
                         
                         try:
                             for ret in rets:
