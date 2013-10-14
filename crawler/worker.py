@@ -96,6 +96,7 @@ class ItemWorker(Worker):
             d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=300)
             #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
+                LC.delete('item', itemid)
                 return
 
             # for connection errors, we simply raise exception here

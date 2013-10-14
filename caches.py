@@ -46,6 +46,11 @@ class LC(object):
         return conn.hlen(hashkey) 
 
     @staticmethod
+    def delete(type, id):
+        hashkey = LC.hashkey.format(type)
+        return conn.hdel(hashkey, id)
+
+    @staticmethod
     def need_update(type, *ids):
         if len(ids) == 0:
             return []
