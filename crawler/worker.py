@@ -16,11 +16,12 @@ import gevent.pool
 from functools import partial
 from collections import deque
 
-from models import db, update_item
+from models import db, update_item, update_shop
 from caches import LC, ItemCT, ShopItem
 from queues import poll, ai1, ai2, as1, af1
 from crawler.tbitem import get_item, is_valid_item
 from crawler.tbshop import list_shop
+from crawler.tbshopinfo2 import get_shop
 
 def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
     """ calling a func with throttling
@@ -139,6 +140,7 @@ class ShopWorker(Worker):
         def update_shopinfo(id):
             try:
                 si = get_shop(id)
+                update_shop(si)
             except Exception as e:
                 traceback.print_exc()
 
