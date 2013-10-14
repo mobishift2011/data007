@@ -15,6 +15,8 @@ from cqlutils import ConnectionPool
 from settings import DB_HOSTS
 from datetime import datetime
 
+import json
+
 # see schema
 DATABASE = 'ataobao2'
 TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item', 'item_attr']
@@ -71,6 +73,25 @@ def update_item(item):
         db.batch(insert_into_item_attr)
 
 
+def update_shop(shopinfo):
+    d = shopinfo
+    if 'rank_num' not in d:
+        d['rank_num'] = 500001
+    d['rating'] = json.dumps(d['rating'])
+    d['rates'] = json.dumps(d['rates'])
+    d['promise'] = json.dumps(d['promise'])
+    d['sid'] = int(d['sid'])
+    d['id'] = d['sid']
+
+    insert_into_shop =  \
+        '''INSERT INTO ataobao2.shop
+                (id, sid, rateid, nick, charge, promise, logo, rating, good_rating,
+                main_sale, rank, rank_num, num_collects, title, rates)
+            VALUES
+                (:id, :sid, :rateid, :nick, :charge, :promise, :logo, :rating, :good_rating,
+                :main_sale, :rank, :rank_num, :num_collects, :title, :rates)'''
+
+    db.execute(insert_into_shop, d)
 
 if __name__ == '__main__':
     from crawler.tbitem import get_item
