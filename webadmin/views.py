@@ -79,7 +79,9 @@ class SchdSeedView(ModelView):
 class TaobaoUserView(ModelView):
     column_list = ("name", "pwd", "enable", "latest")
 
-
+class EcIPView(ModelView):
+    column_list = ("ip", "use_time")
+    
 
 class EC2_SchdView(ModelView):
     column_list = ("name", "ec2_region", "instance_num", "instance_type", "price", "live_time", "security_group_ids", "enable", "schd_time", "latest_schd")
@@ -126,6 +128,7 @@ from flask.ext import admin
 admin = admin.Admin(app,  'taobao')
 admin.add_view(SpiderAdminView())
 
+
 # admin.add_view(MainCategoryView(MainCategory,name="parent", endpoint='MainCategory', category='category'))
 # admin.add_view(CategoryView(Category,name="sub", endpoint='Category', category='category'))
 
@@ -139,5 +142,8 @@ admin.add_view(SpiderNaviView(SpiderNavi, name="spider_navi", endpoint='SpiderNa
 
 admin.add_view(TaobaoUserView(TaobaoUser))
 
+admin.add_view(EcIPView(EcIP))
+
 #admin.add_view(SpidersView())
+
 

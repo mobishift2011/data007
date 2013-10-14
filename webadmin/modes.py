@@ -117,6 +117,14 @@ class TaobaoUser(db.Document):
     def __unicode__(self):
         return self.name
     
+
+class EcIP(db.Document):
+    '''
+    '''
+    ip = db.StringField(max_length=500)
+    use_time = db.DateTimeField(default=datetime.datetime.utcnow())
+    def __unicode__(self):
+        return self.ip    
 #------------------------------------------------------------------------------ ec2
 
 class EC2_Schd(db.Document):

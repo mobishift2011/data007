@@ -192,3 +192,13 @@ def test_py():
 print "medule api s loaded."
 
 
+
+@app.route('/store_remote_ip/', methods=['GET', 'POST'])
+def store_remote_ip():
+    from webadmin.modes import EcIP
+    from flask import request
+    ip = request.remote_addr
+    EcIP(ip=ip).save()
+    
+    return ip
+
