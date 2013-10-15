@@ -101,7 +101,7 @@ class ItemScheduler(Scheduler):
         ids = ItemCT.get_items(self.ct)
         if ids:
             print('scheduled {} items for lastcheck'.format(len(ids)))
-            ids = LC.need_update(*ids)
+            ids = LC.need_update('item', *ids)
             print('putting {} items in queue'.format(len(ids)))
             ai1.put(*ids)
 
