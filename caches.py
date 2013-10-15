@@ -22,6 +22,10 @@ class IF(object):
     """
     setkey = 'ataobao-infrequent-items' 
     @staticmethod
+    def count():
+        return conn.scard(IF.setkey) 
+
+    @staticmethod
     def contains(*ids):
         p = conn.pipeline()
         for id in ids:
