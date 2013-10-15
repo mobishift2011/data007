@@ -19,7 +19,7 @@ from collections import deque
 from models import db, update_item, update_shop
 from caches import LC, ItemCT, ShopItem
 from queues import poll, ai1, ai2, as1, af1
-from crawler.tbitem import get_item, is_valid_item
+from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
 
@@ -131,6 +131,7 @@ class ItemWorker(Worker):
 
         while True:
             if self.banned:
+                print('banned, sleeping 60 secs')
                 time.sleep(60)
             result = poll([ai1, ai2], timeout=10)
             if result:
