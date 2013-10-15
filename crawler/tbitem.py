@@ -27,6 +27,11 @@ import traceback
 from session import get_session, get_blank_session
 from jsctx import get_ctx, need_decode
 
+def is_banned():
+    s = get_blank_session()
+    iteminfo_url = 'http://detailskip.taobao.com/json/ifq.htm?id=26694692884&sid=860349499&sbn=882872a35964841ee57f639b99428609&q=1'
+    return 'regcheckcode' in s.get(iteminfo_url).content
+
 def is_valid_item(item):
     """ test if an item dict is valid """
     if not isinstance(item, dict):

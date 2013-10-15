@@ -90,10 +90,23 @@ class ItemWorker(Worker):
 
     implement throttling
     """
+    def __init__(self, poolsize=100):
+        self.pool = gevent.pool.Pool(poolsize+1)
+        self.banned = False
+        self.pool.spawn(self.check_ban)
+
+    def check_ban(self):
+        while True:
+            time.sleep(10)
+            try:
+                self.banned = is_banned()
+            except:
+                traceback.print_exc()
+
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=300)
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
             #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
                 return
@@ -115,6 +128,8 @@ class ItemWorker(Worker):
                     as1.put(d['shopid'])
 
         while True:
+            if self.banned:
+                time.sleep(60)
             result = poll([ai1, ai2], timeout=10)
             if result:
                 queue, itemid = result
