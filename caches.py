@@ -12,6 +12,32 @@ from settings import QUEUE_URI
 
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
+
+
+class IF(object):
+    """ infrequent items 
+
+    save ids for num_sold30 == 0, to distinguish from everyday fetchs
+    ids belong to IF would trigger crawler less frequently (7days/run)
+    """
+    setkey = 'ataobao-infrequent-items' 
+    @staticmethod
+    def contains(*ids):
+        p = conn.pipeline()
+        for id in ids:
+            p.sismember(IF.setkey, id)
+        result = p.execute()
+        if len(result) == 1:
+            result = result[0]
+        return result
+
+    @staticmethod
+    def delete(*ids):
+        conn.srem(IF.setkey, *ids)
+
+    @staticmethod
+    def add(*ids):
+        conn.sadd(IF.setkey, *ids)
     
 class LC(object):
     """ Item LastCheck Management 
@@ -62,12 +88,16 @@ class LC(object):
         lastchecks = conn.hmget(hashkey, *ids)
 
         offset = 80000 if type == 'item' else 86400*7
+        offsets = [offset] * len(ids)
+        if type == 'item':
+            contains = IF.contains(*ids)
+            offsets = map(lambda o, c: o*7 if c else o, offsets, contains)
 
         needs = []
         for i, lastcheck in enumerate(lastchecks): 
             # if there's no lastcheck, or lastcheck happened some time ago
             # try call on_update with id, if succeeded, update lastcheck in redis
-            if lastcheck is None or unpack(lastcheck) + offset < tsnow:
+            if lastcheck is None or unpack(lastcheck) + offsets[i] < tsnow:
                 needs.append(ids[i])
 
         return needs

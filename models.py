@@ -15,6 +15,8 @@ from cqlutils import ConnectionPool
 from settings import DB_HOSTS
 from datetime import datetime
 
+from caches import IF
+
 import json
 
 # see schema
@@ -61,6 +63,11 @@ def update_item(item):
             insert_into_item,
             insert_into_item_by_date,
             insert_into_shop_by_item])
+
+    if d['num_sold30'] == 0:
+        IF.add(d['id'])
+    else:
+        IF.delete(d['id'])
 
     # batch insert attributes
     insert_into_item_attr = \
