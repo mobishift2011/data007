@@ -35,7 +35,16 @@
                     </th>
             </tr>
         </thead>
-        
+        <div>
+                      过滤：<select id="spider_filter">
+        		<option selected="selected">taobao_spider</option>
+        		<option >process_spider</option>
+        		<option >taobao_spider_nb</option>
+        		<option >all</option>
+        	</select>
+        	
+                       爬虫数量：<span id="spider_count"></span>
+        </div>
         <tbody id="spider_list">
     	</tbody>
     
@@ -107,7 +116,12 @@ var g_session = "";
 
 $(document).ready(function(){
    // connect to WAMP server
-	server_connect()
+	server_connect();
+	
+	$("#spider_filter").change(function(){
+		console.log("#spider_filter on change");
+		g_session.call("get_spiders").then(on_get_spiders);
+	});
 });
 
 function server_connect(){
@@ -163,7 +177,20 @@ function update_status(sid, por_list){
 function on_get_spiders(spider_list) {
    console.log(spider_list)
    $("#spider_list").html("");
+   
+   var spider_count = 0;
    for(var i=0; i < spider_list.length; i++){
+	   
+   	   var sel_text = $('#spider_filter option:selected').text();
+   	   
+   	   if(sel_text != 'all'){
+   	   	  if(sel_text != spider_list[i].spider_name){
+   	   	  	continue;
+   	   	  }
+   	   }
+   	   
+   	   spider_count++;
+   	   
    	   var tr = $("#tr-demo tr").clone().removeAttr("id");
    	   tr.attr("name", spider_list[i].sid);
    	   
@@ -179,6 +206,9 @@ function on_get_spiders(spider_list) {
    	   event.act = "status";
    	   g_session.publish('spider', event, [], [spider_list[i].sid]);
    }
+   
+   $("#spider_count").text(spider_count);
+   
 }
 function spider_start2(btn){
 	
