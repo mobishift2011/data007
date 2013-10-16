@@ -1,4 +1,5 @@
 """ Given taobao's itemid, return a dict of item info
+#update()
 
 Usage::
 
@@ -236,7 +237,7 @@ def get_sold30(url):
             content = content.decode('gbk', 'ignore')
         # eval pattern using pyv8
         data = ctx.eval('d='+patjsonp.search(content).group(1))
-        if not getattr(data, 'quantity', None) and data.postage:
+        if not getattr(data, 'quantity', None):
             return 0
         return data.quantity.quanity
     except:
