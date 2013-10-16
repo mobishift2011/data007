@@ -55,10 +55,17 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
         return {}
     else:
         content = r.content
-        if 'error-notice-text' in content or 'errorDetail' in content \
-            or 'tb-off-sale' in content or 'sold-out-tit' in content \
-            or 'pageType:"auction"' in content or 'status:-9' in content:
-            return {'error':True}
+        if 'error-notice-text' in content or 'errorDetail' in content:
+            return {'error': True, 'reason': 'not found'}
+        elif 'tb-off-sale' in content:
+            return {'error': True, 'reason': 'off sale'}
+        elif 'sold-out-tit' in content: 
+            return {'error': True, 'reason': 'sold out'}
+        elif 'pageType:"auction"' in content:
+            return {'error': True, 'reason': 'auction'}
+        elif 'status:-9' in content:
+            return {'error':True, 'reason': 'shop banned'}
+
         if 'http://s.tongcheng.taobao.com/detail.htm' in content:
             return get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 
 
@@ -68,7 +75,7 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
             return get_tmall_item(id, content)
         else:
             # we will ignore products in i.life.taobao.com
-            return {'notfound':True}
+            return {'error':True, 'reason':'i.life.taobao.com'}
 
 def get_tmall_item(id, content):
     """ get tmall item info by id and content """
@@ -184,8 +191,10 @@ def parse_content(content, patlist, patdict):
                     val = callback(obj)
                 except Exception as e:
                     # shopid does not exist
+                    # it must be a second hand product
+                    # we should ignore it
                     if name == 'shopid':
-                        return {}
+                        return {'error':True, 'reason':'second hand'}
                     else:
                         raise e 
                 if isinstance(val, dict):

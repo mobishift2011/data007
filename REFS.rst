@@ -28,6 +28,9 @@ data modeling best practices
 http://www.ebaytechblog.com/2012/07/16/cassandra-data-modeling-best-practices-part-1/
 http://www.ebaytechblog.com/2012/08/14/cassandra-data-modeling-best-practices-part-2/
 
+attack gc problems
+http://cassandra-user-incubator-apache-org.3065146.n2.nabble.com/cassandra-not-responding-log-full-of-gc-invocations-td7590356.html
+
 HADOOP
 ------
 why ec2 over emc
