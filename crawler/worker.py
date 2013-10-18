@@ -175,6 +175,7 @@ class ShopInfoWorker(Worker):
                     si = get_shop(id)
                     update_shop(si)
                 except:
+                    traceback.print_exc()
                     print('id {} will be requeued some time later'.format(id))
                 else:
                     asi1.task_done(id)
