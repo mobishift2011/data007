@@ -18,7 +18,7 @@ from collections import deque
 
 from models import db, update_item, update_shop
 from caches import LC, ItemCT, ShopItem, ShopInfo
-from queues import poll, ai1, ai2, as1, af1, aa1
+from queues import poll, ai1, ai2, as1, af1, asi1, aa1
 from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
@@ -80,7 +80,7 @@ class Worker(object):
 class ReQueueWorker(Worker):
     """ ReQueue Timeouted Jobs """
     def work(self):
-        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, aa1]])
+        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1, aa1]])
 
 class ItemWorker(Worker): 
     """ Work on Item Queues
@@ -155,18 +155,9 @@ class ShopWorker(Worker):
             ItemCT.add_items(*ids)
             ai2.put(*ids)
 
-        def update_shopinfo(id, retry=0):
-            try:
-                si = get_shop(id)
-                update_shop(si)
-            except Exception as e:
-                traceback.print_exc()
-                if retry<10:
-                    self.pool.spawn(update_shopinfo, shopid, retry+1)
-
         def spawn_shop(shopid):
             print('updating shop-item of shop {}'.format(shopid))
-            self.pool.spawn(update_shopinfo, shopid)
+            asi1.put(shopid)
             self.pool.spawn(list_shop, shopid, on_update)
             
         while True:
@@ -174,6 +165,27 @@ class ShopWorker(Worker):
             if result:
                 queue, shopid = result
                 LC.update_if_needed('shop', shopid, spawn_shop, queue)
+
+class ShopInfoWorker(Worker):
+    """ Work on ShopInfo Queues """
+    def work(self):
+        def update_shopinfo(id):
+            if LC.need_update('shop', id):
+                try:
+                    si = get_shop(id)
+                    update_shop(si)
+                except:
+                    print('id {} will be requeued some time later'.format(id))
+                else:
+                    asi1.task_done(id)
+            else:
+                asi1.task_done(id)
+
+        while True:
+            result = poll([asi1], timeout=10)
+            if result:
+                queue, shopid = result
+                self.pool.spawn(update_shopinfo, shopid)
 
 class AggregateWorker(Worker):
     """ worker for shop info aggregation """
@@ -192,12 +204,13 @@ class AggregateWorker(Worker):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
-    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'aggregator', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
+    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'shopinfo', 'aggregator', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
     parser.add_argument('--poolsize', '-p', type=int, default=100, help='gevent pool size for worker (default: %(default)s)')
     option = parser.parse_args()
     {
         "item": ItemWorker(option.poolsize),
         "shop": ShopWorker(option.poolsize),
+        "shopinfo": ShopInfoWorker(option.poolsize),
         "aggregator": AggregateWorker(option.poolsize),
         "requeue": ReQueueWorker(),
     }.get(option.worker).work()

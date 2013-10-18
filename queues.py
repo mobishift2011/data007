@@ -34,10 +34,11 @@ class Queue(object):
 
     see ``Queue.clean_tasks`` method for details
     """
-    def __init__(self, key, priority=1):
+    def __init__(self, key, priority=1, timeout=90):
         self.key = key
         self.hashkey = '{key}-timehash'.format(key=key)
         self.priority = priority
+        self.timeout = timeout
 
     def qsize(self):
         return conn.scard(self.key)
@@ -77,10 +78,9 @@ class Queue(object):
         """ clear start time in redis hash, indicating the task done """
         conn.hdel(self.hashkey, pack(result))
 
-    def clean_task(self, timeout=None):
+    def clean_task(self):
         """ check task hash for unfinished long running tasks, requeue them """
-        if timeout is None:
-            timeout = 90 if 'item' in self.key else 1800
+        timeout = self.timeout
 
         items = []
         for field, value in conn.hgetall(self.hashkey).iteritems():
@@ -124,8 +124,9 @@ def poll(queues, timeout=None):
         t += 0.05
         time.sleep(0.05)
 
-ai1 = Queue('ataobao-item-queue-1', 3)
-ai2 = Queue('ataobao-item-queue-2', 1)
-as1 = Queue('ataobao-shop-queue-1')
-af1 = Queue('ataobao-fail-queue-1')
-aa1 = Queue('ataobao-aggregate-1')
+ai1 = Queue('ataobao-item-queue-1', 3, timeout=90)
+ai2 = Queue('ataobao-item-queue-2', 1, timeout=90)
+as1 = Queue('ataobao-shop-queue-1', timeout=1800)
+af1 = Queue('ataobao-fail-queue-1', timeout=1800)
+asi1 = Queue('ataobao-shopinfo-queue-1', timeout=90)
+aa1 = Queue('ataobao-aggregate-1', timeout=120)

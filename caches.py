@@ -62,7 +62,6 @@ class ShopInfo(object):
         else:
             queue.task_done(shopid)
          
-
     @staticmethod
     def get_range(start, stop):
         return [int(id) for id in conn.zrange(ShopInfo.zkey, start, stop)]
