@@ -175,7 +175,10 @@ def get_service_info(rateid, s):
                 
         ele = body.find("div.info-block ul.sep li:first-child")
         if ele:
-            info["rank_num"] = int(PyQuery(ele).text().replace(u"卖家信用：", "").strip())
+            try:
+                info["rank_num"] = int(PyQuery(ele).text().replace(u"卖家信用：", "").strip())
+            except:
+                info["rank_num"] = 0
         
 #------------------------------------------------------------------------------ 
 #         info['bao_money'] = body.find('div.left-box[data-spm="1000330"] div.charge span').text()

@@ -43,6 +43,8 @@ class ShopInfo(object):
                 tsnow = time.mktime(time.gmtime())
                 if month_sales > 0 and lastcheck < tsnow - 80000:
                     needs.append(shopids[i])
+                elif lastcheck < tsnow - 800000:
+                    needs.append(shopids[i])
         return needs
 
     @staticmethod
