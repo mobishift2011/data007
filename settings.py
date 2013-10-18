@@ -14,7 +14,7 @@ envs = {
         'QUEUE_URI': 'redis://localhost:6379/11',
         'CACHE_URI': 'redis://localhost:6379/12',
         'DB_HOSTS': ['localhost:9160'],
-        'MONGO_HOST': ['localhost:27017'],
+        'MONGO_HOST': 'localhost:27017',
     },
     'TEST': {
         'QUEUE_URI': 'redis://ec2-107-21-68-149.compute-1.amazonaws.com:6379/11',

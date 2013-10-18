@@ -25,6 +25,7 @@ import json
 import operator
 import traceback
 
+from datetime import datetime, timedelta
 from session import get_session, get_blank_session
 from jsctx import get_ctx, need_decode
 
@@ -211,6 +212,12 @@ def parse_content(content, patlist, patdict):
     if 'num_sold30' not in result:
         return {}
     result['attributes'] = get_attributes(content)
+
+    #try:
+    #    url = re.compile(r'detail:params="([^,]+)').search(content).group(1)
+    #    result['num_soldld'] = get_num_soldld(url, result['num_sold30'])
+    #except:
+    #    pass
     return result
 
 def get_counters(id, sellerid):
@@ -345,6 +352,37 @@ def get_buyhistory(content):
         # eval pattern using pyv8
         data = ctx.eval('d='+patjsonp.search(content).group(1))
         return re.compile('<em class="tb-rmb-num">(\d+)</em>.*?<td class="tb-amount">(\d+)</td>.*?<td class="tb-time">([^>]+)</td>', re.DOTALL).findall(data.html)
+    except:
+        traceback.print_exc()
+
+def get_num_soldld(url):
+    if url.endswith('&'):
+        url = url[:-1]
+    url += '&callback=jsonp'
+    s = get_blank_session()
+    headers = {'Referer': 'http://detail.tmall.com', 'User-Agent': 'Mozilla 5.0/Abracadabra'}
+    try:
+        last_day = (datetime.utcnow() - timedelta(hours=16)).date().strftime('%Y-%m-%d')
+        def get_ld(page=1, total=0):
+            theurl = url.replace('bid_page=1', 'bid_page='+str(page))
+            #theurl = theurl.replace('bid_page', 'bidPage').replace('item_id', 'itemId').replace('seller_num_id', 'sellerNumId')
+            content = s.get(theurl, headers=headers).content
+            bl = re.compile(r'tb-amount\\">(\d+).*?tb-time\\">([^ ]+)', re.DOTALL).findall(content)
+            bl.extend(re.compile(r'<td>(\d+)</td> <td>(\d+-\d+-\d+) ', re.DOTALL).findall(content))
+            if bl == []:
+                end = True
+            else:
+                end = False
+                for amount, date in bl:
+                    if date == last_day:
+                        total += int(amount)
+                    if date < last_day:
+                        end = True
+            if end:
+                return total 
+            else:
+                return get_ld(page+1, total)
+        return get_ld()
     except:
         traceback.print_exc()
 

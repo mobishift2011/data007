@@ -12,7 +12,7 @@ host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
 class Queue(object):
-    """ a unordered queue wrapper for redis, provides Queue.Queue like methods
+    """ an unordered queue wrapper for redis, provides Queue.Queue like methods
 
     Usage::
 
@@ -77,9 +77,11 @@ class Queue(object):
         """ clear start time in redis hash, indicating the task done """
         conn.hdel(self.hashkey, pack(result))
 
-    def clean_task(self):
+    def clean_task(self, timeout=None):
         """ check task hash for unfinished long running tasks, requeue them """
-        timeout = 90 if 'item' in self.key else 1800
+        if timeout is None:
+            timeout = 90 if 'item' in self.key else 1800
+
         items = []
         for field, value in conn.hgetall(self.hashkey).iteritems():
             start_time = unpack(value)
@@ -126,3 +128,4 @@ ai1 = Queue('ataobao-item-queue-1', 3)
 ai2 = Queue('ataobao-item-queue-2', 1)
 as1 = Queue('ataobao-shop-queue-1')
 af1 = Queue('ataobao-fail-queue-1')
+aa1 = Queue('ataobao-aggregate-1')
