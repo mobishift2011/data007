@@ -86,7 +86,7 @@ def get_search_info(url, src_info, s):
 
         search_url = "http://s.taobao.com/search?q=%s&app=shopsearch" % src_info['nick']
         content = s.get(search_url, timeout=30).content
-        body = PyQuery(content.decode("gbk"))
+        body = PyQuery(content.decode("gbk", "ignore"))
         ele = body.find('ul#list-container li.list-item:first-child')
         
         info['main_cat'] = PyQuery(ele).find("li.list-info p.main-cat a").text()
@@ -163,7 +163,7 @@ def get_service_info(rateid, s):
             info['charge'] = ''
 #------------------------------------------------------------------------------ 
 
-        body = PyQuery(rateresp.decode("gbk"))
+        body = PyQuery(rateresp.decode("gbk", "ignore"))
         ele = body.find("div.info-block.info-block-first ul li")
         
         for e in ele:
