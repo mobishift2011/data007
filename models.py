@@ -12,18 +12,22 @@ See more details in ``ConnectionPool``'s doc
 """
 from cqlutils import ConnectionPool
 
-from settings import DB_HOSTS
+from settings import DB_HOSTS, MONGO_HOST
 from datetime import datetime
 
 from caches import IF
 
 import json
+import pymongo
 
 # see schema
 DATABASE = 'ataobao2'
 TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item', 'item_attr']
 
 db = ConnectionPool(DB_HOSTS)
+
+host, port = MONGO_HOST.split(':')
+mdb = pymongo.MongoClient(host=host, port=int(port))['ataobao']
 
 def update_item(item):
     # Item Fields:
