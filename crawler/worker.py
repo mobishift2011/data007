@@ -155,12 +155,14 @@ class ShopWorker(Worker):
             ItemCT.add_items(*ids)
             ai2.put(*ids)
 
-        def update_shopinfo(id):
+        def update_shopinfo(id, retry=0):
             try:
                 si = get_shop(id)
                 update_shop(si)
             except Exception as e:
                 traceback.print_exc()
+                if retry<10:
+                    self.pool.spawn(update_shopinfo, shopid, retry+1)
 
         def spawn_shop(shopid):
             print('updating shop-item of shop {}'.format(shopid))
