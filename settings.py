@@ -26,7 +26,7 @@ envs = {
             'ec2-72-44-53-84.compute-1.amazonaws.com:9160',
             'ec2-184-73-45-244.compute-1.amazonaws.com:9160',
         ],
-        'MONGO_HOST': 'ec2-54-227-0-188.compute-1.amazonaws.com:27017', 
+        'MONGO_HOST': 'ec2-54-227-0-188.compute-1.amazonaws.com:27017',
     },
 }
 
