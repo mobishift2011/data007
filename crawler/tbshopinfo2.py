@@ -63,6 +63,7 @@ def get_shop(id_or_url):
     info['rateid'] = rateid
     
     if info['rank'] == "tmall":
+        info['num_collects'] = 0
         info.update(get_shop_info(info['sid']))
         info.update(get_service_info(rateid, s))
         info.update(get_search_info(url, info, s))
