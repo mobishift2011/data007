@@ -150,7 +150,7 @@ class ShopWorker(Worker):
         shopid = None
 
         def on_update(ids):
-            ShopInfo.add(shopid)
+            ShopInfo.add_shop(shopid)
             ShopItem.add_items(shopid, *ids)
             ItemCT.add_items(*ids)
             ai2.put(*ids)
