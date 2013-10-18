@@ -82,8 +82,6 @@ class IF(object):
         for id in ids:
             p.sismember(IF.setkey, id)
         result = p.execute()
-        if len(result) == 1:
-            result = result[0]
         return result
 
     @staticmethod
