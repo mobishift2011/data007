@@ -13,7 +13,7 @@ credits = [ 4, 11, 41, 91, 151,
             10001, 20001, 50001, 100001, 200001,
             500001, 1000001, 2000001, 5000001, 10000001, ]
 
-def aggregate_by_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
+def aggregate_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
     date2 = datetime(date.year, date.month, date.day)
     date1 = date2 - timedelta(days=1)
     date0 = date2 - timedelta(days=2)
@@ -21,6 +21,12 @@ def aggregate_by_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
     si = db.execute('''select id, date, iid from ataobao2.shop_by_item 
                         where id=:shopid and date>=:date0 and date<:date2''',
                 dict(shopid=shopid, date0=date0, date2=date2), result=True)
+
+    # if there is no info about the provided shopid
+    # we do nothing
+    if not si.results:
+        return
+
     itemids = set(r[2] for r in si.results)
     cids = db.execute('''select id, cid from ataobao2.item where id in :ids''', dict(ids=tuple(itemids)), result=True)
     items = db.execute('''select id, date, price, num_sold30, num_collects, num_reviews, num_views from ataobao2.item_by_date
@@ -58,13 +64,14 @@ def calculate_aggregations(ciddict, item_metrics, shopid, shop):
                 plans[pname]['active_index'] += m['active_index']
                 plans[pname]['mon_sales'] += m['price'] * m['mon_deals']
                 plans[pname]['mon_deals'] += m['mon_deals']
-            
-    pname = 'shop_base'
-    plans[pname]['worth'] = 10 * (plans[pname]['active_index']/1000. + plans[pname]['mon_sales']/30.*0.3)
-    if shop.results:
-        plans[pname]['name'] = shop.results[0][0]
-        plans[pname]['logo'] = shop.results[0][1]
-        plans[pname]['credit_score'] = bisect(credits, shop.results[0][2])
+
+    if plans:
+        pname = 'shop_base'
+        plans[pname]['worth'] = 10 * (plans[pname]['active_index']/1000. + plans[pname]['mon_sales']/30.*0.3)
+        if shop.results:
+            plans[pname]['name'] = shop.results[0][0]
+            plans[pname]['logo'] = shop.results[0][1]
+            plans[pname]['credit_score'] = bisect(credits, shop.results[0][2])
 
     for pname in plans:
         plans[pname]['score'] = plans[pname]['active_index']/1000. + plans[pname]['mon_sales']/30.*0.3

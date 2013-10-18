@@ -17,11 +17,12 @@ from functools import partial
 from collections import deque
 
 from models import db, update_item, update_shop
-from caches import LC, ItemCT, ShopItem
-from queues import poll, ai1, ai2, as1, af1
+from caches import LC, ItemCT, ShopItem, ShopInfo
+from queues import poll, ai1, ai2, as1, af1, aa1
 from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
+from crawler.aggregator import aggregate_shop
 
 def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
     """ calling a func with throttling
@@ -79,7 +80,7 @@ class Worker(object):
 class ReQueueWorker(Worker):
     """ ReQueue Timeouted Jobs """
     def work(self):
-        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1]])
+        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, aa1]])
 
 class ItemWorker(Worker): 
     """ Work on Item Queues
@@ -149,6 +150,7 @@ class ShopWorker(Worker):
         shopid = None
 
         def on_update(ids):
+            ShopInfo.add(shopid)
             ShopItem.add_items(shopid, *ids)
             ItemCT.add_items(*ids)
             ai2.put(*ids)
@@ -171,15 +173,30 @@ class ShopWorker(Worker):
                 queue, shopid = result
                 LC.update_if_needed('shop', shopid, spawn_shop, queue)
 
+class AggregateWorker(Worker):
+    """ worker for shop info aggregation """
+    def work(self):
+        shopid = None
+
+        def do_aggregation(shopid):
+            aggregate_shop(shopid)
+
+        while True:
+            result = poll([aa1], timeout=10)
+            if result:
+                queue, shopid = result
+                ShopInfo.aggregate_if_needed(shopid, do_aggregation, queue)
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
-    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
+    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'aggregator', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
     parser.add_argument('--poolsize', '-p', type=int, default=100, help='gevent pool size for worker (default: %(default)s)')
     option = parser.parse_args()
     {
         "item": ItemWorker(option.poolsize),
         "shop": ShopWorker(option.poolsize),
+        "aggregator": AggregateWorker(option.poolsize),
         "requeue": ReQueueWorker(),
     }.get(option.worker).work()
 
