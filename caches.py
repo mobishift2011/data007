@@ -8,9 +8,9 @@ import traceback
 
 from msgpack import unpackb as unpack, packb as pack
 
-from settings import QUEUE_URI
+from settings import CACHE_URI
 
-host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(QUEUE_URI).groups()
+host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(CACHE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
 class ShopInfo(object):
@@ -19,8 +19,8 @@ class ShopInfo(object):
     1. zkey, a sorted set for shopids 
     2. hkey, a hashtable saves the (num_sold30, last aggregate time)
     """
-    zkey = 'ataobao_shopinfo_shopids'
-    hkey = 'ataobao_shopinfo_shophash'
+    zkey = 'ataobao-shopinfo-shopids'
+    hkey = 'ataobao-shopinfo-shophash'
     @staticmethod
     def count():
         return conn.zcard(ShopInfo.zkey)
