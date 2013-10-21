@@ -210,31 +210,3 @@ class ItemCT(object):
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
         return [unpack(m) for m in conn.smembers(setkey)]
-
-class ShopItem(object):
-    """ Shop-Item Relation Management 
-
-    one-to-many shop-item relation hashes
-
-        - key -> shop
-        - value -> a set of item ids in the shop
-
-    Typical Usage::
-
-    >>> ShopItem.add_items(100, 1,2,3,4,5)
-    >>> ShopItem.get_items(100)
-    set([1, 2, 3, 4, 5])
-    """
-    basekey = 'ataobao-shop-item-set'
-
-    @staticmethod
-    def add_items(shopid, *itemids):
-        setkey = '{basekey}-{shopid}'.format(basekey=ShopItem.basekey, shopid=shopid)
-        if itemids:
-            conn.sadd(setkey, *[pack(id) for id in itemids]) 
-
-    @staticmethod
-    def get_items(shopid):
-        setkey = '{basekey}-{shopid}'.format(basekey=ShopItem.basekey, shopid=shopid)
-        for m in conn.smembers(setkey):
-            yield unpack(m)

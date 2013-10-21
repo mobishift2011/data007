@@ -17,7 +17,7 @@ from functools import partial
 from collections import deque
 
 from models import db, update_item, update_shop
-from caches import LC, ItemCT, ShopItem, ShopInfo
+from caches import LC, ItemCT, ShopInfo
 from queues import poll, ai1, ai2, as1, af1, asi1, aa1
 from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
@@ -144,14 +144,13 @@ class ShopWorker(Worker):
 
     1. poll item ids from [as1]
     2. check update, if yes, go on
-    3. listing items in shop, update ItemCT and ShopItem info
+    3. listing items in shop, update ItemCT info
     """
     def work(self):
         shopid = None
 
         def on_update(ids):
             ShopInfo.add_shop(shopid)
-            ShopItem.add_items(shopid, *ids)
             ItemCT.add_items(*ids)
             ai2.put(*ids)
 
