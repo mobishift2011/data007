@@ -15,7 +15,9 @@ for cid in cates.keys():
 print('total l1l2: {}'.format(len(l1l2)))
 
 for l1, l2 in l1l2:
-    for tablename in ['shop_{}'.format(l1), 'shop_{}_{}'.format(l1, l2)]:
-        print("ensure_index for table {}".format(tablename))
-        for field in ['score', 'mon_sales', 'mon_deals', 'day_sales', 'day_deals', 'active_index', 'worth', 'credit_score']:
-            mdb[tablename].ensure_index([(field, 1)])
+    for postfix in ['mon', 'day']:
+        for tablename in ['shop_{}'.format(l1), 'shop_{}_{}'.format(l1, l2)]:
+            tablename = '{}_{}'.format(tablename, postfix)
+            print("ensure_index for table {}".format(tablename))
+            for field in ['score', 'mon_sales', 'mon_deals', 'day_sales', 'day_deals', 'active_index', 'worth', 'credit_score']:
+                mdb[tablename].ensure_index([(field, 1)])
