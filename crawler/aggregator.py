@@ -26,9 +26,12 @@ def aggregate_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
     # if there is no info about the provided shopid
     # we do nothing
     if not si.results:
-        return
+        return 0
 
     itemids = set(r[2] for r in si.results)
+    if len(itemids) <= 1:
+        return 0
+
     cids = db.execute('''select id, cid from ataobao2.item where id in :ids''', dict(ids=tuple(itemids)), result=True)
     items = db.execute('''select id, date, price, num_sold30, num_collects, num_reviews, num_views from ataobao2.item_by_date
                           where id in :ids and date>=:datep and date<:date2''',
@@ -40,11 +43,15 @@ def aggregate_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
 
     item_metrics = calculate_item_metrics(items.results)
     plans = calculate_aggregations(ciddict, item_metrics, shopid, shop)
-    insert_plans(plans) 
+    if plans:
+        insert_plans(plans) 
+        return plans['shop_base']['sales']
+    else:
+        return 0
 
 def insert_plans(plans):
     for pname in plans:
-        print('insert into {}: {}'.format(pname, plans[pname]))
+        #print('insert into {}: {}'.format(pname, plans[pname]))
         mdb[pname].save(plans[pname]) 
 
 def calculate_aggregations(ciddict, item_metrics, shopid, shop):
@@ -52,9 +59,14 @@ def calculate_aggregations(ciddict, item_metrics, shopid, shop):
     l1l2 = get_l1_and_l2_cids(cids)
     plans = {}
     for itemid in item_metrics:
-        cid = ciddict[itemid]
         m = item_metrics[itemid]
-        for pname in ['shop_{}_mon'.format(l1l2[cid][0]), 'shop_{}_{}_mon'.format(l1l2[cid][0], l1l2[cid][1]), 'shop_base']:
+        try:
+            cid = ciddict[itemid]
+        except:
+            pnames = ['shop_base']
+        else:
+            pnames = ['shop_{}_mon'.format(l1l2[cid][0]), 'shop_{}_{}_mon'.format(l1l2[cid][0], l1l2[cid][1]), 'shop_base']
+        for pname in pnames:
             if pname not in plans:
                 plans[pname] = {
                     '_id': shopid,
@@ -78,6 +90,8 @@ def calculate_aggregations(ciddict, item_metrics, shopid, shop):
             plans[pname]['name'] = shop.results[0][0]
             plans[pname]['logo'] = shop.results[0][1]
             plans[pname]['credit_score'] = bisect(credits, shop.results[0][2])
+        else:
+            return {}
 
     for pname in plans:
         plans[pname]['score'] = plans[pname]['active_index']/1000. + plans[pname]['sales']/30.*0.3
@@ -95,7 +109,10 @@ def get_l1_and_l2_cids(cids):
                 cidchain.append(cid)
                 cid = cates[cid]
             cidchain.append(cid)
-            l1l2[ cidchain[0] ] = (cidchain[-1], cidchain[-2])
+            try:
+                l1l2[ cidchain[0] ] = (cidchain[-1], cidchain[-2])
+            except:
+                pass
     return l1l2
 
 def calculate_item_metrics(items):
@@ -145,4 +162,7 @@ def calculate_item_metrics(items):
     return metrics
 
 if __name__ == '__main__':
-    aggregate_shop(102603268)
+    #print aggregate_shop(102603268)
+    #aggregate_shop(57500767)
+    aggregate_shop(36968757)
+    

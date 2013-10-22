@@ -49,11 +49,11 @@ class ShopInfo(object):
 
     @staticmethod
     def aggregate_if_needed(shopid, on_aggregate, queue):
-        if need_aggregate(shopid):
+        if ShopInfo.need_aggregate(shopid):
             try:
-                on_aggregate(shopid)
+                month_sales = on_aggregate(shopid)
             except:
-                print('we do not set task_done for id {}, so we will pick them up in requeue'.format(id))
+                print('we do not set task_done for id {}, so we will pick them up in requeue'.format(shopid))
                 traceback.print_exc()
             else:
                 lastcheck = time.mktime(time.gmtime())

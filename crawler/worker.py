@@ -193,7 +193,8 @@ class AggregateWorker(Worker):
         shopid = None
 
         def do_aggregation(shopid):
-            aggregate_shop(shopid)
+            print('aggregating {}'.format(shopid))
+            return aggregate_shop(shopid)
 
         while True:
             result = poll([aa1], timeout=10)
