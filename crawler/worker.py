@@ -200,7 +200,7 @@ class AggregateWorker(Worker):
             result = poll([aa1], timeout=10)
             if result:
                 queue, shopid = result
-                ShopInfo.aggregate_if_needed(shopid, do_aggregation, queue)
+                self.pool.spawn(ShopInfo.aggregate_if_needed, shopid, do_aggregation, queue)
 
 def main():
     import argparse

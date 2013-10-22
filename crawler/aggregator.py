@@ -73,14 +73,14 @@ def calculate_aggregations(ciddict, item_metrics, shopid, shop):
                     'active_index': m['active_index'],
                     'delta_active_index': m['delta_active_index'],
                     'deals': m['deals'],
-                    'delta_deals': m['delta_deals'],
+                    'delta_sales': m['delta_sales'],
                     'sales': m['price']*m['deals'],
                 }
             else:
                 plans[pname]['active_index'] += m['active_index']
                 plans[pname]['delta_active_index'] += m['delta_active_index']
                 plans[pname]['deals'] += m['deals']
-                plans[pname]['delta_deals'] += m['delta_deals']
+                plans[pname]['delta_sales'] += m['delta_sales']
                 plans[pname]['sales'] += m['price'] * m['deals']
 
     if plans:
@@ -157,8 +157,8 @@ def calculate_item_metrics(items):
         active_index = (data3[2] - data2[2])*50 + (data3[3] - data2[3])*10 + (data3[4] - data2[4])
         delta_active_index = active_index - ((data2[2] - data1[2])*50 + (data2[3] - data1[3])*10 + (data2[4] - data1[4]))
         deals = data3[1]
-        delta_deals = data3[1] - data2[1]
-        metrics[id] = dict(active_index=active_index, delta_active_index=delta_active_index, deals=deals, delta_deals=delta_deals, price=price)
+        delta_sales = data3[0]*data3[1] - data2[0]*data2[1]
+        metrics[id] = dict(active_index=active_index, delta_active_index=delta_active_index, deals=deals, delta_sales=delta_sales, price=price)
     return metrics
 
 if __name__ == '__main__':
