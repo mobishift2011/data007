@@ -19,5 +19,5 @@ for l1, l2 in l1l2:
         for tablename in ['shop_{}'.format(l1), 'shop_{}_{}'.format(l1, l2)]:
             tablename = '{}_{}'.format(tablename, postfix)
             print("ensure_index for table {}".format(tablename))
-            for field in ['score', 'mon_sales', 'mon_deals', 'day_sales', 'day_deals', 'active_index', 'worth', 'credit_score']:
+            for field in ['score', 'sales', 'deals', 'active_index', 'worth', 'credit_score']:
                 mdb[tablename].ensure_index([(field, 1)])
