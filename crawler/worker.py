@@ -172,7 +172,8 @@ class ShopInfoWorker(Worker):
             if LC.need_update('shop', id):
                 try:
                     si = get_shop(id)
-                    update_shop(si)
+                    if si and 'error' not in si:
+                        update_shop(si)
                 except:
                     traceback.print_exc()
                     print('id {} will be requeued some time later'.format(id))

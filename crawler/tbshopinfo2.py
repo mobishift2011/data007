@@ -42,6 +42,10 @@ def get_shop(id_or_url):
     except:
         traceback.print_exc()
         return {}
+
+    if "error-notice" in content:
+        return {"error": True}
+
     try:
         rateid = re.compile(r'http://rate.taobao.com/user-rate-([0-9a-f]+).htm').search(content).group(1)
     except:
