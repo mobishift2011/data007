@@ -39,6 +39,7 @@ def aggregate_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
     shop = db.execute('''select title, logo, rank_num from ataobao2.shop where id=:shopid''', 
                         dict(shopid=shopid), result=True) 
 
+
     ciddict = dict(cids.results)
 
     item_metrics = calculate_item_metrics(items.results)
@@ -51,7 +52,7 @@ def aggregate_shop(shopid, date=datetime.utcnow()+timedelta(hours=8)):
 
 def insert_plans(plans):
     for pname in plans:
-        #print('insert into {}: {}'.format(pname, plans[pname]))
+        print('insert into {}: {}'.format(pname, plans[pname]))
         mdb[pname].save(plans[pname]) 
 
 def calculate_aggregations(ciddict, item_metrics, shopid, shop):
@@ -161,8 +162,66 @@ def calculate_item_metrics(items):
         metrics[id] = dict(active_index=active_index, delta_active_index=delta_active_index, deals=deals, delta_sales=delta_sales, price=price)
     return metrics
 
+def aggregate_items(token_start, token_end, date=datetime.utcnow()+timedelta(hours=8)):
+    with db.connection() as cur:
+        cur.execute('''select id, shopid, cid, num_sold30, price from ataobao2.item where token(id)>=:start and token(id)<:end''', 
+                    dict(start=token_start, end=token_end), consistency_level='ONE')
+        for row in cur:
+            itemid, shopid, cid, nc, price = row
+            if nc > 0:
+                aggregate_item(itemid, shopid, cid, price, date)
+
+def aggregate_item(itemid, shopid, cid, price, date):
+    date2 = datetime(date.year, date.month, date.day)
+    date1 = date2 - timedelta(days=60)
+    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
+    d2 = (date2 - timedelta(days=2)).strftime("%Y-%m-%d")
+    d3 = (date2 - timedelta(days=3)).strftime("%Y-%m-%d")
+    d31 = (date2 - timedelta(days=31)).strftime("%Y-%m-%d")
+    d32 = (date2 - timedelta(days=32)).strftime("%Y-%m-%d")
+    d61 = (date2 - timedelta(days=61)).strftime("%Y-%m-%d")
+    d62 = (date2 - timedelta(days=62)).strftime("%Y-%m-%d")
+    items = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+                    where id=:itemid and date>=:date1 and date<:date2''',
+                    dict(itemid=itemid, date1=date1, date2=date2), result=True).results
+    items = {i[0].strftime("%Y-%m-%d"):i[1:] for i in items}
+    if d1 in items:
+        l1, l2 = get_l1_and_l2_cids([cid])[cid]
+        i1 = items[d1]
+        i2 = items.get(d2, i1)
+        i3 = items.get(d3, i2)
+        i31 = items.get(d31, i1)
+        i32 = items.get(d32, i2)
+        i61 = items.get(d61, i31)
+        i62 = items.get(d62, i32)
+        active_index_day = (i1[1]-i2[1])*50 + (i1[0]-i2[0])*10 + (i1[3]-i2[3])
+        delta_active_index_day = active_index_day - (i2[1]-i3[1])*50 - (i2[0]-i3[0])*10 - (i2[3]-i3[3])
+        active_index_mon = (i1[1]-i31[1])*50 + (i1[0]-i31[0])*10 + (i1[3]-i31[3])
+        delta_active_index_mon = active_index_mon - (i31[1]-i61[1])*50 - (i31[0]-i61[0])*10 - (i31[3]-i61[3])
+        deals_mon = i1[2]
+        if d31 in items:
+            deals_day = i1[2] - (i2[2] - i31[2])
+        else:
+            deals_day = i1[2]//30
+        if d32 in items:
+            deals_day1 = i2[2] - (i3[2] - i32[2])
+        else:
+            deals_day1 = i2[2]//30
+        price = price
+        sales_mon = deals_mon * price
+        sales_day = deals_day * price
+        delta_sales_mon = deals_mon * price - i2[2] * price 
+        delta_sales_day = deals_day * price - deals_day1 * price
+
+        for cate in [str(l1), str(l1) + '_' + str(l2)]:
+            for period in ['_mon', '_day']:
+                inc = {'sales':locals()['sales'+period],
+                       'deals':locals()['deals'+period],
+                       'delta_sales': locals()['delta_sales'+period],
+                       'active_index': locals()['active_index'+period],
+                       'delta_active_index': locals()['delta_active_index'+period]}
+                mdb['shop_'+cate+period].update({'_id':shopid}, {'$inc':inc})
+
 if __name__ == '__main__':
     #print aggregate_shop(102603268)
-    #aggregate_shop(57500767)
-    aggregate_shop(36968757)
-    
+    aggregate_items(0, 2**46)

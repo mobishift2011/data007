@@ -15,6 +15,7 @@ There're three Schedulers:
 from gevent import monkey; monkey.patch_all()
 
 import time
+import traceback
 
 from caches import ItemCT, LC
 from queues import ai1, ai2, af1
@@ -25,7 +26,10 @@ class Scheduler(object):
         while True:
             print('looping')
             if self.should_run():
-                self.run()
+                try:
+                    self.run()
+                except:
+                    traceback.print_exc()
             time.sleep(1)
 
     def should_run(self):
