@@ -36,17 +36,16 @@ def get_all():
         max_tid = server.incr("token_id", per_num)
         print max_tid, scan_sum, begin_time, time.asctime()
         with db.connection() as cur:
-            cur.execute('''select id, shopid, cid, num_sold30, price from ataobao2.item where token(id)>=:start and token(id)<:end''', 
+            cur.execute('''select * from ataobao2.item_by_date where token(id)>=:start and token(id)<:end''', 
                         dict(start=max_tid - per_num, end=max_tid), consistency_level='ONE')
-            if cur.rowcount:
-                scan_sum += cur.rowcount
-                cnt = 0
-                for row in cur:
-                    cnt += 1
-                    itemid, shopid, cid, nc, price = row
-                    if cnt%10000 == 0:
-                        print "#############", row
-    
+#             if cur.rowcount:
+#                 scan_sum += cur.rowcount
+#                 cnt = 0
+#                 for row in cur:
+#                     cnt += 1
+#                     itemid, shopid, cid, nc, price = row
+#                     if cnt%10000 == 0:
+#                         print "#############", row
 
 def main():
     get_all()
