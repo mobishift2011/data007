@@ -13,12 +13,13 @@ envs = {
     'DEV': {
         'QUEUE_URI': 'redis://localhost:6379/11',
         'CACHE_URI': 'redis://localhost:6379/12',
+        'AGGRE_URI': 'redis://localhost:6379/13',
         'DB_HOSTS': ['localhost:9160'],
-        'MONGO_HOST': 'localhost:27017',
     },
     'TEST': {
         'QUEUE_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/11',
         'CACHE_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/12',
+        'AGGRE_URI': 'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6379/13',
         'DB_HOSTS': [
             'ec2-54-224-101-163.compute-1.amazonaws.com:9160',
             'ec2-23-20-136-42.compute-1.amazonaws.com:9160',
@@ -26,7 +27,6 @@ envs = {
             'ec2-72-44-53-84.compute-1.amazonaws.com:9160',
             'ec2-184-73-45-244.compute-1.amazonaws.com:9160',
         ],
-        'MONGO_HOST': 'ec2-54-227-0-188.compute-1.amazonaws.com:27017',
     },
 }
 
