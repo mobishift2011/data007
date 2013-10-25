@@ -8,7 +8,7 @@ import logging
 import argparse
 
 from queues import ai1, ai2, as1, af1, aa1, aa2, asi1
-from caches import LC, IF, ShopInfo
+from caches import LC, IF
 
 def gettermsize():
     def ioctl_GWINSZ(fd):
@@ -244,7 +244,7 @@ def show_counts(args):
         num_items += count
         
     chart = green('|' + '█' * int(ratio * IF.count()))
-    line = '    %-12s %s %d' % ('Items(num_sold30=0)', chart, IF.count())
+    line = '    %-12s %s %d' % ('items(num_sold30=0)', chart, IF.count())
     print(line)
 
     # Print summary when not in raw mode

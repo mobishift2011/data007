@@ -40,6 +40,9 @@ class Queue(object):
         self.priority = priority
         self.timeout = timeout
 
+    def clear(self):
+        return conn.delete(self.key)
+
     def qsize(self):
         return conn.scard(self.key)
 
