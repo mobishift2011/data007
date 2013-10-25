@@ -86,6 +86,7 @@ class Queue(object):
         timeout = self.timeout
         if timeout is None:
             conn.delete(self.hashkey)
+            return
 
         items = []
         for field, value in conn.hgetall(self.hashkey).iteritems():
