@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS item (
     id              bigint PRIMARY KEY,
     cid             int,
     rcid            int,
+    brand           text,
+    image           text,
     shopid          int,
     pagetype        text,
     title           text,
@@ -47,6 +49,8 @@ CREATE TABLE IF NOT EXISTS shop_by_item (
 CREATE TABLE IF NOT EXISTS item_by_date (
     id              bigint,
     date            timestamp,
+    brand           text,
+    image           text,
     title           text,
     price           float,
     num_collects    int,
