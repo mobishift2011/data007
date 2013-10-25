@@ -106,6 +106,9 @@ class LC(object):
         ids = list(set(ids))
         ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
 
+        if not ids:
+            return []
+
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
         lastchecks = conn.hmget(hashkey, *ids)
