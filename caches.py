@@ -13,59 +13,6 @@ from settings import CACHE_URI
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(CACHE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
-class ShopInfo(object):
-    """ some datastructures store shop info
-
-    1. zkey, a sorted set for shopids 
-    2. hkey, a hashtable saves the (num_sold30, last aggregate time)
-    """
-    zkey = 'ataobao-shopinfo-shopids'
-    hkey = 'ataobao-shopinfo-shophash'
-    @staticmethod
-    def count():
-        return conn.zcard(ShopInfo.zkey)
-    
-    @staticmethod
-    def add_shop(*ids):
-        args = [id for ziped in zip(ids, ids) for id in ziped]
-        conn.zadd(ShopInfo.zkey, *args)
-
-    @staticmethod
-    def need_aggregate(*shopids):
-        if not shopids:
-            return []
-        needs = []
-        for i, x in enumerate(conn.hmget(ShopInfo.hkey, *shopids)):
-            if not x:
-                needs.append(shopids[i])
-            else:
-                month_sales, lastcheck = unpack(x)
-                tsnow = time.mktime(time.gmtime())
-                if month_sales > 0 and lastcheck < tsnow - 80000:
-                    needs.append(shopids[i])
-                elif lastcheck < tsnow - 800000:
-                    needs.append(shopids[i])
-        return needs
-
-    @staticmethod
-    def aggregate_if_needed(shopid, on_aggregate, queue):
-        if ShopInfo.need_aggregate(shopid):
-            try:
-                month_sales = on_aggregate(shopid)
-            except:
-                print('we do not set task_done for id {}, so we will pick them up in requeue'.format(shopid))
-                traceback.print_exc()
-            else:
-                lastcheck = time.mktime(time.gmtime())
-                conn.hset(ShopInfo.hkey, shopid, pack([month_sales, lastcheck]))
-                queue.task_done(shopid)
-        else:
-            queue.task_done(shopid)
-         
-    @staticmethod
-    def get_range(start, stop):
-        return [int(id) for id in conn.zrange(ShopInfo.zkey, start, stop)]
-
 class IF(object):
     """ infrequent items 
 
@@ -210,3 +157,5 @@ class ItemCT(object):
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
         return [unpack(m) for m in conn.smembers(setkey)]
+
+    

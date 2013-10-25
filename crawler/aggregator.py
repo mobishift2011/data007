@@ -33,24 +33,25 @@ def get_l1_and_l2_cids(cids):
 def aggregate_items(token_start, token_end, date=datetime.utcnow()+timedelta(hours=8), on_finish_item=None, on_finish=None):
     date2 = datetime(date.year, date.month, date.day)
     d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    si = ShopIndex(d1)
-    si.multi()
-    with db.connection() as cur:
-        cur.execute('''select id, shopid, cid, num_sold30, price from ataobao2.item where token(id)>=:start and token(id)<:end''', 
-                    dict(start=token_start, end=token_end), consistency_level='ONE')
-        for row in cur:
-            itemid, shopid, cid, nc, price = row
-            if nc > 0:
-                try:
-                    aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item)
-                except:
-                    traceback.print_exc()
-    si.execute()
+    try:
+        si = ShopIndex(d1)
+        si.multi()
+        with db.connection() as cur:
+            cur.execute('''select id, shopid, cid, num_sold30, price from ataobao2.item where token(id)>=:start and token(id)<:end''', 
+                    dict(start=int(token_start), end=int(token_end)), consistency_level='ONE')
+            for row in cur:
+                itemid, shopid, cid, nc, price = row
+                if nc > 0:
+                    try:
+                        aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item)
+                    except:
+                        traceback.print_exc()
+        si.execute()
+    except:
+        traceback.print_exc()
 
     if on_finish:
-        date2 = datetime(date.year, date.month, date.day)
-        d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-        on_finish(token_start, token_end, d1)
+        on_finish('item', d1, token_start, token_end)
 
 def aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item=None):
     date2 = datetime(date.year, date.month, date.day)
@@ -127,22 +128,25 @@ def aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item=None):
 def aggregate_shops(start, end, date=datetime.utcnow()+timedelta(hours=8), on_finish_shop=None, on_finish=None):
     date2 = datetime(date.year, date.month, date.day)
     d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    si = ShopIndex(d1)
-    si.multi()
-    with db.connection() as cur:
-        cur.execute('''select id, title, logo, rank_num from ataobao2.shop
+    try:
+        si = ShopIndex(d1)
+        si.multi()
+        with db.connection() as cur:
+            cur.execute('''select id, title, logo, rank_num from ataobao2.shop
                     where token(id)>=:start and token(id)<:end''',
                     dict(start=start, end=end), consistency_level='ONE')
-        for row in cur:
-            shopid, name, logo, rank_num = row
-            try:
-                aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop)
-            except:
-                traceback.print_exc()
+            for row in cur:
+                shopid, name, logo, rank_num = row
+                try:
+                    aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop)
+                except:
+                    traceback.print_exc()
+        si.execute()
+    except:
+        traceback.print_exc()
 
-    si.execute()
     if on_finish:
-        on_finish(start, end, d1)
+        on_finish('shop', d1, start, end)
 
 def aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop):
     shopinfo = si.getbase(shopid)

@@ -124,3 +124,48 @@ class ShopIndex(object):
         date = self.date
         skey = ShopIndex.shopcates.format(date, shopid)
         return [ unpack(x) for x in conn.smembers(skey) ]
+
+class AggInfo(object):
+    key =  'ataobao-aggregate-info-{}-{}'
+
+    def __init__(self, date):
+        self.date = date
+        
+    def clear(self):
+        for type in ['item', 'shop']:
+            key = AggInfo.key.format(self.date, type)
+            conn.delete(key)
+        
+    def done_range(self, type, start, end):
+        key = AggInfo.key.format(self.date, type)
+        conn.rpush(key, pack((start, end)))
+
+    def gaps(self, type):
+        key = AggInfo.key.format(self.date, type)
+        lowerbound = -2**63
+        upperbound = 2**63
+        lines = []
+        for val in conn.lrange(key, 0, -1):
+            start, end = unpack(val)
+            lines.append([start, end])
+        lines = sorted(lines)
+        point = lowerbound
+        gaps = []
+        for start, end in lines:
+            if start != point:
+                gaps.append((point, start))
+            point = end
+        if point < upperbound:
+            gaps.append((point, upperbound))
+        return gaps
+
+    def task_left(self, type):
+        key = AggInfo.key.format(self.date, type)
+        numkeys = conn.llen(key)
+        if numkeys:
+            start, end = unpack(conn.lindex(key, 0))
+            step = end - start
+            d, m = divmod(2**64, step)
+            return d + int(bool(m)) - numkeys
+        else:
+            return 'unknown'

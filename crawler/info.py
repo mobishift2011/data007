@@ -7,7 +7,7 @@ import time
 import logging
 import argparse
 
-from queues import ai1, ai2, as1, af1, aa1, asi1
+from queues import ai1, ai2, as1, af1, aa1, aa2, asi1
 from caches import LC, IF, ShopInfo
 
 def gettermsize():
@@ -190,7 +190,7 @@ def state_symbol(state):
 
 
 def show_queues(args):
-    qs = [ai1, ai2, as1, af1, aa1, asi1]
+    qs = [ai1, ai2, as1, af1, aa1, aa2, asi1]
     num_jobs = 0
     termwidth, _ = gettermsize()
     chartwidth = min(20, termwidth - 20)
