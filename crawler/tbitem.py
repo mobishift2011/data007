@@ -1,3 +1,5 @@
+#coding:utf-8
+
 """ Given taobao's itemid, return a dict of item info
 #update()
 
@@ -24,6 +26,8 @@ import re
 import json
 import operator
 import traceback
+import requests
+
 
 from datetime import datetime, timedelta
 from session import get_session, get_blank_session
@@ -49,34 +53,56 @@ def is_valid_item(item):
 def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
     """ given itemid, return item info dict """
     s = get_session()
+    
+    result = {}
     try:
         r = s.get(prefix.format(id), timeout=30)
     except:
         traceback.print_exc()
-        return {}
+        result = {}
     else:
         content = r.content
         if 'error-notice-text' in content or 'errorDetail' in content:
-            return {'error': True, 'reason': 'not found'}
+            result = {'error': True, 'reason': 'not found'}
         elif 'tb-off-sale' in content:
-            return {'error': True, 'reason': 'off sale'}
+            result = {'error': True, 'reason': 'off sale'}
         elif 'sold-out-tit' in content: 
-            return {'error': True, 'reason': 'sold out'}
+            result = {'error': True, 'reason': 'sold out'}
         elif 'pageType:"auction"' in content:
-            return {'error': True, 'reason': 'auction'}
+            result = {'error': True, 'reason': 'auction'}
         elif 'status:-9' in content:
-            return {'error':True, 'reason': 'shop banned'}
-
-        if 'http://s.tongcheng.taobao.com/detail.htm' in content:
-            return get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 
-
-        if r.url.startswith('http://item.taobao.com'):
-            return get_taobao_item(id, content)
-        elif r.url.startswith('http://detail.tmall.com'):
-            return get_tmall_item(id, content)
+            result = {'error':True, 'reason': 'shop banned'}
+            
         else:
-            # we will ignore products in i.life.taobao.com
-            return {'error':True, 'reason':'i.life.taobao.com'}
+            if 'http://s.tongcheng.taobao.com/detail.htm' in content:
+                result = get_item(id, prefix='http://s.tongcheng.taobao.com/detail.htm?id={}') 
+            elif r.url.startswith('http://item.taobao.com'):
+                result = get_taobao_item(id, content)
+            elif r.url.startswith('http://detail.tmall.com'):
+                result = get_tmall_item(id, content)
+            else:
+                # we will ignore products in i.life.taobao.com
+                return {'error':True, 'reason':'i.life.taobao.com'}
+            
+            result.update(get_brand_image(id))
+            
+    return result
+    
+def get_brand_image(id):
+    ret = {}
+    url = "http://a.m.taobao.com/da%s.htm#itemProp" % id
+    response = requests.get(url)
+    rec = re.compile(u'<td >品牌：</td>\r\n<td>\r\n(.*?)\r\n</td>', re.DOTALL)
+    rets = rec.findall(response.content.decode('utf-8'))
+    if len(rets):
+       ret['brand'] = rets[0] 
+    url = "http://a.m.taobao.com/i%s.htm" % id
+    response = requests.get(url)
+    retc2 = re.compile(u'<hr class="btm_line" />\r\n<div class="box">\r\n<div class="detail">.*?<p>\r\n<img alt=".*?" src="(.*?)" />\r\n</p>', re.DOTALL)
+    rets = retc2.findall(response.content.decode('utf-8'))
+    if len(rets):
+        ret['image'] = rets[0]
+    return ret
 
 def get_tmall_item(id, content):
     """ get tmall item info by id and content """

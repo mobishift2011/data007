@@ -175,6 +175,14 @@ class ItemCT(object):
         pipeline.execute()
 
     @staticmethod
+    def delete(*ids):
+        pipeline = conn.pipeline()
+        for id in ids:
+            setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
+            pipeline.srem(setkey, pack(id))
+        pipeline.execute()
+
+    @staticmethod
     def get_items(ct=None):
         if ct is None:
             ct = int(time.mktime(time.gmtime())%86400/60)
