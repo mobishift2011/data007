@@ -92,16 +92,20 @@ def get_brand_image(id):
     ret = {}
     url = "http://a.m.taobao.com/da%s.htm#itemProp" % id
     response = requests.get(url)
-    rec = re.compile(u'<td >品牌：</td>\r\n<td>\r\n(.*?)\r\n</td>', re.DOTALL)
+    rec = re.compile(u'品牌：</td>\r\n<td>\r\n(.*?)\r\n</td>', re.DOTALL)
     rets = rec.findall(response.content.decode('utf-8'))
     if len(rets):
-       ret['brand'] = rets[0] 
+        ret['brand'] = rets[0] 
+    else:
+        ret['brand'] = '' 
     url = "http://a.m.taobao.com/i%s.htm" % id
     response = requests.get(url)
     retc2 = re.compile(u'<hr class="btm_line" />\r\n<div class="box">\r\n<div class="detail">.*?<p>\r\n<img alt=".*?" src="(.*?)" />\r\n</p>', re.DOTALL)
     rets = retc2.findall(response.content.decode('utf-8'))
     if len(rets):
         ret['image'] = rets[0]
+    else:
+        ret['image'] = ''
     return ret
 
 def get_tmall_item(id, content):
