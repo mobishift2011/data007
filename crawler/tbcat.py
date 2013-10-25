@@ -8,6 +8,7 @@ import re
 import time
 import traceback
 from itertools import chain
+from functools import partial
 
 from session import get_session, get_blank_session
 
@@ -22,6 +23,19 @@ def get_count(data):
 def get_ids(data):
     if data and data['itemList']:
         return [ int(i['itemId']) for i in data['itemList'] ]
+    else:
+        return []
+
+def get_subcats(data):
+    if data['cat']:
+        if data['cat']['hasGroup'] == 0:
+            return [int(d['value']) for d in data['cat']['catList']]
+        else:
+            cids = []
+            for l in data['cat']['catGroupList']:
+                for d in l['catList']:
+                    cids.append(int(d['value']))
+            return cids
     else:
         return []
     
@@ -65,7 +79,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
         pathpool = None
 
     ids = []
-    def list_paths(paths, page=1, data=None):
+    def list_paths(paths, page=1, data=None, cid=cid):
         if data is None:
             data = get_json(cid, paths, page, sort=sort)
        
@@ -73,20 +87,20 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
         ids.extend(iids)
         if on_ids:
             try:
-                print('found {} items (ppath={} page={})'.format(len(iids), ';'.join(paths), page))
+                print('found {} items (cid={}, ppath={} page={})'.format(len(iids), cid, ';'.join(paths), page))
                 on_ids(iids)
             except:
                 traceback.print_exc()
         else:
-            print('found {} items (ppath={} page={})'.format(len(iids), ';'.join(paths), page))
+            print('found {} items (cid={}, ppath={} page={})'.format(len(iids), cid, ';'.join(paths), page))
 
         if page == 1:
             count = get_count(data)
             for p in range(2, 2+count/95):
                 if pathpool is not None:
-                    pathpool.spawn(list_paths, paths, p)
+                    pathpool.spawn(list_paths, paths, p, cid=cid)
                 else:
-                    list_paths(paths, p)
+                    list_paths(paths, p, cid=cid)
         
     list_cat_paths(cid, pool=catpool, on_paths=list_paths)
 
@@ -95,7 +109,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
         pathpool.join()
     return list(set(ids))
 
-def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, on_paths=None, sort=None):
+def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, on_paths=None, sort=None):
     """ try filter category by paths, and list all paths have less than 9500 items
     
     :param cid: category id
@@ -114,7 +128,12 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, o
             return False
 
     data = get_json(cid, paths, sort=sort)
-    if allpath == []:
+    if depth == 0 and paths == [] and allpath == [] and data['cat']:
+        cids = get_subcats(data)  
+        for scid in cids:
+            list_cat_paths(scid, pool=pool, on_paths=on_paths)
+
+    if allpath == [] and data['propertyList']:
         allpath = [ [p2['value'] for p2 in p1['propertyList']] for p1 in data['propertyList'] ]
         allpath = sorted(allpath, key=len, reverse=True)[:num_paths]
         paths = [''] * len(allpath)
@@ -131,7 +150,7 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=4, o
             print(paths)
         else:
             try:
-                on_paths(paths, data=data)
+                on_paths(paths, data=data, cid=cid)
             except:
                 traceback.print_exc()
 

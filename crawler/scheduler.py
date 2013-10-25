@@ -13,6 +13,7 @@ There're three Schedulers:
     ItemScheduler: list items based on caches.ItemCT rules
 """
 from gevent import monkey; monkey.patch_all()
+import gevent.pool
 
 import time
 import traceback
@@ -20,6 +21,7 @@ import traceback
 from caches import ItemCT, LC
 from queues import ai1, ai2, af1
 from crawler.tbcat import list_cat, get_json, get_ids
+from crawler.topcates import topcids
 
 class Scheduler(object):
     def start(self):
@@ -34,6 +36,29 @@ class Scheduler(object):
 
     def should_run(self):
         return False
+
+class AllScheduler(Scheduler):
+    """ listing all category """
+    def __init__(self):
+        self.week = None
+        self.pool = gevent.pool.Pool(100)
+
+    def should_run(self):
+        week = int(time.mktime(time.gmtime())/86400/7)
+        if week != self.week:
+            self.week = week
+            return True
+        else:
+            return False
+
+    def run(self):
+        def on_ids(ids):
+            ai2.put(*ids)
+            ItemCT.add_items(*ids)
+        
+        for cid in topcids:
+            self.pool.spawn(list_cat, cid, on_ids=on_ids, use_pool=False)
+        self.pool.join()
 
 class FullScheduler(Scheduler):
     """ listing category id """
@@ -112,12 +137,13 @@ class ItemScheduler(Scheduler):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Scheduler with arguments')
-    parser.add_argument('--worker', '-w', choices=['full', 'update', 'item'], help='worker type, can be "full", "update", "item"', required=True)
+    parser.add_argument('--worker', '-w', choices=['full', 'all', 'update', 'item'], help='worker type, can be "full", "update", "item"', required=True)
     parser.add_argument('--cid', '-c', type=int, help='category id if worker type in "full" or "update"')
     parser.add_argument('--pool', '-p', action='store_true', help='use gevent pool')
     option = parser.parse_args()
     {
         "full": FullScheduler(option.cid, option.pool),
+        "all": AllScheduler(),
         "update": UpdateScheduler(option.cid),
         "item": ItemScheduler(),
     }.get(option.worker).start()
