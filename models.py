@@ -36,17 +36,17 @@ def update_item(item):
 
     insert_into_item =  \
         ('''INSERT INTO ataobao2.item
-                (id, cid, rcid, shopid, pagetype, title, price, rating,
+                (id, cid, rcid, shopid, pagetype, title, price, rating, brand, image,
                  num_collects, num_instock, num_reviews, num_sold30, num_views)
             VALUES
-                (:id, :cid, :rcid, :shopid, :pagetype, :title, :price, :rating,
+                (:id, :cid, :rcid, :shopid, :pagetype, :title, :price, :rating, :brand, :image,
                  :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
 
     insert_into_item_by_date = \
         ('''INSERT INTO ataobao2.item_by_date
-                (id, date, title, price, num_collects, num_instock, num_reviews, num_sold30, num_views)
+                (id, date, price, num_collects, num_instock, num_reviews, num_sold30, num_views)
             VALUES
-                (:id, :date, :title, :price, :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
+                (:id, :date, :price, :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
 
     # Here we use :v1, :v2, :v3 instead of :id, :date, :iid
     # because in batch mode, arguments are passed in batch, 

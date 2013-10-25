@@ -49,9 +49,6 @@ CREATE TABLE IF NOT EXISTS shop_by_item (
 CREATE TABLE IF NOT EXISTS item_by_date (
     id              bigint,
     date            timestamp,
-    brand           text,
-    image           text,
-    title           text,
     price           float,
     num_collects    int,
     num_instock     int,
