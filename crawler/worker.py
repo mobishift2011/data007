@@ -18,7 +18,7 @@ from collections import deque
 
 from models import db, update_item, update_shop
 from caches import LC, ItemCT, WC
-from queues import poll, ai1, ai2, as1, af1, asi1, aa1
+from queues import poll, ai1, ai2, as1, af1, asi1, aa1, aa2
 from aggres import AggInfo
 from crawler.cates import need_crawl
 from crawler.tbitem import get_item, is_valid_item, is_banned
@@ -82,7 +82,7 @@ class Worker(object):
 class ReQueueWorker(Worker):
     """ ReQueue Timeouted Jobs """
     def work(self):
-        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1, aa1]])
+        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1, aa1, aa2]])
 
 class ItemWorker(Worker): 
     """ Work on Item Queues
@@ -223,7 +223,7 @@ class ShopAggregateWorker(Worker):
             AggInfo(date).done_range(type, start, end)
 
         while True:
-            result = poll([aa1], timeout=10)
+            result = poll([aa2], timeout=10)
             if result:
                 queue, ran = result
                 start, end = ran
