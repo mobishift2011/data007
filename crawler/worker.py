@@ -17,9 +17,10 @@ from functools import partial
 from collections import deque
 
 from models import db, update_item, update_shop
-from caches import LC, ItemCT
+from caches import LC, ItemCT, WC
 from queues import poll, ai1, ai2, as1, af1, asi1, aa1
 from aggres import AggInfo
+from crawler.cates import need_crawl
 from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
@@ -115,6 +116,12 @@ class ItemWorker(Worker):
                 LC.delete('item', itemid)
                 return
 
+            # check if we should save this item in the first place
+            # we only accept a few cates
+            if 'rcid' in d and not need_crawl(d['cid']):
+                WC.add(d['id'])
+                return
+
             # for connection errors, we simply raise exception here
             # the exceptions will be captured in LC.update_if_needed
             # the task will not clean up and will be requeued by requeue worker
@@ -126,6 +133,7 @@ class ItemWorker(Worker):
                 except:
                     traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
+
 
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs

@@ -13,6 +13,28 @@ from settings import CACHE_URI
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(CACHE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
+class WC(object):
+    """ wrong category items """
+    setkey = 'ataobao-wrongcategory-items'
+    @staticmethod
+    def count():
+        return conn.scard(WC.setkey)
+
+    @staticmethod
+    def add(*ids):
+        conn.sadd(WC.setkey, *ids)
+
+    @staticmethod
+    def contains(*ids):
+        p = conn.pipeline()
+        for id in ids:
+            p.sismember(WC.setkey, id)
+        return p.execute()
+
+    @staticmethod
+    def delete(*ids):
+        conn.srem(WC.setkey, *ids)
+
 class IF(object):
     """ infrequent items 
 
@@ -81,7 +103,9 @@ class LC(object):
     def need_update(type, *ids):
         if not ids:
             return []
-	    ids.append(ids[0])
+        ids = list(set(ids))
+        ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
+
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
         lastchecks = conn.hmget(hashkey, *ids)

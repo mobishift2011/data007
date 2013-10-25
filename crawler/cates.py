@@ -14495,3 +14495,14 @@ cates = \
  121128001: 99,
  121130001: 99,
  121130002: 99}
+
+from topcates import topcids
+
+def need_crawl(cid):
+    if cid not in cates:
+        return False
+
+    while cates[cid] != 0:
+        cid = cates[cid]
+
+    return cid in topcids

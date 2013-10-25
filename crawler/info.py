@@ -8,7 +8,7 @@ import logging
 import argparse
 
 from queues import ai1, ai2, as1, af1, aa1, aa2, asi1
-from caches import LC, IF
+from caches import LC, IF, WC
 
 def gettermsize():
     def ioctl_GWINSZ(fd):
@@ -245,6 +245,10 @@ def show_counts(args):
         
     chart = green('|' + '█' * int(ratio * IF.count()))
     line = '    %-12s %s %d' % ('items(num_sold30=0)', chart, IF.count())
+    print(line)
+
+    chart = green('|' + '█' * int(ratio * WC.count()))
+    line = '    %-12s %s %d' % ('items(wrong cate)', chart, WC.count())
     print(line)
 
     # Print summary when not in raw mode
