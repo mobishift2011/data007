@@ -140,13 +140,16 @@ class ItemWorker(Worker):
                     as1.put(d['shopid'])
 
         while True:
-            if self.banned:
-                print('banned, sleeping 60 secs')
-                time.sleep(60)
-            result = poll([ai1, ai2], timeout=10)
-            if result:
-                queue, itemid = result
-                self.pool.spawn(LC.update_if_needed, 'item', itemid, on_update, queue)
+            try:
+                if self.banned:
+                    print('banned, sleeping 60 secs')
+                    time.sleep(60)
+                result = poll([ai1, ai2], timeout=10)
+                if result:
+                    queue, itemid = result
+                    self.pool.spawn(LC.update_if_needed, 'item', itemid, on_update, queue)
+            except:
+                traceback.print_exc()
 
 class ShopWorker(Worker):
     """ Work on Shop Queues
@@ -168,10 +171,13 @@ class ShopWorker(Worker):
             self.pool.spawn(list_shop, shopid, on_update)
             
         while True:
-            result = poll([as1], timeout=10)
-            if result:
-                queue, shopid = result
-                LC.update_if_needed('shop', shopid, spawn_shop, queue)
+            try:
+                result = poll([as1], timeout=10)
+                if result:
+                    queue, shopid = result
+                    LC.update_if_needed('shop', shopid, spawn_shop, queue)
+            except:
+                traceback.print_exc()
 
 class ShopInfoWorker(Worker):
     """ Work on ShopInfo Queues """
@@ -191,10 +197,13 @@ class ShopInfoWorker(Worker):
                 asi1.task_done(id)
 
         while True:
-            result = poll([asi1], timeout=10)
-            if result:
-                queue, shopid = result
-                self.pool.spawn(update_shopinfo, shopid)
+            try:
+                result = poll([asi1], timeout=10)
+                if result:
+                    queue, shopid = result
+                    self.pool.spawn(update_shopinfo, shopid)
+            except:
+                traceback.print_exc()
 
 class ItemAggregateWorker(Worker):
     """ worker for item info aggregation """
@@ -206,12 +215,15 @@ class ItemAggregateWorker(Worker):
             AggInfo(date).done_range(type, start, end)
 
         while True:
-            result = poll([aa1], timeout=10)
-            if result:
-                queue, ran = result
-                start, end = ran
-                print('calculating slice {}, {}'.format(start, end))
-                self.pool.spawn(aggregate_items, start, end, on_finish=on_finish)
+            try:
+                result = poll([aa1], timeout=10)
+                if result:
+                    queue, ran = result
+                    start, end = ran
+                    print('calculating slice {}, {}'.format(start, end))
+                    self.pool.spawn(aggregate_items, start, end, on_finish=on_finish)
+            except:
+                traceback.print_exc()
 
 class ShopAggregateWorker(Worker):
     """ worker for shop info aggregation """
@@ -223,12 +235,15 @@ class ShopAggregateWorker(Worker):
             AggInfo(date).done_range(type, start, end)
 
         while True:
-            result = poll([aa2], timeout=10)
-            if result:
-                queue, ran = result
-                start, end = ran
-                print('calculating slice {}, {}'.format(start, end))
-                self.pool.spawn(aggregate_shops, start, end, on_finish=on_finish)
+            try:
+                result = poll([aa2], timeout=10)
+                if result:
+                    queue, ran = result
+                    start, end = ran
+                    print('calculating slice {}, {}'.format(start, end))
+                    self.pool.spawn(aggregate_shops, start, end, on_finish=on_finish)
+            except:
+                traceback.print_exc()
 
 def main():
     import argparse

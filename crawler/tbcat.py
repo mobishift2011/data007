@@ -6,6 +6,7 @@ import gevent.pool
 
 import re
 import time
+import random
 import traceback
 from itertools import chain
 from functools import partial
@@ -96,7 +97,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
 
         if page == 1:
             count = get_count(data)
-            for p in range(2, 2+count/95):
+            for p in range(2, 2+min(count/95, 5)):
                 if pathpool is not None:
                     pathpool.spawn(list_paths, paths, p, cid=cid)
                 else:
@@ -109,7 +110,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
         pathpool.join()
     return list(set(ids))
 
-def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, on_paths=None, sort=None):
+def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=1, on_paths=None, sort=None):
     """ try filter category by paths, and list all paths have less than 9500 items
     
     :param cid: category id
@@ -128,12 +129,13 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, o
             return False
 
     data = get_json(cid, paths, sort=sort)
-    if depth == 0 and paths == [] and allpath == [] and data['cat']:
-        cids = get_subcats(data)  
+    if depth == 0 and paths == [] and allpath == [] and data and data['cat']:
+        cids = get_subcats(data)
+        random.shuffle(cids)
         for scid in cids:
             list_cat_paths(scid, pool=pool, on_paths=on_paths)
 
-    if allpath == [] and data['propertyList']:
+    if allpath == [] and data and data['propertyList']:
         allpath = [ [p2['value'] for p2 in p1['propertyList']] for p1 in data['propertyList'] ]
         allpath = sorted(allpath, key=len, reverse=True)[:num_paths]
         paths = [''] * len(allpath)
