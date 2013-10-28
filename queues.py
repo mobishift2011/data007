@@ -4,7 +4,6 @@ import re
 import time
 import redis
 import threading
-from msgpack import unpackb as unpack, packb as pack
 
 from settings import QUEUE_URI
 
@@ -49,7 +48,7 @@ class Queue(object):
     def put(self, *items):
         """ put item(s) into queue """
         if items:
-            return conn.sadd(self.key, *[pack(item) for item in items])
+            return conn.sadd(self.key, *items)
         else:
             return 0
 
@@ -59,15 +58,11 @@ class Queue(object):
             t = 0  
             while timeout is None or t < timeout:
                 result = conn.spop(self.key)
-                if result:
-                    result = unpack(result)
-                    break
-                else:
+                if not result:
                     t += 0.05
                     time.sleep(0.05)
         else:
             result = conn.spop(self.key)
-            result =  unpack(result) if result is not None else None
 
         if result:
             self.task_start(result)
@@ -75,11 +70,11 @@ class Queue(object):
 
     def task_start(self, result):
         """ save start time in redis hash """
-        conn.hsetnx(self.hashkey, pack(result), pack(time.mktime(time.gmtime())))
+        conn.hsetnx(self.hashkey, result, time.mktime(time.gmtime()))
 
     def task_done(self, result):
         """ clear start time in redis hash, indicating the task done """
-        conn.hdel(self.hashkey, pack(result))
+        conn.hdel(self.hashkey, result)
 
     def clean_task(self):
         """ check task hash for unfinished long running tasks, requeue them """
@@ -90,15 +85,14 @@ class Queue(object):
 
         items = []
         for field, value in conn.hgetall(self.hashkey).iteritems():
-            start_time = unpack(value)
+            start_time = float(value)
             if time.mktime(time.gmtime()) - start_time > timeout:
                 items.append(field)
 
-        # we call sadd directly because we don't want to unpack then pack fields
         items, items_tail = items[:50000], items[50000:]
         while items:
             try:
-                print('requeuing {} items(e.g. ... {}) to {}'.format(len(items), [unpack(item) for item in items[-10:]], self.key))
+                print('requeuing {} items(e.g. ... {}) to {}'.format(len(items), items[-10:], self.key))
                 pipeline = conn.pipeline()
                 pipeline.hdel(self.hashkey, *items)
                 pipeline.sadd(self.key, *items)

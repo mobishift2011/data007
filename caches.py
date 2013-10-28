@@ -174,7 +174,7 @@ class ItemCT(object):
         pipeline = conn.pipeline()
         for id in ids:
             setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
-            pipeline.sadd(setkey, pack(id))
+            pipeline.sadd(setkey, id)
         pipeline.execute()
 
     @staticmethod
@@ -182,7 +182,7 @@ class ItemCT(object):
         pipeline = conn.pipeline()
         for id in ids:
             setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
-            pipeline.srem(setkey, pack(id))
+            pipeline.srem(setkey, id)
         pipeline.execute()
 
     @staticmethod
@@ -191,6 +191,6 @@ class ItemCT(object):
             ct = int(time.mktime(time.gmtime())%86400/60)
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
-        return [unpack(m) for m in conn.smembers(setkey)]
+        return conn.smembers(setkey)
 
     
