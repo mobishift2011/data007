@@ -6,62 +6,15 @@ import redis
 import binascii
 import traceback
 
-from msgpack import unpackb as unpack, packb as pack
-
+from thinredis import ThinSet, ThinHash 
 from settings import CACHE_URI
 
 host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(CACHE_URI).groups()
 conn = redis.Redis(host=host, port=int(port), db=int(db))
 
-class WC(object):
-    """ wrong category items """
-    setkey = 'ataobao-wrongcategory-items'
-    @staticmethod
-    def count():
-        return conn.scard(WC.setkey)
+WC = ThinSet('ataobao-wrongcategory-items', 3000*10000, connection=conn)
+IF = ThinSet('ataobao-infrequent-items', 15000*10000, connection=conn)
 
-    @staticmethod
-    def add(*ids):
-        conn.sadd(WC.setkey, *ids)
-
-    @staticmethod
-    def contains(*ids):
-        p = conn.pipeline()
-        for id in ids:
-            p.sismember(WC.setkey, id)
-        return p.execute()
-
-    @staticmethod
-    def delete(*ids):
-        conn.srem(WC.setkey, *ids)
-
-class IF(object):
-    """ infrequent items 
-
-    save ids for num_sold30 == 0, to distinguish from everyday fetchs
-    ids belong to IF would trigger crawler less frequently (7days/run)
-    """
-    setkey = 'ataobao-infrequent-items' 
-    @staticmethod
-    def count():
-        return conn.scard(IF.setkey) 
-
-    @staticmethod
-    def contains(*ids):
-        p = conn.pipeline()
-        for id in ids:
-            p.sismember(IF.setkey, id)
-        result = p.execute()
-        return result
-
-    @staticmethod
-    def delete(*ids):
-        conn.srem(IF.setkey, *ids)
-
-    @staticmethod
-    def add(*ids):
-        conn.sadd(IF.setkey, *ids)
-    
 class LC(object):
     """ Item LastCheck Management 
 
@@ -88,16 +41,23 @@ class LC(object):
     This will ensure we do cleanups after we done the task
     """
     hashkey = 'ataobao-{}-lastcheck-hash'
+    
+    @staticmethod
+    def gethash(type):
+        hashkey = LC.hashkey.format(type)
+        if type == 'item':
+            count = 2*10000*10000
+        else:
+            count = 500*10000
+        return ThinHash(hashkey, count, connection=conn)
 
     @staticmethod
     def count(type):
-        hashkey = LC.hashkey.format(type)
-        return conn.hlen(hashkey) 
+        return LC.gethash(type).count()
 
     @staticmethod
     def delete(type, id):
-        hashkey = LC.hashkey.format(type)
-        return conn.hdel(hashkey, id)
+        return LC.gethash(type).delete(id)
 
     @staticmethod
     def need_update(type, *ids):
@@ -109,9 +69,9 @@ class LC(object):
         if not ids:
             return []
 
-        hashkey = LC.hashkey.format(type)
+        thehash = LC.gethash(type)
         tsnow = time.mktime(time.gmtime())
-        lastchecks = conn.hmget(hashkey, *ids)
+        lastchecks = thehash.hmget(*ids)
 
         offset = 80000 if type == 'item' else 86400*7
         offsets = [offset] * len(ids)
@@ -123,7 +83,7 @@ class LC(object):
         for i, lastcheck in enumerate(lastchecks): 
             # if there's no lastcheck, or lastcheck happened some time ago
             # try call on_update with id, if succeeded, update lastcheck in redis
-            if lastcheck is None or unpack(lastcheck) + offsets[i] < tsnow:
+            if lastcheck is None or float(lastcheck) + offsets[i] < tsnow:
                 needs.append(ids[i])
 
         return needs
@@ -141,7 +101,7 @@ class LC(object):
                 traceback.print_exc()
             else:
                 queue.task_done(id)
-                conn.hset(hashkey, id, pack(tsnow))
+                LC.gethash(type).hset(id, tsnow)
         else:
             queue.task_done(id)
 
@@ -162,6 +122,13 @@ class ItemCT(object):
     ``item scheduler`` will use ``ItemCT.get_items`` methods to retrieve items to update
     """
     basekey = 'ataobao-item-checktime-set'
+    @staticmethod
+    def ct():
+        return int(time.mktime(time.gmtime())%86400/60+480)
+
+    @staticmethod
+    def getset(setkey):
+        return ThinSet(setkey, 20*10000, connection=conn)
 
     @staticmethod
     def checktime(id):
@@ -171,26 +138,20 @@ class ItemCT(object):
 
     @staticmethod
     def add_items(*ids):
-        pipeline = conn.pipeline()
         for id in ids:
             setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
-            pipeline.sadd(setkey, id)
-        pipeline.execute()
+            ItemCT.getset(setkey).add(id)
 
     @staticmethod
     def delete(*ids):
-        pipeline = conn.pipeline()
         for id in ids:
             setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ItemCT.checktime(id))
-            pipeline.srem(setkey, id)
-        pipeline.execute()
+            ItemCT.getset(setkey).delete(id)
 
     @staticmethod
     def get_items(ct=None):
         if ct is None:
-            ct = int(time.mktime(time.gmtime())%86400/60)
+            ct = ItemCT.ct()
          
         setkey = '{basekey}-{ct}'.format(basekey=ItemCT.basekey, ct=ct)
-        return conn.smembers(setkey)
-
-    
+        return ItemCT.getset(setkey).smembers()

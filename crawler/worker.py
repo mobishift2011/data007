@@ -147,7 +147,7 @@ class ItemWorker(Worker):
                 result = poll([ai1, ai2], timeout=10)
                 if result:
                     queue, itemid = result
-                    self.pool.spawn(LC.update_if_needed, 'item', itemid, on_update, queue)
+                    self.pool.spawn(LC.update_if_needed, 'item', int(itemid), on_update, queue)
             except:
                 traceback.print_exc()
 
@@ -201,7 +201,7 @@ class ShopInfoWorker(Worker):
                 result = poll([asi1], timeout=10)
                 if result:
                     queue, shopid = result
-                    self.pool.spawn(update_shopinfo, shopid)
+                    self.pool.spawn(update_shopinfo, int(shopid))
             except:
                 traceback.print_exc()
 
