@@ -13,13 +13,37 @@ envs = {
     'DEV': {
         'QUEUE_URI': 'redis://localhost:6379/11',
         'CACHE_URI': 'redis://localhost:6379/12',
+        'CACHE_URIS': [
+            'redis://localhost:6401/12',
+            'redis://localhost:6402/12',
+            'redis://localhost:6403/12',
+            'redis://localhost:6404/12',
+        ],
         'AGGRE_URI': 'redis://localhost:6379/13',
+        'AGGRE_URIS': [
+            'redis://localhost:6401/13',
+            'redis://localhost:6402/13',
+            'redis://localhost:6403/13',
+            'redis://localhost:6404/13',
+        ],
         'DB_HOSTS': ['localhost:9160'],
     },
     'TEST': {
         'QUEUE_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/11',
         'CACHE_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/12',
+        'CACHE_URIS': [
+            'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6401/12',
+            'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6402/12',
+            'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6403/12',
+            'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6404/12',
+        ],
         'AGGRE_URI': 'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6379/13',
+        'AGGRE_URIS': [
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6401/13'
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6402/13'
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6403/13'
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6404/13'
+        ],
         'DB_HOSTS': [
             'ec2-54-224-101-163.compute-1.amazonaws.com:9160',
             'ec2-23-20-136-42.compute-1.amazonaws.com:9160',

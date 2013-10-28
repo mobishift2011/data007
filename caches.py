@@ -7,10 +7,15 @@ import binascii
 import traceback
 
 from thinredis import ThinSet, ThinHash 
-from settings import CACHE_URI
+from shardredis import ShardRedis
+from settings import CACHE_URIS
 
-host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(CACHE_URI).groups()
-conn = redis.Redis(host=host, port=int(port), db=int(db))
+conns = []
+for uri in CACHE_URIS:
+    host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(uri).groups()
+    conn = redis.Redis(host=host, port=int(port), db=int(db))
+conns.append(conn)
+conn = ShardRedis(conns=conns)
 
 WC = ThinSet('ataobao-wrongcategory-items', 3000*10000, connection=conn)
 IF = ThinSet('ataobao-infrequent-items', 15000*10000, connection=conn)

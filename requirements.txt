@@ -28,3 +28,4 @@ autobahn
 txmongo
 txredisapi
 pyquery
+hash_ring
