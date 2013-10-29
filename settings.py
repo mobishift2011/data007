@@ -39,10 +39,10 @@ envs = {
         ],
         'AGGRE_URI': 'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6379/13',
         'AGGRE_URIS': [
-            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6401/13'
-            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6402/13'
-            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6403/13'
-            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6404/13'
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6401/13',
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6402/13',
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6403/13',
+            'redis://ec2-54-205-83-14.compute-1.amazonaws.com:6404/13',
         ],
         'DB_HOSTS': [
             'ec2-54-224-101-163.compute-1.amazonaws.com:9160',
