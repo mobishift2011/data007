@@ -127,13 +127,17 @@ class ItemCT(object):
     ``item scheduler`` will use ``ItemCT.get_items`` methods to retrieve items to update
     """
     basekey = 'ataobao-item-checktime-set'
+    cache = {}
     @staticmethod
     def ct():
         return int(time.mktime(time.gmtime())%86400/60+480)
 
     @staticmethod
     def getset(setkey):
-        return ThinSet(setkey, 20*10000, connection=conn)
+        cache = ItemCT.cache
+        if setkey not in cache:
+            cache[setkey] = ThinSet(setkey, 20*10000, connection=conn)
+        return cache[setkey]
 
     @staticmethod
     def checktime(id):

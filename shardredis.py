@@ -23,8 +23,12 @@ cmd_zsets = {'zadd', 'zinterstore', 'zrem', 'zrevrangebyscore', 'zcard', 'zrange
 cmd_mods = cmd_hashes | cmd_lists | cmd_sets | cmd_zsets | cmd_strings
 
 class ShardRedis(object):
+    cache = {}
     def __init__(self, conns, pipelines=None):
-        self.ring = HashRing(range(len(conns)))
+        length = len(conns)
+        if length not in ShardRedis.cache:
+            ShardRedis.cache[length] = HashRing(range(length))
+        self.ring = ShardRedis.cache[length]
         self.conns = conns
         self.pipelines = pipelines
 
