@@ -14,7 +14,7 @@ conns = []
 for uri in CACHE_URIS:
     host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(uri).groups()
     conn = redis.Redis(host=host, port=int(port), db=int(db))
-conns.append(conn)
+    conns.append(conn)
 conn = ShardRedis(conns=conns)
 
 WC = ThinSet('ataobao-wrongcategory-items', 3000*10000, connection=conn)
@@ -62,7 +62,7 @@ class LC(object):
 
     @staticmethod
     def delete(type, id):
-        return LC.gethash(type).delete(id)
+        return LC.gethash(type).hdel(id)
 
     @staticmethod
     def need_update(type, *ids):
