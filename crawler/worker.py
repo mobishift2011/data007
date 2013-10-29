@@ -219,7 +219,7 @@ class ItemAggregateWorker(Worker):
                 result = poll([aa1], timeout=10)
                 if result:
                     queue, ran = result
-                    start, end = ran
+                    start, end = eval(ran)
                     print('calculating slice {}, {}'.format(start, end))
                     self.pool.spawn(aggregate_items, start, end, on_finish=on_finish)
             except:

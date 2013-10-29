@@ -8,10 +8,17 @@ import traceback
 
 from msgpack import unpackb as unpack, packb as pack
 
-from settings import AGGRE_URI
+from settings import AGGRE_URIS
+from shardredis import ShardRedis
 
-host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(AGGRE_URI).groups()
-conn = redis.Redis(host=host, port=int(port), db=int(db))
+conns = []
+for uri in AGGRE_URIS:
+    host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(uri).groups()
+    conn = redis.Redis(host=host, port=int(port), db=int(db))
+    conns.append(conn)
+
+conn = ShardRedis(conns=conns)
+
 
 class ShopIndex(object):
     shopindex = 'shopindex_{}_{}_{}_{}_{}' # sortedsets for indexes
@@ -23,6 +30,9 @@ class ShopIndex(object):
     def __init__(self, date):
         self.date = date
         self.pipeline = None
+
+    def make_skey(self, cate1, cate2):
+        return '{}_{}'.format(cate1, cate2)
 
     def multi(self):
         self.pipeline = conn.pipeline(transaction=False) 
@@ -69,37 +79,40 @@ class ShopIndex(object):
     def addcates(self, shopid, cate1, cate2):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
-        p.sadd(ShopIndex.shopcates.format(date, shopid), pack((cate1, cate2)))
+        p.sadd(
+            ShopIndex.shopcates.format(date, shopid), 
+            pack((cate1, cate2))
+        )
          
     def incrindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
         key = ShopIndex.shopindex.format(date, cate1, cate2, field, monorday)
-        p.zincrby(key, shopid, amount)
+        p.zincrby(key, shopid, amount, skey=self.make_skey(cate1, cate2))
 
     def setindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
         zkey = ShopIndex.shopindex.format(date, cate1, cate2, field, monorday)
-        p.zadd(zkey, shopid, amount)
+        p.zadd(zkey, shopid, amount, skey=self.make_skey(cate1, cate2))
     
     def incrinfo(self, cate1, cate2, monorday, shopid, shopinfo):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
         hkey = ShopIndex.shopinfo.format(date, cate1, cate2, monorday, shopid)
         for key, value in shopinfo.items():
-            p.hincrbyfloat(hkey, key, value)
+            p.hincrbyfloat(hkey, key, value, skey=self.make_skey(cate1, cate2))
 
     def setinfo(self, cate1, cate2, monorday, shopid, shopinfo):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
         hkey = ShopIndex.shopinfo.format(date, cate1, cate2, monorday, shopid)
-        p.hmset(hkey, shopinfo)
+        p.hmset(hkey, shopinfo, skey=self.make_skey(cate1, cate2))
 
     def getinfo(self, cate1, cate2, monorday, shopid):
         date = self.date
         hkey = ShopIndex.shopinfo.format(date, cate1, cate2, monorday, shopid)
-        return conn.hgetall(hkey)
+        return conn.hgetall(hkey, skey=self.make_skey(cate1, cate2))
 
     def incrbase(self, shopid, shopinfo):
         date = self.date

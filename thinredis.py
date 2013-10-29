@@ -3,12 +3,17 @@
 """ A simplified and thin set/hash for redis
 
 A "real set/hash" in redis has too much overhead (~10x)
+
 This is a simplified version of set/hash, 
     * only integer/biginteger values supported
     * for set, only ``contains``, ``add`` and  ``delete`` is supported
-However the size of set is highly optimized using redis's ``zipset`` feature
 
-The concept comes from `this stackoverflow question<http://stackoverflow.com/questions/10004565/redis-10x-more-memory-usage-than-data/10008222#10008222>`_
+By doing this simplification, we are able to take advantage of ``redis``'s 
+zipentry optimization. Thus the size of set/hash can be reduced to
+1/4 ~ 1/3 of the original size.
+
+The concept comes from `this stackoverflow question 
+<http://stackoverflow.com/questions/10004565/redis-10x-more-memory-usage-than-data/10008222#10008222>`_
 """
 import redis
 import gevent.coros
