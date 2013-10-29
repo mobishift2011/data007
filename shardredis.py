@@ -23,10 +23,10 @@ cmd_zsets = {'zadd', 'zinterstore', 'zrem', 'zrevrangebyscore', 'zcard', 'zrange
 cmd_mods = cmd_hashes | cmd_lists | cmd_sets | cmd_zsets | cmd_strings
 
 class ShardRedis(object):
-    def __init__(self, conns):
+    def __init__(self, conns, pipelines=None):
         self.ring = HashRing(range(len(conns)))
         self.conns = conns
-        self.pipelines = None
+        self.pipelines = pipelines
 
     def getconn(self, index):
         if self.pipelines:
@@ -46,9 +46,8 @@ class ShardRedis(object):
                 return getattr(self.getconn(index), name)(*args, **kwargs)
             return func
         elif name == 'pipeline':
-            def func():
-                self.pipelines = [conn.pipeline() for conn in self.conns]
-                return self
+            def func(*args, **kwargs):
+                return ShardRedis(conns=self.conns, pipelines=[conn.pipeline(*args, **kwargs) for conn in self.conns])
             return func
         elif name == 'execute':
             def func():

@@ -98,7 +98,7 @@ class LC(object):
         """ try update item by id, update lastcheck if needed """
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
-        if LC.need_update(type, id):
+        if LC.need_update(type, int(id)):
             try:
                 on_update(id)
             except:

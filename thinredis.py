@@ -11,6 +11,7 @@ However the size of set is highly optimized using redis's ``zipset`` feature
 The concept comes from `this stackoverflow question<http://stackoverflow.com/questions/10004565/redis-10x-more-memory-usage-than-data/10008222#10008222>`_
 """
 import redis
+import gevent.coros
 
 class ThinSet(object):
     def __init__(self, name, totalcount, connection=None):
@@ -36,8 +37,8 @@ class ThinSet(object):
     def add(self, *items):
         if len(items) == 0:
             return
-            
-        p = self.conn.pipeline()
+           
+        p = self.conn.pipeline(transaction=False)
 
         buckets = set()
         for item in items:
@@ -46,6 +47,7 @@ class ThinSet(object):
             p.sadd(bucket, item)
 
         added = sum(p.execute())
+
         self.conn.incr(self.counterkey, added)
         self.conn.sadd(self.bucketskey, *list(buckets))
     
@@ -54,34 +56,40 @@ class ThinSet(object):
         if len(items) == 0:
             return
             
-        p = self.conn.pipeline() 
+        p = self.conn.pipeline(transaction=False) 
 
         for item in items: 
             bucket = self._get_bucket(item)
             p.srem(bucket, item)
 
         deleted = sum(p.execute())
+
         if deleted:
             self.conn.decr(self.counterkey, deleted)
 
 
     def contains(self, *items):
-        p = self.conn.pipeline()
+        if not items:
+            return []
+
+        p = self.conn.pipeline(transaction=False)
     
         for item in items:
             bucket = self._get_bucket(item)
-            p.sismember(bucket, item) 
+            p.sismember(bucket, item)
 
         return p.execute()
 
     def smembers(self):
         buckets = self.conn.smembers(self.bucketskey)
-        p = self.conn.pipeline()
+
+        p = self.conn.pipeline(transaction=False)
         for bucket in buckets:
             p.smembers(bucket)
         r = set()
         for s in p.execute():
             r.update(s)
+
         return r
 
 class ThinHash(object):
@@ -105,7 +113,7 @@ class ThinHash(object):
 
     def hset(self, field, value):
         bucket = self._get_bucket(field)
-        p = self.conn.pipeline()
+        p = self.conn.pipeline(transaction=False)
         p.hset(bucket, field, value) 
         p.sadd(self.bucketskey, bucket)
         r = p.execute()
@@ -124,7 +132,7 @@ class ThinHash(object):
         elif len(args) % 2 != 0:
             raise ValueError("hmset only accept even arguments")
 
-        p = self.conn.pipeline()
+        p = self.conn.pipeline(transaction=False)
         buckets = set()
         for i in range(len(args)/2):
             field, value = args[i*2], args[i*2+1]
@@ -140,17 +148,16 @@ class ThinHash(object):
         if len(fields) == 0:
             return
 
-        p = self.conn.pipeline()
+        p = self.conn.pipeline(transaction=False)
         for field in fields:
             bucket = self._get_bucket(field)
-            p.hget(bucket, field)
+            p.hget(bucket, int(field))
 
         return p.execute()
-        #return {f:v for f, v in zip(fields, p.execute())}
 
     def hgetall(self):
         buckets = self.conn.smembers(self.bucketskey)
-        p = self.conn.pipeline()
+        p = self.conn.pipeline(transaction=False)
         for bucket in buckets:
             p.hgetall(bucket)
         r = {}
