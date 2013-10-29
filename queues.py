@@ -121,8 +121,8 @@ def poll(queues, timeout=None):
             result = q.get(block=False)
             if result is not None:
                 return q, result
-        t += 0.05
-        time.sleep(0.05)
+        t += 0.5
+        time.sleep(0.5)
 
 ai1 = Queue('ataobao-item-queue-1', 3, timeout=90)
 ai2 = Queue('ataobao-item-queue-2', 1, timeout=90)
