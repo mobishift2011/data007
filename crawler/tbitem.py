@@ -152,7 +152,7 @@ def get_taobao_item(id, content):
         (r"Hub.config.set\('sku',({.*?})\)", [
             ('apiItemInfo', 'get_sold30', 'num_sold30'),
             #('valItemInfo', 'get_price', 'price'),
-            ('umpStockUrl', 'get_ump_price', 'price'),
+            ('wholeSibUrl', 'get_sib_price', 'price'),
         ]),
     ]
     result = parse_content(content, patlist, patdict)
@@ -209,7 +209,7 @@ def parse_content(content, patlist, patdict):
             data = ctx.eval('d='+re.compile(pat, re.DOTALL).search(content).group(1))
             for field, callback, name in patlist:
                 obj = data
-                if field == 'umpStockUrl' and not getattr(obj, field, None):
+                if field == 'wholeSibUrl' and not getattr(obj, field, None):
                     continue 
 
                 for f in field.split('.'):
@@ -295,20 +295,15 @@ def get_price(d):
     except:
         return None
 
-def get_ump_price(url):
+def get_sib_price(url):
     s = get_blank_session()
     ctx = get_ctx()
     s.headers['Referer'] = 'http://item.taobao.com/item.htm'
-    patpromo = re.compile(r';TB.PromoData = ({.+)', re.DOTALL)
+    patpromo = re.compile(r'PromoData=({.+]\s*})\s*;', re.DOTALL)
     try:
         content = s.get(url, timeout=30).content
         if need_decode:
             content = content.decode('gbk', 'ignore')
-        content = re.sub(r';TB.PointData=.*', '', content).strip()
-
-        # no idea why this happens, but we can ignore it
-        if 'g_config.vdata.asyncViewer' in content:
-            return
 
         if content:
             data = ctx.eval('d='+patpromo.search(content).group(1))
