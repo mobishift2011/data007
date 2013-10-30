@@ -239,7 +239,7 @@ class ShopAggregateWorker(Worker):
                 result = poll([aa2], timeout=10)
                 if result:
                     queue, ran = result
-                    start, end = ran
+                    start, end = eval(ran)
                     print('calculating slice {}, {}'.format(start, end))
                     self.pool.spawn(aggregate_shops, start, end, on_finish=on_finish)
             except:
