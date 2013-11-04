@@ -169,3 +169,4 @@ topciddict = {
 }
 
 topcids = [topciddict[text] for text in topcidlist if text in topciddict]
+crawlids = [26, 50008164, 27, 50010788, 21, 1801, 50008163, 1512, 14, 35, 1101, 5008165, 5008090, 50010728, 50007218, 25, 16, 50006843, 50006842, 1625, 50010404, 29]

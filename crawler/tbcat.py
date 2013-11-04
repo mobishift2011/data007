@@ -97,7 +97,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
 
         if page == 1:
             count = get_count(data)
-            for p in range(2, 2+min(count/95, 5)):
+            for p in range(2, 2+min(count/95, 30)):
                 if pathpool is not None:
                     pathpool.spawn(list_paths, paths, p, cid=cid)
                 else:
@@ -110,7 +110,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
         pathpool.join()
     return list(set(ids))
 
-def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=1, on_paths=None, sort=None):
+def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, on_paths=None, sort=None):
     """ try filter category by paths, and list all paths have less than 9500 items
     
     :param cid: category id
