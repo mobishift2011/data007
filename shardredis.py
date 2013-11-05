@@ -108,7 +108,7 @@ class ShardRedis(object):
                     self.pipelines = None
                     return result
             return func
-        elif name in ['flushall']:
+        elif name in ['flushall', 'flushdb']:
             def func(*args, **kwargs):
                 results = []
                 for index in self.ring.nodes:
