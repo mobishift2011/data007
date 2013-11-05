@@ -35,7 +35,6 @@ def get_shop(id_or_url):
     else:
         url = 'http://shop{}.taobao.com'.format(id_or_url)
     s = get_session()
-#------------------------------------------------------------------------------ 
     print "begin...: %s" % url
     try:
         content = s.get(url, timeout=30).content
@@ -54,9 +53,12 @@ def get_shop(id_or_url):
     try:
         rank = re.compile(r'http://pics.taobaocdn.com/newrank/(.*?).gif').search(content).group(1)
     except:
-        #traceback.print_exc()
-        print "rank is tmall"
-        rank = 'tmall'
+        if u'该店铺尚未收到评价' in content.decode('gb18030', 'ignore'):
+            rank = '0'
+        else:
+            #traceback.print_exc()
+            print "rank is tmall"
+            rank = 'tmall'
         
     nick = urllib.unquote(re.compile(r'data-nick="([^"]+)"').search(content).group(1))
     
@@ -65,7 +67,9 @@ def get_shop(id_or_url):
     info['nick'] = nick
     info['rank'] = rank
     info['rateid'] = rateid
-    
+    if rank == '0':
+        info['rank_num'] = 0
+
     if info['rank'] == "tmall":
         info['num_collects'] = 0
         info.update(get_shop_info(info['sid']))
@@ -79,14 +83,11 @@ def get_shop(id_or_url):
     return info
 
 
-#shop_info
 def get_search_info(url, src_info, s):
     print "begin...get_search_info"
     
     info = {}
     try:
-#         url = "%s/dongtai.htm" % url
-#         content = requests.get(url).content
 
         search_url = "http://s.taobao.com/search?q=%s&app=shopsearch" % src_info['nick']
         content = s.get(search_url, timeout=30).content
@@ -98,7 +99,6 @@ def get_search_info(url, src_info, s):
         info['logo'] = PyQuery(ele).find("li.list-img img").attr("src")
         
         info['title'] = PyQuery(ele).find('li.list-info a.shop-name.J_shop_name[trace="shop"]').text()
-#------------------------------------------------------------------------------ 
     except:
         traceback.print_exc()
         
@@ -165,7 +165,6 @@ def get_service_info(rateid, s):
             info['charge'] = re.compile(r'class="charge".*?([0-9,.]+)').search(rateresp).group(1)
         except:
             info['charge'] = ''
-#------------------------------------------------------------------------------ 
 
         body = PyQuery(rateresp.decode("gbk", "ignore"))
         ele = body.find("div.info-block.info-block-first ul li")
@@ -185,11 +184,6 @@ def get_service_info(rateid, s):
             except:
                 info["rank_num"] = 0
         
-#------------------------------------------------------------------------------ 
-#         info['bao_money'] = body.find('div.left-box[data-spm="1000330"] div.charge span').text()
-#         info['nick'] = body.find('div.info-block.info-block-first div.title a').text()
-        
-#------------------------------------------------------------------------------ 
         info['rating'] = re.compile(r'class="count">([^<]*).*?class="percent ([a-z]*)[^>]*>([^<]*)', re.DOTALL).findall(rateresp)
         info['rates'] = re.compile(r'class="small-star-no[45]".*?(\d+\.\d+)%', re.DOTALL).findall(rateresp)
         info['good_rating'] = sum(float(r) for r in info['rates'])/3
@@ -206,10 +200,6 @@ def main():
     option = parser.parse_args()
     print('Shop Info:')
     shop = get_shop(option.shopid)
-#     for key, value in shop.iteritems():
-#         print key
-#         print(u'    {:16s} {}'.format(key, value))
-
     print json.dumps(shop, indent=4)
 
 if __name__ == '__main__':

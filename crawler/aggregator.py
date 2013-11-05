@@ -132,13 +132,13 @@ def aggregate_shops(start, end, date=datetime.utcnow()+timedelta(hours=8), on_fi
         si = ShopIndex(d1)
         si.multi()
         with db.connection() as cur:
-            cur.execute('''select id, title, logo, rank_num from ataobao2.shop
+            cur.execute('''select id, title, logo, rank, rank_num from ataobao2.shop
                     where token(id)>=:start and token(id)<:end''',
                     dict(start=start, end=end), consistency_level='ONE')
             for row in cur:
-                shopid, name, logo, rank_num = row
+                shopid, name, logo, rank, rank_num = row
                 try:
-                    aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop)
+                    aggregate_shop(si, shopid, name, logo, rank, rank_num, on_finish_shop)
                 except:
                     traceback.print_exc()
         si.execute()
@@ -148,7 +148,7 @@ def aggregate_shops(start, end, date=datetime.utcnow()+timedelta(hours=8), on_fi
     if on_finish:
         on_finish('shop', d1, start, end)
 
-def aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop):
+def aggregate_shop(si, shopid, name, logo, rank, rank_num, on_finish_shop):
     shopinfo = si.getbase(shopid)
     if shopinfo:
         active_index = float(shopinfo['active_index_mon'])
@@ -156,6 +156,7 @@ def aggregate_shop(si, shopid, name, logo, rank_num, on_finish_shop):
         credit_score = bisect(credits, rank_num)
         worth = 2**credit_score + active_index/3000. + sales/30.
         update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth}
+        update['type'] = 'tmall' if rank == 'tmall' else 'taobao'
         si.setbase(shopid, update)
 
         def update_with_cates(cate1, cate2):
