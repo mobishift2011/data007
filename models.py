@@ -79,6 +79,10 @@ def update_item(item):
     if insert_into_item_attr:
         db.batch(insert_into_item_attr)
 
+def delete_item(itemid):
+    db.execute('''delete from ataobao2.item where id=:itemid''', dict(itemid=itemid))
+    db.execute('''delete from ataobao2.item_by_date where id=:itemid''', dict(itemid=itemid))
+    db.execute('''delete from ataobao2.item_attr where id=:itemid''', dict(itemid=itemid))
 
 def update_shop(shopinfo):
     d = shopinfo

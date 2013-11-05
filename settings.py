@@ -13,10 +13,10 @@ envs = {
     'DEV': {
         'QUEUE_URI': 'redis://localhost:6379/11',
         'CACHE_URIS': [
-            'redis://localhost:6379/13',
-            'redis://localhost:6379/14',
-            'redis://localhost:6379/15',
-            'redis://localhost:6379/16',
+            'redis://localhost:6379/5',
+            'redis://localhost:6379/6',
+            'redis://localhost:6379/7',
+            'redis://localhost:6379/8',
         ],
         'AGGRE_URIS': [
             'redis://localhost:6379/1',

@@ -16,7 +16,7 @@ import gevent.pool
 from functools import partial
 from collections import deque
 
-from models import db, update_item, update_shop
+from models import db, update_item, delete_item, update_shop
 from caches import LC, ItemCT, WC
 from queues import poll, ai1, ai2, as1, af1, asi1, aa1, aa2
 from aggres import AggInfo
@@ -113,7 +113,13 @@ class ItemWorker(Worker):
             d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
             #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
-                LC.delete('item', itemid)
+                try:
+                    print('deleting id: {}'.format(itemid))
+                    LC.delete('item', itemid)
+                    ItemCT.delete(itemid)
+                    delete_item(itemid)
+                except:
+                    traceback.print_exc()
                 return
 
             # check if we should save this item in the first place

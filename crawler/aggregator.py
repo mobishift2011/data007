@@ -169,8 +169,7 @@ def aggregate_shop(si, shopid, name, logo, rank, rank_num, on_finish_shop):
                 si.setinfo(cate1, cate2, mod, shopid, update) 
                 shopinfo.update(update)
                 for field in ['sales', 'deals', 'active_index', 'credit_score', 'worth', 'score']:
-                    if shopinfo[field] > 0:
-                        si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
+                    si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
     
         cates = si.getcates(shopid)
         c1s = list(set([c[0] for c in cates]))
