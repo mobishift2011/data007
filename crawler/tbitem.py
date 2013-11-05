@@ -305,7 +305,7 @@ def get_sib_price(url):
         if need_decode:
             content = content.decode('gbk', 'ignore')
 
-        if content:
+        if content and 'PromoData' in content:
             data = ctx.eval('d='+patpromo.search(content).group(1))
             if data['def'].length > 0:
                 if hasattr(data['def'][0], 'price'):
