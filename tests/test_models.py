@@ -1,2 +1,2 @@
 def test_model_works():
-    from models import pool, item, shop
+    from models import db
