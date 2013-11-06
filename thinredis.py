@@ -150,15 +150,27 @@ class ThinHash(object):
         self.conn.sadd(self.bucketskey, *buckets)
 
     def hmget(self, *fields):
+        """ order preserving hmget, works only for shardredis """
         if len(fields) == 0:
             return
 
+        pointers = {}
         p = self.conn.pipeline(transaction=False)
-        for field in fields:
+        for i, field in enumerate(fields):
             bucket = self._get_bucket(field)
+            index = self.conn.ring.get_node(bucket)
+            if index not in pointers:
+                pointers[index] = []
+            pointers[index].append(i)
             p.hget(bucket, int(field))
-
-        return p.execute()
+        orders = []
+        for index in range(len(self.conn.conns)):
+            if index in pointers:
+                orders.extend(pointers[index])
+                
+        values = p.execute()
+        _, values = zip(*sorted(zip(orders, values)))
+        return values
 
     def hgetall(self):
         buckets = self.conn.smembers(self.bucketskey)
