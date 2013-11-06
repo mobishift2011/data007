@@ -74,16 +74,29 @@ class ThinSet(object):
 
 
     def contains(self, *items):
+        """ order preserving contains, works only for shardredis """
         if not items:
             return []
 
         p = self.conn.pipeline(transaction=False)
     
-        for item in items:
+        pointers = {}
+        for i, item in enumerate(items):
             bucket = self._get_bucket(item)
+            index = self.conn.ring.get_node(bucket)
+            if index not in pointers:
+                pointers[index] = []
+            pointers[index].append(i)
             p.sismember(bucket, item)
 
-        return p.execute()
+        orders = []
+        for index in range(len(self.conn.conns)):
+            if index in pointers:
+                orders.extend(pointers[index])
+                
+        values = p.execute()
+        _, values = zip(*sorted(zip(orders, values)))
+        return values
 
     def smembers(self):
         buckets = self.conn.smembers(self.bucketskey)
