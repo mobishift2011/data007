@@ -82,7 +82,7 @@ class ShardRedis(object):
         return conn
 
     def __getattribute__(self, name):
-        if name in ['mget', 'mset', 'hmset', 'hmget']:
+        if name in ['mget', 'hmget']:
             raise ValueError('Temporily Unsupported')
         elif name in cmd_mods:
             def func(*args, **kwargs): 

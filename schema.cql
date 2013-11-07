@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
     rating          text,
     cid             int,
     rank            text,
+    worth           float,
     num_collects    int,
     title           text,
     good_rating     float,
@@ -75,4 +76,19 @@ CREATE TABLE IF NOT EXISTS item_attr (
     attr_name       text,
     attr_value      text,
     PRIMARY KEY (id, attr_name)
+);
+
+CREATE TABLE IF NOT EXISTS brand (
+    name            text,
+    logo            text,
+    PRIMARY KEY (name)
+);
+
+CREATE TABLE IF NOT EXISTS brand_by_date (
+    name            text,
+    date            timestamp, 
+    sales           float,
+    shares          float,
+    num_shops       int,
+    PRIMARY KEY (name, date)
 );

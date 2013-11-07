@@ -215,7 +215,7 @@ class CappedSortedSet(object):
     """
     # lua script operation for a capped sorted set
     script = '\n'.join([
-            'redis.call("ZADD", KEYS[1], ARGV[2]+0, ARGV[1]+0)',
+            'redis.call("ZADD", KEYS[1], ARGV[2]+0, ARGV[1])',
             'local n = redis.call("ZCARD", KEYS[1])',
             'if n > ARGV[3]+0 then redis.call("ZREMRANGEBYRANK", KEYS[1], 0, n-ARGV[3]-1) end',
         ])
