@@ -82,7 +82,9 @@ class ShardRedis(object):
         return conn
 
     def __getattribute__(self, name):
-        if name in cmd_mods:
+        if name in ['mget', 'mset', 'hmset', 'hmget']:
+            raise ValueError('Temporily Unsupported')
+        elif name in cmd_mods:
             def func(*args, **kwargs): 
                 if 'skey' in kwargs:
                     # skey shorts for sharding key
