@@ -206,7 +206,7 @@ class BrandIndex(object):
     brands = 'brands_{}' # (date); set for brandnames
     brandbase = 'brandbase_{}_{}' # (date, brandname(utf-8)); hash for brand total info
                                   # name, logo, sales, deals, num_of_items, num_of_shops, 
-    brandsales = 'brandsales_{}_{}_{}' # (date, cate1, cate2); zset(brandname, sales), capped to 1000
+    brandindex = 'brandindex_{}_{}_{}_{}' # (date, cate1, cate2, field); zset(brandname, sales), capped to 1000
     brandtopitems = 'brandtopitems_{}_{}_{}' # (date, brandname, cate1); zset(itemid, sales), capped to 10
     brandtopshops = 'brandtopshops_{}_{}_{}' # (date, brandname, cate1); zset(shopid, sales), capped to 10
         
@@ -231,7 +231,7 @@ class BrandIndex(object):
                     'brandinfo_{}*'.format(date),
                     'brandcates_{}*'.format(date),
                     'brandbase_{}*'.format(date),
-                    'brandsales_{}*'.format(date),
+                    'brandindex_{}*'.format(date),
                     'brandtopitems_{}*'.format(date),
                     'brandtopshops_{}*'.format(date),
                     ]
@@ -261,7 +261,7 @@ class BrandIndex(object):
         # brand sales, aka indexes
         sales = brandinfo.get('sales') 
         if sales:
-            zkey = BrandIndex.brandsales.format(self.date, cate1, cate2)
+            zkey = BrandIndex.brandindex.format(self.date, cate1, cate2, 'sales')
             CappedSortedSet(zkey, 1000, p, skey=c12).zadd(brand, sales)
 
     def addcates(self, brand, cate1, cate2):
@@ -278,8 +278,13 @@ class BrandIndex(object):
 
 class CategoryIndex(object):
     categoryinfo = 'categoryinfo_{}_{}_{}_{}' # (date, cate1, cate2, monorday); hash for info
-                                              # sales, deals, delta_sales, num_of_items, *search_index*
-
+                                              # sales, deals, delta_sales, num_of_items,
+                                              # *num_of_brands*, = scard category brands
+                                              # *num_of_shops*, = zcard shopindex_date_cate1_cate2_sales_mon
+                                              #  *search_index* = crawler
+    categorybrands = 'categorybrands_{}_{}_{}' # (date, cate1, cate2); set for (brands) 
+    categoryindex = 'categoryindex_{}_{}_{}_{}' # (date, cate1, field, monorday); sorted set(cate2, sales) for cate rank
+     
     def __init__(self, date):
         self.date = date
         self.pipeline = None
@@ -305,6 +310,18 @@ class CategoryIndex(object):
                 p.delete(key)
             p.execute()
 
+    def incrinfo(self, cate1, cate2, monorday, categoryinfo):
+        # incr categoryinfo
+        hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
+        p = conn if self.pipeline is None else self.pipeline
+        c12 = self.make_skey(cate1, cate2)
+        for field, value in categoryinfo.iteritems():
+            p.hincrbyfloat(hkey, field, value, skey=c12)
+
+    def addbrand(self, cate1, cate2, brand):
+        hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
+        p = conn if self.pipeline is None else self.pipeline
+        p.sadd(hkey, brand)
 
 class AggInfo(object):
     key =  'ataobao-aggregate-info-{}-{}'

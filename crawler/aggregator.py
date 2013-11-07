@@ -108,6 +108,19 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
         delta_sales_mon = deals_mon * price - i2[2] * price 
         delta_sales_day = deals_day * price - deals_day1 * price
 
+        # inc category counters
+        for mod in ['day', 'mon']:
+            inc = {
+                'sales': locals()['sales_'+mod],
+                'deals': locals()['deals_'+mod],
+                'delta_sales': locals()['delta_sales_'+mod],
+                'items': 1,
+            }
+            ci.incrinfo(l1, l2, mod, inc)
+            ci.incrinfo(l1, 'all', mod, inc)
+        ci.addbrand(l1, l2, brand)
+        ci.addbrand(l1, 'all', brand)
+
         # inc brand counters
         bi.addshop(brand, shopid)
         bi.addcates(brand, l1, l2)
@@ -123,10 +136,10 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
 
         # inc item counters
         ii.incrcates(l1, l2, sales_mon, deals_mon)
-        ii.incrindex(l1, l2, 'sales_mon', 'mon', itemid, sales_mon)
-        ii.incrindex(l1, 'all', 'sales_mon', 'mon', itemid, sales_mon)
-        ii.incrindex(l1, l2, 'sales_day', 'day', itemid, sales_day)
-        ii.incrindex(l1, 'all', 'sales_day', 'day', itemid, sales_day)
+        ii.incrindex(l1, l2, 'sales', 'mon', itemid, sales_mon)
+        ii.incrindex(l1, 'all', 'sales', 'mon', itemid, sales_mon)
+        ii.incrindex(l1, l2, 'sales', 'day', itemid, sales_day)
+        ii.incrindex(l1, 'all', 'sales', 'day', itemid, sales_day)
         ii.setinfo(itemid, {
             'name': name,
             'image': image,
