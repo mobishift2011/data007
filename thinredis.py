@@ -16,6 +16,7 @@ The concept comes from `this stackoverflow question
 <http://stackoverflow.com/questions/10004565/redis-10x-more-memory-usage-than-data/10008222#10008222>`_
 """
 import redis
+import hashlib
 import gevent.coros
 
 class ThinSet(object):
@@ -230,5 +231,10 @@ class CappedSortedSet(object):
             self.conn.script_load(self.script)
             CappedSortedSet.inited = True
     
-    def zadd(self, member, score):
-        self.conn.evalsha(self.sha1, 1, self.key, member, score, self.cap, **self.kwargs)
+    def zadd(self, member, score, **kwargs):
+        kwargs.update(self.kwargs)
+        self.conn.evalsha(self.sha1, 1, self.key, member, score, self.cap, **kwargs)
+
+    def zrange(self, start, end, **kwargs):
+        kwargs.update(self.kwargs)
+        return self.conn.zrange(self.key, start, end, **kwargs)
