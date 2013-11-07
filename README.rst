@@ -1,4 +1,3 @@
 Initialize Database
 ===================
-cql host port -f schema.cql
-python scripts/init_mongodb.py
+cqlsh host port -f schema.cql
