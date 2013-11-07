@@ -10,8 +10,8 @@ and then send commands to it.
 ``Pipeline`` is supported by issuing pipelines to each of the nodes and 
 executing them all at the end.
 
-Some Redis operations, e.g. ``eval``, is not supported, because we can't 
-reliably determine which shard should we send the command to.
+Some Redis operations, e.g. ``eval``, will require you to specify ``skey``
+argument, in order to determine which node to use.
 """
 from hash_ring import HashRing
 from redis import Redis
@@ -108,7 +108,7 @@ class ShardRedis(object):
                     self.pipelines = None
                     return result
             return func
-        elif name in ['flushall', 'flushdb']:
+        elif name in ['flushall', 'flushdb', 'script_load', 'script_kill', 'script_flush']:
             def func(*args, **kwargs):
                 results = []
                 for index in self.ring.nodes:
@@ -139,7 +139,13 @@ class ShardRedis(object):
             try:
                 attr = object.__getattribute__(self, name)
             except:
-                return ValueError("Unsupported operation: {}".format(name))
+                def func(*args, **kwargs):
+                    if 'skey' not in kwargs:
+                        raise ValueError('{} command should use with "skey" argument'.format(name))
+                    index = self.ring.get_node(kwargs['skey'])
+                    del kwargs['skey']
+                    return getattr(self.getconn(index), name)(*args, **kwargs)
+                return func
             else:
                 return attr
 

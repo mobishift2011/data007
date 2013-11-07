@@ -35,25 +35,34 @@ def aggregate_items(token_start, token_end, date=datetime.utcnow()+timedelta(hou
     d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
     try:
         si = ShopIndex(d1)
+        ii = ItemIndex(d1)
+        bi = BrandIndex(d1)
+        ci = CategoryIndex(d1)
         si.multi()
+        ii.multi()
+        bi.multi()
+        ci.multi()
         with db.connection() as cur:
-            cur.execute('''select id, shopid, cid, num_sold30, price from ataobao2.item where token(id)>=:start and token(id)<:end''', 
+            cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image from ataobao2.item where token(id)>=:start and token(id)<:end''', 
                     dict(start=int(token_start), end=int(token_end)), consistency_level='ONE')
             for row in cur:
-                itemid, shopid, cid, nc, price = row
+                itemid, shopid, cid, nc, price, brand, name, image = row
                 if nc > 0:
                     try:
-                        aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item)
+                        aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date, on_finish_item)
                     except:
                         traceback.print_exc()
         si.execute()
+        ii.execute()
+        bi.execute()
+        ci.execute()
     except:
         traceback.print_exc()
 
     if on_finish:
         on_finish('item', d1, token_start, token_end)
 
-def aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item=None):
+def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date, on_finish_item=None):
     date2 = datetime(date.year, date.month, date.day)
     date1 = date2 - timedelta(days=60)
     d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -99,8 +108,43 @@ def aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item=None):
         delta_sales_mon = deals_mon * price - i2[2] * price 
         delta_sales_day = deals_day * price - deals_day1 * price
 
-        #print('updating item {} to {}'.format(itemid, 'ataobao_'+d1))
+        # inc brand counters
+        bi.addshop(brand, shopid)
+        bi.addcates(brand, l1, l2)
+        bi.addtops(brand, l1, itemid, shopid, sales_mon)
+        inc = {
+            'items': 1,
+            'deals': deals_mon,
+            'sales': sales_mon,
+            'delta_sales': delta_sales_mon,
+        }
+        bi.incrinfo(brand, l1, l2, inc)
+        bi.incrinfo(brand, l1, 'all', inc)
+
+        # inc item counters
+        ii.incrcates(l1, l2, sales_mon, deals_mon)
+        ii.incrindex(l1, l2, 'sales_mon', 'mon', itemid, sales_mon)
+        ii.incrindex(l1, 'all', 'sales_mon', 'mon', itemid, sales_mon)
+        ii.incrindex(l1, l2, 'sales_day', 'day', itemid, sales_day)
+        ii.incrindex(l1, 'all', 'sales_day', 'day', itemid, sales_day)
+        ii.setinfo(itemid, {
+            'name': name,
+            'image': image,
+            'shopid': shopid,
+            'brand': brand,
+            'price': price,
+            'sales_day': sales_day,
+            'sales_mon': sales_mon,
+            'deals_day': deals_day,
+            'deals_mon': deals_mon,
+        })
+
+        # inc shop counters
         si.addcates(shopid, l1, l2)
+        si.incrbrand(shopid, 'sales', brand, sales_mon)
+        si.incrbrand(shopid, 'deals', brand, deals_mon)
+        si.addhotitems(shopid, itemid, sales_mon)
+
         cate1 = l1
         for cate2 in  ['all', l2]:
             for period in ['mon', 'day']:
@@ -120,7 +164,6 @@ def aggregate_item(si, itemid, shopid, cid, price, date, on_finish_item=None):
                'active_index_mon': active_index_mon,
                'active_index_day': active_index_day}
         si.incrbase(shopid, inc)
-        si.addshop(shopid)
 
     if on_finish_item:
         on_finish_item(itemid)
