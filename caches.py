@@ -88,8 +88,23 @@ class LC(object):
         for i, lastcheck in enumerate(lastchecks): 
             # if there's no lastcheck, or lastcheck happened some time ago
             # try call on_update with id, if succeeded, update lastcheck in redis
-            if lastcheck is None or float(lastcheck) + offsets[i] < tsnow:
-                needs.append(ids[i])
+            
+            if type == 'item':
+                #cfz
+                if lastcheck is None:
+                    needs.append(ids[i])
+                else:
+                    lastcheck = int(float(lastcheck))
+                    offset = lastcheck/10**10 % 10**7
+                    lastcheck = lastcheck % 10**10
+                    if offset == 0:
+                        offset = offsets[i]
+                    if lastcheck + offset < int(tsnow):
+                        needs.append(ids[i])
+            else:
+                if lastcheck is None or float(lastcheck) + offsets[i] < tsnow:
+                    needs.append(ids[i])
+
 
         return needs
 
@@ -100,13 +115,42 @@ class LC(object):
         tsnow = time.mktime(time.gmtime())
         if LC.need_update(type, int(id)):
             try:
-                on_update(id)
+                info = on_update(id)
             except:
                 print('we do not set task_done for id {}, so we will pick them up in requeue'.format(id))
                 traceback.print_exc()
             else:
                 queue.task_done(id)
-                LC.gethash(type).hset(id, tsnow)
+                if type == "item":
+                    src = LC.gethash(type).hmget(id)
+                    
+                    if src[0]:
+                        src = int(src[0])
+                        num_sold30 = src/10**17
+                        offset = (src/10**10) % 10**7
+                        ts = src % 10**14
+                        sold0, sold1 = map(int, [num_sold30, info['num_sold30']])
+                        
+                        if sold0 == sold1:
+                            if offset == 0:
+                                offset = 86400*1
+                            elif offset == 86400:
+                                offset = 86400*2
+                            elif offset == 86400*2:
+                                offset = 86400*4
+                            elif offset == 86400*4:
+                                offset = 86400*8
+                            elif offset == 86400*8:
+                                offset = 86400*16
+                        else:
+                            offset = 0
+                        new_deb = sold1*10**17 + offset*10**10 + int(tsnow)
+                    else:
+                        new_deb = int(info['num_sold30'])*10**17 + int(tsnow)
+                        
+                    LC.gethash(type).hset(id, new_deb)
+                else:
+                    LC.gethash(type).hset(id, tsnow)
         else:
             queue.task_done(id)
 

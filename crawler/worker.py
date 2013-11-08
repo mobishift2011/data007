@@ -144,7 +144,9 @@ class ItemWorker(Worker):
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
                     as1.put(d['shopid'])
-
+                    
+                return d
+            
         while True:
             try:
                 if self.banned:
