@@ -63,7 +63,7 @@ class ShopIndex(object):
             p.execute()
 
     def getshops(self, cate1, cate2):
-        zkey = ShopIndex.shopindex.format(date, cate1, cate2, 'sales', 'mon')
+        zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'sales', 'mon')
         return conn.zcard(zkey, skey=self.make_skey(cate1, cate2))
 
     def getcates(self, shopid):
@@ -384,49 +384,3 @@ class CategoryIndex(object):
         hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
         p.sadd(hkey, brand)
-
-
-class AggInfo(object):
-    key =  'ataobao-aggregate-info-{}-{}'
-
-    def __init__(self, date):
-        self.date = date
-        
-    def clear(self):
-        for type in ['item', 'shop', 'brand', 'category']:
-            key = AggInfo.key.format(self.date, type)
-            conn.delete(key)
-        
-    def done_range(self, type, start, end):
-        key = AggInfo.key.format(self.date, type)
-        conn.rpush(key, pack((start, end)))
-
-    def gaps(self, type):
-        key = AggInfo.key.format(self.date, type)
-        lowerbound = -2**63
-        upperbound = 2**63
-        lines = []
-        for val in conn.lrange(key, 0, -1):
-            start, end = unpack(val)
-            lines.append([start, end])
-        lines = sorted(lines)
-        point = lowerbound
-        gaps = []
-        for start, end in lines:
-            if start != point:
-                gaps.append((point, start))
-            point = end
-        if point < upperbound:
-            gaps.append((point, upperbound))
-        return gaps
-
-    def task_left(self, type):
-        key = AggInfo.key.format(self.date, type)
-        numkeys = conn.llen(key)
-        if numkeys:
-            start, end = unpack(conn.lindex(key, 0))
-            step = end - start
-            d, m = divmod(2**64, step)
-            return d + int(bool(m)) - numkeys
-        else:
-            return 'unknown'

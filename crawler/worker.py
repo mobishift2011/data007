@@ -18,13 +18,11 @@ from collections import deque
 
 from models import db, update_item, delete_item, update_shop
 from caches import LC, ItemCT, WC
-from queues import poll, ai1, ai2, as1, af1, asi1, aa1, aa2
-from aggres import AggInfo
+from queues import poll, ai1, ai2, as1, af1, asi1
 from crawler.cates import need_crawl
 from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
-from crawler.aggregator import aggregate_items, aggregate_shops
 
 def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
     """ calling a func with throttling
@@ -82,7 +80,7 @@ class Worker(object):
 class ReQueueWorker(Worker):
     """ ReQueue Timeouted Jobs """
     def work(self):
-        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1, aa1, aa2]])
+        gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1]])
 
 class ItemWorker(Worker): 
     """ Work on Item Queues
@@ -211,50 +209,11 @@ class ShopInfoWorker(Worker):
             except:
                 traceback.print_exc()
 
-class ItemAggregateWorker(Worker):
-    """ worker for item info aggregation """
-    def work(self):
-        shopid = None
-
-        def on_finish(type, date, start, end):
-            print('done {}, {}, {}, {}'.format(type, date, start, end))
-            AggInfo(date).done_range(type, start, end)
-
-        while True:
-            try:
-                result = poll([aa1], timeout=10)
-                if result:
-                    queue, ran = result
-                    start, end = eval(ran)
-                    print('calculating slice {}, {}'.format(start, end))
-                    self.pool.spawn(aggregate_items, start, end, on_finish=on_finish)
-            except:
-                traceback.print_exc()
-
-class ShopAggregateWorker(Worker):
-    """ worker for shop info aggregation """
-    def work(self):
-        shopid = None
-
-        def on_finish(type, date, start, end):
-            print('done {}, {}, {}, {}'.format(type, date, start, end))
-            AggInfo(date).done_range(type, start, end)
-
-        while True:
-            try:
-                result = poll([aa2], timeout=10)
-                if result:
-                    queue, ran = result
-                    start, end = eval(ran)
-                    print('calculating slice {}, {}'.format(start, end))
-                    self.pool.spawn(aggregate_shops, start, end, on_finish=on_finish)
-            except:
-                traceback.print_exc()
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
-    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'shopinfo', 'itemagg', 'shopagg', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
+    parser.add_argument('--worker', '-w', choices=['item', 'shop', 'shopinfo', 'requeue'], help='worker type, can be "item", "shop", or "requeue"', required=True)
     parser.add_argument('--poolsize', '-p', type=int, default=100, help='gevent pool size for worker (default: %(default)s)')
     option = parser.parse_args()
     if option.worker == "item":
@@ -263,10 +222,6 @@ def main():
         ShopWorker(option.poolsize).work()
     elif option.worker == "shopinfo":
         ShopInfoWorker(option.poolsize).work()
-    elif option.worker == "itemagg":
-        ItemAggregateWorker(option.poolsize).work()
-    elif option.worker == "shopagg":
-        ShopAggregateWorker(option.poolsize).work()
     elif option.worker == "requeue":
         ReQueueWorker().work()
 
@@ -279,7 +234,6 @@ def test_throttling():
     while True:
         pool.spawn(call_with_throttling, printget, threshold_per_minute=600) 
     pool.join()
-
 
 if __name__ == '__main__':
     main()

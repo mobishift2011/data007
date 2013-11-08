@@ -1,19 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from models import db
-from aggres import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
+from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
+from aggregator.processes import Process
 
 from datetime import datetime, timedelta
-from bisect import bisect
 
-from crawler.cates import cates, l1l2s
+from crawler.cates import cates
 
 import traceback
-
-credits = [ 4, 11, 41, 91, 151, 
-            251, 501, 1001, 2001, 5001, 
-            10001, 20001, 50001, 100001, 200001,
-            500001, 1000001, 2000001, 5000001, 10000001, ]
 
 def get_l1_and_l2_cids(cids): 
     l1l2 = {}
@@ -183,158 +178,22 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
     if on_finish_item:
         on_finish_item(itemid)
 
-def aggregate_shops(start, end, date=datetime.utcnow()+timedelta(hours=8), on_finish_shop=None, on_finish=None):
-    date2 = datetime(date.year, date.month, date.day)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    try:
-        si = ShopIndex(d1)
-        ci = CategoryIndex(d1)
-        si.multi()
-        ci.multi()
-        with db.connection() as cur:
-            cur.execute('''select id, title, logo, rank, rank_num from ataobao2.shop
-                    where token(id)>=:start and token(id)<:end''',
-                    dict(start=start, end=end), consistency_level='ONE')
-            for row in cur:
-                shopid, name, logo, rank, rank_num = row
-                try:
-                    aggregate_shop(si, ci, shopid, name, logo, rank, rank_num, on_finish_shop)
-                except:
-                    traceback.print_exc()
-        si.execute()
-        ci.execute()
-    except:
-        traceback.print_exc()
+class ItemAggProcess(Process):
+    def __init__(self):
+        super(ItemAggProcess, self).__init__('itemagg')
+        self.step = 2**64/100
 
-    if on_finish:
-        on_finish('shop', d1, start, end)
+    def generate_tasks(self):
+        self.clear_redis()
+        count = 0
+        for start in range(-2**63, 2**63, self.step):
+            end = start + self.step
+            if end > 2**63-1:
+                end = 2**63-1
+            self.add_task('aggregator.itemagg.aggregate_items', start, end)
+        self.finish_generation()
 
-def aggregate_shop(si, ci, shopid, name, logo, rank, rank_num, on_finish_shop):
-    shopinfo = si.getbase(shopid)
-    if shopinfo:
-        # create indexes
-        active_index = float(shopinfo['active_index_mon'])
-        sales = float(shopinfo['sales_mon'])
-        credit_score = bisect(credits, rank_num)
-        worth = 2**credit_score + active_index/3000. + sales/30.
-        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth}
-        update['type'] = 'tmall' if rank == 'tmall' else 'taobao'
-        si.setbase(shopid, update)
-
-        def update_with_cates(cate1, cate2):
-            ci.incrcredit(cate1, cate2, credit_score)
-            for mod in ['mon', 'day']:
-                shopinfo = si.getinfo(cate1, cate2, mod, shopid)
-                for field in ['sales', 'deals', 'active_index']:
-                    shopinfo[field] = float(shopinfo[field])
-                score = shopinfo['active_index']/1000. + shopinfo['sales']/30.
-                update = {'credit_score':credit_score, 'worth':worth, 'score':score}
-                si.setinfo(cate1, cate2, mod, shopid, update) 
-                shopinfo.update(update)
-                for field in ['sales', 'deals', 'active_index', 'credit_score', 'worth', 'score']:
-                    si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
-    
-        cates = si.getcates(shopid)
-        c1s = list(set([c[0] for c in cates]))
-        for c1 in c1s:
-            update_with_cates(c1, 'all')
-        for cate1, cate2 in cates:
-            update_with_cates(cate1, cate2)
-
-    if on_finish_shop:
-        on_finish_shop(shopid)
-
-
-def aggregate_brands(date=datetime.utcnow()+timedelta(hours=8), on_finish=None, on_finish_brand=None):
-    date2 = datetime(date.year, date.month, date.day)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    si = ShopIndex(d1)
-    bi = BrandIndex(d1)
-    brands = list(bi.getbrands())
-    batch = 1000
-    for i in range(len(brands)/batch):
-        try:
-            si.multi()
-            bi.multi()
-            for brand in brands[i*batch:(i+1)*batch]:
-                aggregate_brand(bi, ci, brand, on_finish_brand)     
-
-            si.execute()
-            bi.execute()
-        except:
-            traceback.print_exc()
-
-    if on_finish:
-        on_finish('brand', d1)
-
-
-def aggregate_brand(bi, ci, brand, on_finish_brand=None):
-    baseinfo = {}
-
-    def update_with_cates(cate1, cate2):
-        brandinfo = bi.getinfo(brand, cate1, cate2)
-        sales = brandinfo.get('sales')
-        if sales:
-            bi.setindex(brand, cate1, cate2, sales)
-
-            categoryinfo = ci.getinfo(cate1, cate2, 'mon')
-            if 'sales' in categoryinfo and categoryinfo['sales']:
-                bi.setinfo(brand, cate1, cate2, {'share':float(sales)/float(categoryinfo['sales'])})
-
-        for field in ['sales', 'deals', 'delta_sales', 'items']:
-            if field not in baseinfo:
-                baseinfo[field] = 0
-            baseinfo[field] += brandinfo.get(field, 0)
-
-    # update info & index
-    cates = bi.get_cates(brand)
-    c1s = list(set([c[0] for c in cates]))
-    for c1 in c1s:
-        update_with_cates(c1, 'all')
-    for cate1, cate2 in cates:
-        update_with_cates(cate1, cate2)
-
-    # update base
-    baseinfo.update({'shops':bi.getshops(brand)})
-    bi.setbase(brand, baseinfo)
-
-    if on_finish_brand:
-        on_finish_brand(brand)
-
-def aggregate_categories(date=datetime.utcnow()+timedelta(hours=8), on_finish=None):
-    date2 = datetime(date.year, date.month, date.day)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    ci = CategoryIndex(d1)
-    si = ShopIndex(d1)
-    ci.multi()
-    for cate1, cate2 in l1l2s:
-        ci.setinfo(cate1, cate2, {
-                        'shops': si.getshops(cate1, cate2),
-                        'brands': ci.getbrands(cate1, cate2),
-                    })
-        if cate2 != 'all':
-            ci.setindex(cate1, cate2, 'sales', 'day', ci.getinfo(cate1, cate2, 'day').get('sales', 0))
-            ci.setindex(cate1, cate2, 'sales', 'mon', ci.getinfo(cate1, cate2, 'mon').get('sales', 0))
-
-    ci.execute()
-
-def save_history():
-    # shop history
-    # 1. save rank per cate (packed as json)
-    # 2. save worth
-    # 3. save num_collects
-    pass
-
-    # brand history
-    # 1. sales/30
-    # 2. shares
-    # 3. shops
-    pass
+iap = ItemAggProcess()
 
 if __name__ == '__main__':
-    pass
-    #step = 2**64/1000
-    #for start in range(-2**63, 2**63-1, step):
-    #    end = start + step
-    #    aggregate_items(start, end)
-    #aggregate_shops(0, 1000)
+    iap.start()

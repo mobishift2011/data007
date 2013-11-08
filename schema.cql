@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
     rating          text,
     cid             int,
     rank            text,
+    sales           float,
     worth           float,
     num_collects    int,
     title           text,
