@@ -30,7 +30,7 @@ class ShopIndex(object):
     shopbase = 'shopbase_{}_{}' # (date, shopid); hash for shopbase info of given shop
                                 # name, logo, credit_score, worth, ...
     shophotitems = 'shophotitems_{}_{}' # (date, shopid); sortedset for (id, sales), capped to 10
-    shopcatescount = 'shopcatescount_{}_{}' #(date, shopid); hash(cate1 -> counts)
+    shopcatescount = 'shopcatescount_{}_{}' #(date, shopid); hash(cate2 -> counts)
     shopbrandinfo = 'shopbrandinfo_{}_{}_{}' # (date, shopid, deals/sales); hash(brand -> value) => should aggregate to shopinfo/cassandra
 
     def __init__(self, date):
@@ -69,9 +69,7 @@ class ShopIndex(object):
         return conn.zcard(zkey, skey=self.make_skey(cate1, cate2))
 
     def getcates(self, shopid):
-        date = self.date
-        p = conn if self.pipeline is None else self.pipeline
-        return [unpack(x) for x in p.smembers(ShopIndex.shopcates.format(date, shopid))]
+        return [unpack(x) for x in conn.smembers(ShopIndex.shopcates.format(self.date, shopid))]
 
     def addcates(self, shopid, cate1, cate2):
         date = self.date
@@ -217,8 +215,8 @@ class BrandIndex(object):
     brandcates = 'brandcates_{}_{}' # (date, brandname); set for (cate1, cate2) pairs 
     brands = 'brands_{}' # (date); set for brandnames
     brandindex = 'brandindex_{}_{}_{}_{}' # (date, cate1, cate2, field); zset(brandname, sales), capped to 1000
-    brandhotitems = 'brandhotitems_{}_{}_{}' # (date, brandname, cate1); zset(itemid, sales), capped to 10
-    brandhotshops = 'brandhotshops_{}_{}_{}' # (date, brandname, cate1); zset(shopid, sales), capped to 10
+    brandhotitems = 'brandhotitems_{}_{}_{}' # (date, brandname, cate2); zset(itemid, sales), capped to 10
+    brandhotshops = 'brandhotshops_{}_{}_{}' # (date, brandname, cate2); zset(shopid, sales), capped to 10
         
     def __init__(self, date):
         self.date = date
@@ -240,6 +238,7 @@ class BrandIndex(object):
         patterns = ['brandshop_{}*'.format(date),
                     'brandinfo_{}*'.format(date),
                     'brandcates_{}*'.format(date),
+                    'brands_{}*'.format(date),
                     'brandindex_{}*'.format(date),
                     'brandhotitems_{}*'.format(date),
                     'brandhotshops_{}*'.format(date),
@@ -251,9 +250,7 @@ class BrandIndex(object):
             p.execute()
 
     def getcates(self, brand):
-        date = self.date
-        p = conn if self.pipeline is None else self.pipeline
-        return [unpack(x) for x in p.smembers(BrandIndex.brandcates.format(date, brand))]
+        return [unpack(x) for x in conn.smembers(BrandIndex.brandcates.format(self.date, brand))]
 
     def addshop(self, brand, cate1, cate2, shopid):
         skey = BrandIndex.brandshop.format(self.date, brand, cate1, cate2)
@@ -301,10 +298,10 @@ class BrandIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         p.sadd(skey, pack((cate1, cate2)))
 
-    def addhots(self, brand, cate1, itemid, shopid, sales):
+    def addhots(self, brand, cate2, itemid, shopid, sales):
         p = conn if self.pipeline is None else self.pipeline
-        zkey1 = BrandIndex.brandhotitems.format(self.date, brand, cate1)
-        zkey2 = BrandIndex.brandhotshops.format(self.date, brand, cate1)
+        zkey1 = BrandIndex.brandhotitems.format(self.date, brand, cate2)
+        zkey2 = BrandIndex.brandhotshops.format(self.date, brand, cate2)
         CappedSortedSet(zkey1, 10, p, skey=zkey1).zadd(itemid, sales)
         CappedSortedSet(zkey2, 10, p, skey=zkey2).zadd(shopid, sales)
 
@@ -337,6 +334,9 @@ class CategoryIndex(object):
     def clear(self):
         date = self.date
         patterns = ['categoryinfo_{}*'.format(date),
+                    'categorybrands_{}*'.format(date),
+                    'categoryindex_{}*'.format(date),
+                    'categorycredits_{}*'.format(date),
                     ]
         for pattern in patterns:
             p = conn.pipeline()

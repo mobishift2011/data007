@@ -12,29 +12,31 @@ defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
 
 
 def aggregate_brands(date, *brands):
-    si = ShopIndex(date)
+    ci = CategoryIndex(date)
     bi = BrandIndex(date)
     try:
-        si.multi()
+        ci.multi()
         bi.multi()
         for brand in brands:
             aggregate_brand(bi, ci, date, brand)     
 
-        si.execute()
+        ci.execute()
         bi.execute()
     except:
         traceback.print_exc()
 
 def aggregate_brand(bi, ci, date, brand):
+    if brand == '':
+        brand = '其他'
     baseinfo = {}
 
     def update_with_cates(cate1, cate2):
         brandinfo = bi.getinfo(brand, cate1, cate2)
-        sales = brandinfo.get('sales', 0)
+        sales = float(brandinfo.get('sales', 0))
         bi.setindex(brand, cate1, cate2, sales)
         categoryinfo = ci.getinfo(cate1, cate2, 'mon')
         try:
-            share = float(sales)/float(categoryinfo['sales'])
+            share = sales/float(categoryinfo['sales'])
         except:
             share = 0
 
@@ -43,7 +45,7 @@ def aggregate_brand(bi, ci, date, brand):
             bi.setinfo(brand, cate1, cate2, {'share':share})
             db.execute('''insert into ataobao2.brand_by_date (name, date, cate1, sales, share, num_shops)
                 values (:name, :date, :cate1, :sales, :share, :num_shops)''',
-                dict(name=brand, date=date, cate1=cate1, sales=sales, share=share, num_shops=num_shops))
+                dict(name=brand.decode('utf-8'), date=date, cate1=cate1, sales=sales, share=share, num_shops=num_shops))
 
 
     # update info & index

@@ -6,6 +6,7 @@ from aggregator.processes import Process
 
 from datetime import datetime, timedelta
 
+import json
 import traceback
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
@@ -33,7 +34,7 @@ def save_history_shops(start, end, date=None):
 def save_history_shop(si, date, shopid, num_collects):
     shopinfo = si.getbase(shopid)
     if shopinfo:
-        worth = shopinfo.get('worth', 0)
+        worth = float(shopinfo.get('worth', 0))
         rank = {}
         cates = si.getcates(shopid)
         c1s = list(set([c[0] for c in cates]))

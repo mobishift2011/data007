@@ -46,6 +46,8 @@ def aggregate_items(start, end, date=None):
                     dict(start=int(start), end=int(end)), consistency_level='ONE')
             for row in cur:
                 itemid, shopid, cid, nc, price, brand, name, image = row
+                if brand == '':
+                    brand = u'其他'
                 if nc > 0:
                     try:
                         aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date)
@@ -60,7 +62,7 @@ def aggregate_items(start, end, date=None):
 
 def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date):
     brand = brand.encode('utf-8')
-    date2 = datetime.strptime(date, "%Y-%m-%d")
+    date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=24)
     date1 = date2 - timedelta(days=60)
     d1 = date
     d2 = (date2 - timedelta(days=2)).strftime("%Y-%m-%d")
@@ -122,7 +124,8 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
         bi.addbrand(brand)
         bi.addshop(brand, l1, l2, shopid)
         bi.addcates(brand, l1, l2)
-        bi.addhots(brand, l1, itemid, shopid, sales_mon)
+        bi.addcates(brand, l1, 'all')
+        bi.addhots(brand, l2, itemid, shopid, sales_mon)
         inc = {
             'items': 1,
             'deals': deals_mon,

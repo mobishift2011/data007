@@ -46,8 +46,11 @@ class Process(object):
         conn.delete(self.dones.format(self.name))
         conn.delete(self.generated.format(self.name))
 
+    def task_left(self):
+        return conn.llen(self.tasks.format(self.name))
+
     def add_task(self, caller, *args, **kwargs):
-        print caller, args, kwargs
+        print caller, args[:5], kwargs
         conn.rpush(self.tasks.format(self.name), pack((caller, args, kwargs))) 
 
     def finish_generation(self):
@@ -96,7 +99,7 @@ class Process(object):
                 _, task = result
                 conn.rpush(self.processing.format(self.name), task)
                 caller, args, kwargs = unpack(task)
-                print('work on {}, {}, {}'.format(caller, args, kwargs))
+                print('work on {}, {}, {}'.format(caller, args[:5], kwargs))
                 if '.' in caller:
                     module, method = caller.rsplit('.', 1)
                     module = __import__(module, fromlist=[method])

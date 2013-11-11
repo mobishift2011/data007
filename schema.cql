@@ -1,5 +1,5 @@
 CREATE KEYSPACE IF NOT EXISTS ataobao2
-    WITH replication = {'class':'SimpleStrategy', 'replication_factor':2};
+    WITH replication = {'class':'SimpleStrategy', 'replication_factor':3};
 
 USE ataobao2;
 
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS brand (
 CREATE TABLE IF NOT EXISTS brand_by_date (
     name            text,
     date            timestamp, 
-    cate1           text,
+    cate1           int,
     sales           float,
     share           float,
     num_shops       int,

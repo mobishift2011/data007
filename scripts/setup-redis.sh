@@ -2,8 +2,8 @@
 add-apt-repository -y ppa:chris-lea/redis-server
 apt-get -y update && apt-get -y install redis-server
 
-update-rc.d redis-server disable
 /etc/init.d/redis-server stop
+update-rc.d redis-server disable
 rm /etc/init.d/redis-server
 
 cat > /etc/init/redis-server.conf <<END
