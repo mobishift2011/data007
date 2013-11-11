@@ -88,8 +88,9 @@ CREATE TABLE IF NOT EXISTS brand (
 CREATE TABLE IF NOT EXISTS brand_by_date (
     name            text,
     date            timestamp, 
+    cate1           text,
     sales           float,
-    shares          float,
+    share           float,
     num_shops       int,
-    PRIMARY KEY (name, date)
+    PRIMARY KEY (name, date, cate1)
 );

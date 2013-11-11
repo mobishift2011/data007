@@ -10,11 +10,13 @@ from crawler.cates import l1l2s
 
 import traceback
 
-def aggregate_categories(date=datetime.utcnow()+timedelta(hours=8), on_finish=None):
-    date2 = datetime(date.year, date.month, date.day)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
-    ci = CategoryIndex(d1)
-    si = ShopIndex(d1)
+defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
+
+def aggregate_categories(date=None):
+    if date is None:
+        date = defaultdate
+    ci = CategoryIndex(date)
+    si = ShopIndex(date)
     ci.multi()
     for cate1, cate2 in l1l2s:
         ci.setinfo(cate1, cate2, 'mon', {
@@ -28,15 +30,16 @@ def aggregate_categories(date=datetime.utcnow()+timedelta(hours=8), on_finish=No
     ci.execute()
 
 class CateAggProcess(Process):
-    def __init__(self):
+    def __init__(self, date=None):
         super(CateAggProcess, self).__init__('cateagg')
+        self.date = date
 
     def generate_tasks(self):
         pass
 
     def start(self):
         print('starting process cateagg')
-        aggregate_categories()
+        aggregate_categories(self.date)
         print('ended process cateagg')
 
     def add_child(self, child):
@@ -48,19 +51,6 @@ class CateAggProcess(Process):
 
 
 cap = CateAggProcess()
-
-def save_history():
-    # shop history
-    # 1. save rank per cate (packed as json)
-    # 2. save worth
-    # 3. save num_collects
-    pass
-
-    # brand history
-    # 1. sales/30
-    # 2. shares
-    # 3. shops
-    pass
 
 if __name__ == '__main__':
     cap.start()

@@ -4,6 +4,7 @@ from models import db
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from aggregator.processes import Process
 
+from settings import ENV
 from datetime import datetime, timedelta
 
 from crawler.cates import cates
@@ -25,26 +26,29 @@ def get_l1_and_l2_cids(cids):
                 pass
     return l1l2
 
-def aggregate_items(token_start, token_end, date=datetime.utcnow()+timedelta(hours=8), on_finish_item=None, on_finish=None):
-    date2 = datetime(date.year, date.month, date.day)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
+defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
+
+def aggregate_items(start, end, date=None):
     try:
-        si = ShopIndex(d1)
-        ii = ItemIndex(d1)
-        bi = BrandIndex(d1)
-        ci = CategoryIndex(d1)
+        if date is None:
+            date = defaultdate
+        si = ShopIndex(date)
+        ii = ItemIndex(date)
+        bi = BrandIndex(date)
+        ci = CategoryIndex(date)
         si.multi()
         ii.multi()
         bi.multi()
         ci.multi()
         with db.connection() as cur:
-            cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image from ataobao2.item where token(id)>=:start and token(id)<:end''', 
-                    dict(start=int(token_start), end=int(token_end)), consistency_level='ONE')
+            cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image 
+                    from ataobao2.item where token(id)>=:start and token(id)<:end''', 
+                    dict(start=int(start), end=int(end)), consistency_level='ONE')
             for row in cur:
                 itemid, shopid, cid, nc, price, brand, name, image = row
                 if nc > 0:
                     try:
-                        aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date, on_finish_item)
+                        aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date)
                     except:
                         traceback.print_exc()
         si.execute()
@@ -54,14 +58,11 @@ def aggregate_items(token_start, token_end, date=datetime.utcnow()+timedelta(hou
     except:
         traceback.print_exc()
 
-    if on_finish:
-        on_finish('item', d1, token_start, token_end)
-
-def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date, on_finish_item=None):
+def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date):
     brand = brand.encode('utf-8')
-    date2 = datetime(date.year, date.month, date.day)
+    date2 = datetime.strptime(date, "%Y-%m-%d")
     date1 = date2 - timedelta(days=60)
-    d1 = (date2 - timedelta(days=1)).strftime("%Y-%m-%d")
+    d1 = date
     d2 = (date2 - timedelta(days=2)).strftime("%Y-%m-%d")
     d3 = (date2 - timedelta(days=3)).strftime("%Y-%m-%d")
     d31 = (date2 - timedelta(days=31)).strftime("%Y-%m-%d")
@@ -119,7 +120,7 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
 
         # inc brand counters
         bi.addbrand(brand)
-        bi.addshop(brand, shopid)
+        bi.addshop(brand, l1, l2, shopid)
         bi.addcates(brand, l1, l2)
         bi.addhots(brand, l1, itemid, shopid, sales_mon)
         inc = {
@@ -175,13 +176,15 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
                'active_index_day': active_index_day}
         si.incrbase(shopid, inc)
 
-    if on_finish_item:
-        on_finish_item(itemid)
 
 class ItemAggProcess(Process):
-    def __init__(self):
+    def __init__(self, date=None):
         super(ItemAggProcess, self).__init__('itemagg')
-        self.step = 2**64/100
+        if ENV == 'DEV':
+            self.step = 2**64/100
+        else:
+            self.step = 2**64/100000
+        self.date = date
 
     def generate_tasks(self):
         self.clear_redis()
@@ -190,7 +193,7 @@ class ItemAggProcess(Process):
             end = start + self.step
             if end > 2**63-1:
                 end = 2**63-1
-            self.add_task('aggregator.itemagg.aggregate_items', start, end)
+            self.add_task('aggregator.itemagg.aggregate_items', start, end, date=self.date)
         self.finish_generation()
 
 iap = ItemAggProcess()

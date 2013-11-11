@@ -24,9 +24,11 @@ conn = ShardRedis(conns=conns)
 
 class ShopIndex(object):
     shopindex = 'shopindex_{}_{}_{}_{}_{}' # (date, cate1, cate2, field, monorday); sortedsets for indexes
-    shopinfo = 'shopinfo_{}_{}_{}_{}_{}' # (date, cate1, cate2, monorday, shopid); hash for shopinfo of given shop under give cates(cate1, cate2), by given period(day/mon)
+    shopinfo = 'shopinfo_{}_{}_{}_{}_{}' # (date, cate1, cate2, monorday, shopid); hash for shopinfo 
+                                         # sales, deals, active_index, delta_sales, delta_active_index
     shopcates = 'shopcates_{}_{}' # (date, shopid); set for cates(cate1,cate2) info of shop
     shopbase = 'shopbase_{}_{}' # (date, shopid); hash for shopbase info of given shop
+                                # name, logo, credit_score, worth, ...
     shophotitems = 'shophotitems_{}_{}' # (date, shopid); sortedset for (id, sales), capped to 10
     shopcatescount = 'shopcatescount_{}_{}' #(date, shopid); hash(cate1 -> counts)
     shopbrandinfo = 'shopbrandinfo_{}_{}_{}' # (date, shopid, deals/sales); hash(brand -> value) => should aggregate to shopinfo/cassandra
@@ -94,6 +96,10 @@ class ShopIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         # equals to p.zadd(zkey, itemid, sales), capped to 10, shared by skey
         CappedSortedSet(zkey, 10, p, skey=zkey).zadd(itemid, sales)
+
+    def getrank(self, cate1, cate2, shopid):
+        zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'sales', 'mon')
+        return conn.zrevrank(zkey, shopid)
          
     def incrindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date
@@ -204,15 +210,12 @@ class ItemIndex(object):
 
 
 class BrandIndex(object):
-    brandshop = 'brandshop_{}_{}' # (date, brandname), set for shopids, used for num_of_shops
+    brandshop = 'brandshop_{}_{}_{}_{}' # (date, brandname, cate1, cate2), set for shopids, used for num_of_shops
     brandinfo = 'brandinfo_{}_{}_{}_{}' # (date, brandname, cate1, cate2); hash for brand info
                                         # num_of_items, deals, sales, delta_sales, 
                                         # *share* = sales/categoryinfo(cate1,cate2).sales
     brandcates = 'brandcates_{}_{}' # (date, brandname); set for (cate1, cate2) pairs 
     brands = 'brands_{}' # (date); set for brandnames
-    brandbase = 'brandbase_{}_{}' # (date, brandname(utf-8)); hash for brand total info
-                                  # name, logo, sales, deals, num_of_items
-                                  # *num_of_shops* -> see brandshop
     brandindex = 'brandindex_{}_{}_{}_{}' # (date, cate1, cate2, field); zset(brandname, sales), capped to 1000
     brandhotitems = 'brandhotitems_{}_{}_{}' # (date, brandname, cate1); zset(itemid, sales), capped to 10
     brandhotshops = 'brandhotshops_{}_{}_{}' # (date, brandname, cate1); zset(shopid, sales), capped to 10
@@ -237,7 +240,6 @@ class BrandIndex(object):
         patterns = ['brandshop_{}*'.format(date),
                     'brandinfo_{}*'.format(date),
                     'brandcates_{}*'.format(date),
-                    'brandbase_{}*'.format(date),
                     'brandindex_{}*'.format(date),
                     'brandhotitems_{}*'.format(date),
                     'brandhotshops_{}*'.format(date),
@@ -253,20 +255,14 @@ class BrandIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         return [unpack(x) for x in p.smembers(BrandIndex.brandcates.format(date, brand))]
 
-    def addshop(self, brand, shopid):
-        skey = BrandIndex.brandshop.format(self.date, brand)
+    def addshop(self, brand, cate1, cate2, shopid):
+        skey = BrandIndex.brandshop.format(self.date, brand, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
         p.sadd(skey, shopid) 
 
-    def getshops(self, brand):
-        skey = BrandIndex.brandshop.format(self.date, brand)
+    def getshops(self, brand, cate1, cate2):
+        skey = BrandIndex.brandshop.format(self.date, brand, cate1, cate2)
         return conn.scard(skey)
-
-    def setbase(self, brand, brandinfo): 
-        hkey = BrandIndex.brandbase.format(self.date, brand)
-        p = conn if self.pipeline is None else self.pipeline
-        c12 = self.make_skey(cate1, cate2)
-        p.hmset(hkey, brandinfo, skey=c12)
 
     def getinfo(self, brand, cate1, cate2):
         hkey = BrandIndex.brandinfo.format(self.date, brand, cate1, cate2)
