@@ -158,7 +158,7 @@ class LC(object):
                         else:
                             src = int(src[0])
                         
-                        info['num_sold30'] += 5
+                        #info['num_sold30'] += 5
                         #print "src", bin(src)
                             
                         num_sold30 = (src >> 4) & 0xffffff
