@@ -59,6 +59,7 @@ class ShopIndex(object):
                     'shopbrandinfo_{}*'.format(date),
                     ]
         for pattern in patterns:
+            print('clearing pattern {}'.format(pattern))
             p = conn.pipeline()
             for key in conn.keys(pattern):
                 p.delete(key)
@@ -183,6 +184,7 @@ class ItemIndex(object):
                     'itemcatessales_{}*'.format(date),
                     ]
         for pattern in patterns:
+            print('clearing pattern {}'.format(pattern))
             p = conn.pipeline()
             for key in conn.keys(pattern):
                 p.delete(key)
@@ -244,6 +246,7 @@ class BrandIndex(object):
                     'brandhotshops_{}*'.format(date),
                     ]
         for pattern in patterns:
+            print('clearing pattern {}'.format(pattern))
             p = conn.pipeline()
             for key in conn.keys(pattern):
                 p.delete(key)
@@ -339,6 +342,7 @@ class CategoryIndex(object):
                     'categorycredits_{}*'.format(date),
                     ]
         for pattern in patterns:
+            print('clearing pattern {}'.format(pattern))
             p = conn.pipeline()
             for key in conn.keys(pattern):
                 p.delete(key)
