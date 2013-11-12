@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 import argparse
 
-from aggregator import iap, sap, bap, cap, shp
+from aggregator import iap, sap, bap, cap, shp, iip
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from datetime import datetime, timedelta
 
 def clearall(date):
-    for p in [iap, sap, bap, cap, shp]:
+    for p in [iap, sap, bap, cap, shp, iip]:
         p.clear_redis()
 
     ShopIndex(date).clear()
@@ -19,10 +19,11 @@ def build_flow(date=None):
     if date is None:
         date = defaultdate
 
-    for p in [iap, sap, bap, cap, shp]:
+    for p in [iap, sap, bap, cap, shp, iip]:
         p.date = date
 
     iap.add_child(sap)
+    iap.add_child(iip)
     sap.add_child(bap)
     sap.add_child(shp)
     sap.add_child(cap)

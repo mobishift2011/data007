@@ -196,7 +196,15 @@ class ItemIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         c12 = self.make_skey(cate1, cate2)
         p.hincrby(hkey1, c12, int(deals))
-        p.hincrbyfloat(hkey2, c12, sales) 
+        p.hincrbyfloat(hkey2, c12, sales)
+
+    def getcates(self):
+        hkey1 = ItemIndex.itemcatescount.format(self.date)
+        return [x.split('_') for x in conn.hkeys(hkey1)]
+
+    def gettopitemids(self, cate1, cate2, field, monorday):
+        zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)
+        return [int(id) for id in conn.zrange(zkey, 0, -1)]
 
     def incrindex(self, cate1, cate2, field, monorday, itemid, amount):
         zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)

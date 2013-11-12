@@ -7,7 +7,7 @@ import time
 import logging
 import argparse
 
-from aggregator import iap, sap, bap, cap, shp
+from aggregator import iap, sap, bap, cap, shp, iip
 
 def gettermsize():
     def ioctl_GWINSZ(fd):
@@ -189,7 +189,7 @@ def state_symbol(state):
 
 
 def show_processes(args):
-    processes = [iap, sap, bap, cap, shp]
+    processes = [iap, sap, bap, cap, shp, iip]
     termwidth, _ = gettermsize()
     chartwidth = min(20, termwidth - 20)
 

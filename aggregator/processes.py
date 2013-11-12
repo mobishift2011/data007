@@ -29,11 +29,11 @@ class Process(object):
     processes may have children, each of them is a process itself,
     processes will call the children once itself is finished.
     """
-    processes = 'ataobao-process-processes'
-    tasks = 'ataobao-process-tasks-{}'
-    processing = 'ataobao-process-processing-{}'
-    dones = 'ataobao-process-dones-{}'
-    generated = 'ataobao-process-generated-{}'
+    processes = 'ataobao-process-processes' # set
+    tasks = 'ataobao-process-tasks-{}' # set
+    processing = 'ataobao-process-processing-{}' # list
+    dones = 'ataobao-process-dones-{}' # list
+    generated = 'ataobao-process-generated-{}' # key
 
     def __init__(self, name):
         self.name = name
@@ -47,11 +47,11 @@ class Process(object):
         conn.delete(self.generated.format(self.name))
 
     def task_left(self):
-        return conn.llen(self.tasks.format(self.name))
+        return conn.scard(self.tasks.format(self.name))
 
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
-        conn.rpush(self.tasks.format(self.name), pack((caller, args, kwargs))) 
+        conn.sadd(self.tasks.format(self.name), pack((caller, args, kwargs))) 
 
     def finish_generation(self):
         conn.set(self.generated.format(self.name), 'true')
@@ -65,7 +65,7 @@ class Process(object):
 
     def is_finished(self):
         generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true' 
-        processing_complete = lambda : conn.llen(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name)) == 0
+        processing_complete = lambda : conn.scard(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name)) == 0
         return generation_complete() and processing_complete()
 
     def start(self):
@@ -93,10 +93,11 @@ class Process(object):
     def work(self):
         while True:
             try:
-                result = conn.blpop(self.tasks.format(self.name), 10)
+                result = conn.spop(self.tasks.format(self.name))
                 if result is None:
+                    time.sleep(0.05)
                     continue
-                _, task = result
+                task = result
                 conn.rpush(self.processing.format(self.name), task)
                 caller, args, kwargs = unpack(task)
                 print('work on {}, {}, {}'.format(caller, args[:5], kwargs))

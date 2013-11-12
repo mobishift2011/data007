@@ -46,7 +46,7 @@ def aggregate_items(start, end, date=None):
                     dict(start=int(start), end=int(end)), consistency_level='ONE')
             for row in cur:
                 itemid, shopid, cid, nc, price, brand, name, image = row
-                if brand == '':
+                if brand == '' or brand is None:
                     brand = u'其他'
                 if nc > 0:
                     try:
@@ -141,17 +141,19 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
         ii.incrindex(l1, 'all', 'sales', 'mon', itemid, sales_mon)
         ii.incrindex(l1, l2, 'sales', 'day', itemid, sales_day)
         ii.incrindex(l1, 'all', 'sales', 'day', itemid, sales_day)
-        ii.setinfo(itemid, {
-            'name': name,
-            'image': image,
-            'shopid': shopid,
-            'brand': brand,
-            'price': price,
-            'sales_day': sales_day,
-            'sales_mon': sales_mon,
-            'deals_day': deals_day,
-            'deals_mon': deals_mon,
-        })
+        # this will take too much space
+        # so we move it to a seperate pass in iteminfo.py
+        # ii.setinfo(itemid, {
+        #     'name': name,
+        #     'image': image,
+        #     'shopid': shopid,
+        #     'brand': brand,
+        #     'price': price,
+        #     'sales_day': sales_day,
+        #     'sales_mon': sales_mon,
+        #     'deals_day': deals_day,
+        #     'deals_mon': deals_mon,
+        # })
 
         # inc shop counters
         si.addcates(shopid, l1, l2)
