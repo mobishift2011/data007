@@ -124,7 +124,7 @@ class ItemScheduler(Scheduler):
             self.ct = ct
             return True
         else:
-            False 
+            return False 
         
     def run(self):  
         ids = ItemCT.get_items(self.ct)
