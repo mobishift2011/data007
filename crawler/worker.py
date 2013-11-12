@@ -120,13 +120,13 @@ class ItemWorker(Worker):
                     delete_item(itemid)
                 except:
                     traceback.print_exc()
-                return
+                return d
 
             # check if we should save this item in the first place
             # we only accept a few cates
             if 'rcid' in d and not need_crawl(d['cid']):
                 WC.add(d['id'])
-                return
+                return d
 
             # for connection errors, we simply raise exception here
             # the exceptions will be captured in LC.update_if_needed
@@ -140,12 +140,11 @@ class ItemWorker(Worker):
                     traceback.print_exc()
                     raise ValueError('item update failed: {}'.format(d))
 
-
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
                     as1.put(d['shopid'])
                     
-                return d
+            return d
             
         while True:
             try:
