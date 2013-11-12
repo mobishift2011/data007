@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import argparse
+
 from aggregator import iap, sap, bap, cap, shp
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from datetime import datetime, timedelta
 
-defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
-
-def clearall(date=None):
-    if date is None:
-        date = defaultdate
-
+def clearall(date):
     for p in [iap, sap, bap, cap, shp]:
         p.clear_redis()
 
@@ -33,10 +30,16 @@ def build_flow(date=None):
     return iap
 
 def main():
-    date = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
+    parser = argparse.ArgumentParser(description='Aggregation Controller')
+    parser.add_argument('--date', '-d', help='the date to aggregate, must be format of YYYY-MM-DD')
+    option = parser.parse_args()
+    if option.date:
+        date = option.date 
+    else:
+        date='2013-11-11'
+    clearall(date)
     flow = build_flow(date)
     flow.start()
 
 if __name__ == '__main__':
-    clearall(date='2013-11-11')
     main()

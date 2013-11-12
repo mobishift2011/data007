@@ -62,7 +62,7 @@ def aggregate_items(start, end, date=None):
 
 def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, image, date):
     brand = brand.encode('utf-8')
-    date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=24)
+    date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
     d1 = date
     d2 = (date2 - timedelta(days=2)).strftime("%Y-%m-%d")
@@ -74,7 +74,7 @@ def aggregate_item(si, ii, bi, ci, itemid, shopid, cid, price, brand, name, imag
     items = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
                     where id=:itemid and date>=:date1 and date<:date2''',
                     dict(itemid=itemid, date1=date1, date2=date2), result=True).results
-    items = {i[0].strftime("%Y-%m-%d"):i[1:] for i in items}
+    items = {(i[0]+timedelta(hours=8)).strftime("%Y-%m-%d"):i[1:] for i in items}
     if d1 in items and items[d1][2]>0:
         try:
             l1, l2 = get_l1_and_l2_cids([cid])[cid]
