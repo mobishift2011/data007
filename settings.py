@@ -52,6 +52,9 @@ envs = {
             'ec2-23-20-176-91.compute-1.amazonaws.com:9160',
             'ec2-54-211-21-55.compute-1.amazonaws.com:9160',
             'ec2-54-205-102-26.compute-1.amazonaws.com:9160',
+            'ec2-23-20-127-61.compute-1.amazonaws.com:9160',
+            'ec2-204-236-222-157.compute-1.amazonaws.com:9160',
+            'ec2-107-22-10-40.compute-1.amazonaws.com:9160',
         ],
     },
 }
