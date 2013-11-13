@@ -37,7 +37,7 @@ def main():
     if option.date:
         date = option.date 
     else:
-        date='2013-11-11'
+        date='2013-11-13'
     clearall(date)
     flow = build_flow(date)
     flow.start()
