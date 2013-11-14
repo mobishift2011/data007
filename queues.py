@@ -129,5 +129,3 @@ ai2 = Queue('ataobao-item-queue-2', 1, timeout=90)
 as1 = Queue('ataobao-shop-queue-1', timeout=1800)
 af1 = Queue('ataobao-fail-queue-1', timeout=1800)
 asi1 = Queue('ataobao-shopinfo-queue-1', timeout=90)
-aa1 = Queue('ataobao-aggregate-1', timeout=None) # item aggregation
-aa2 = Queue('ataobao-aggregate-2', timeout=None) # shop aggregation

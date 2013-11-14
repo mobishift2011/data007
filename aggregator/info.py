@@ -7,8 +7,7 @@ import time
 import logging
 import argparse
 
-from queues import ai1, ai2, as1, af1, asi1
-from caches import LC, IF, WC
+from aggregator import iap, sap, bap, cap, shp, iip
 
 def gettermsize():
     def ioctl_GWINSZ(fd):
@@ -189,75 +188,30 @@ def state_symbol(state):
         return state
 
 
-def show_queues(args):
-    qs = [ai1, ai2, as1, af1, asi1]
-    num_jobs = 0
+def show_processes(args):
+    processes = [iap, sap, bap, cap, shp, iip]
     termwidth, _ = gettermsize()
     chartwidth = min(20, termwidth - 20)
 
     max_count = 0
     counts = dict()
-    for q in qs:
-        count = q.qsize()
-        counts[q.key] = count
+    for p in processes:
+        count = p.task_left()
+        counts[p.name] = count
         max_count = max(max_count, count)
 
     scale = get_scale(max_count)
     ratio = chartwidth * 1.0 / scale
 
-    print('Queues Info:')
-    for q in qs:
-        count = counts[q.key]
+    print('Agg Info:')
+    for p in processes:
+        count = counts[p.name]
         chart = green('|' + '█' * int(ratio * count))
-        line = '    %-12s %s %d' % (q.key, chart, count)
+        line = '    %-12s %s %d' % (p.name, chart, count)
         print(line)
-
-        num_jobs += count
-
-    # Print summary when not in raw mode
-    print('    %d queues, %d jobs total\n' % (len(qs), num_jobs))
-
-def show_counts(args):
-    num_items = 0
-    termwidth, _ = gettermsize()
-    chartwidth = min(20, termwidth - 20)
-
-    types = ['item', 'shop']
-
-    max_count = 0
-    counts = dict()
-    for t in types:
-        count = LC.count(t)
-        counts[t] = count
-        max_count = max(max_count, count)
-
-    scale = get_scale(max_count)
-    ratio = chartwidth * 1.0 / scale
-
-    print('Counts Info:')
-    for t in types:
-        count = counts[t]
-        chart = green('|' + '█' * int(ratio * count))
-        line = '    %-12s %s %d' % (t, chart, count)
-        print(line)
-
-        num_items += count
-        
-    chart = green('|' + '█' * int(ratio * IF.count()))
-    line = '    %-12s %s %d' % ('items(num_sold30=0)', chart, IF.count())
-    print(line)
-
-    chart = green('|' + '█' * int(ratio * WC.count()))
-    line = '    %-12s %s %d' % ('items(wrong cate)', chart, WC.count())
-    print(line)
-
-    # Print summary when not in raw mode
-    print('    %d types, %d items total\n' % (len(types), num_items))
-
 
 def show_both(args):
-    show_queues(args)
-    show_counts(args)
+    show_processes(args)
     
 def parse_args():
     parser = argparse.ArgumentParser(description='ataobao command-line monitor.')

@@ -16,6 +16,7 @@ The concept comes from `this stackoverflow question
 <http://stackoverflow.com/questions/10004565/redis-10x-more-memory-usage-than-data/10008222#10008222>`_
 """
 import redis
+import hashlib
 import gevent.coros
 
 class ThinSet(object):
@@ -206,3 +207,34 @@ class ThinHash(object):
         for d in p.execute():
             r.update(d)
         return r
+
+class CappedSortedSet(object):
+    """ Capped sorted set for redis
+    
+    implemented using redis's lua scripting support, need redis 2.6+
+    """
+    # lua script operation for a capped sorted set
+    script = '\n'.join([
+            'redis.call("ZADD", KEYS[1], ARGV[2]+0, ARGV[1])',
+            'local n = redis.call("ZCARD", KEYS[1])',
+            'if n > ARGV[3]+0 then redis.call("ZREMRANGEBYRANK", KEYS[1], 0, n-ARGV[3]-1) end',
+        ])
+    sha1 = hashlib.sha1(script).hexdigest()
+    inited = False
+
+    def __init__(self, key, cap, conn, **kwargs):
+        self.key = key
+        self.cap = cap
+        self.conn = conn
+        self.kwargs = kwargs
+        if not CappedSortedSet.inited:
+            self.conn.script_load(self.script)
+            CappedSortedSet.inited = True
+    
+    def zadd(self, member, score, **kwargs):
+        kwargs.update(self.kwargs)
+        self.conn.evalsha(self.sha1, 1, self.key, member, score, self.cap, **kwargs)
+
+    def zrange(self, start, end, **kwargs):
+        kwargs.update(self.kwargs)
+        return self.conn.zrange(self.key, start, end, **kwargs)
