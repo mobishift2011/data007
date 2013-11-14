@@ -6,7 +6,7 @@ from aggregator.processes import Process
 
 from datetime import datetime, timedelta
 
-from crawler.cates import l1l2s
+from crawler.cates import l1l2s, topcids
 
 import traceback
 
@@ -19,13 +19,22 @@ def aggregate_categories(date=None):
     si = ShopIndex(date)
     ci.multi()
     for cate1, cate2 in l1l2s:
-        ci.setinfo(cate1, cate2, 'mon', {
+        for mod in ['mon', 'day']:
+            info = {
                         'shops': si.getshops(cate1, cate2),
                         'brands': ci.getbrands(cate1, cate2),
-                    })
-        if cate2 != 'all':
-            ci.setindex(cate1, cate2, 'sales', 'day', ci.getinfo(cate1, cate2, 'day').get('sales', 0))
-            ci.setindex(cate1, cate2, 'sales', 'mon', ci.getinfo(cate1, cate2, 'mon').get('sales', 0))
+                    }
+            info.update(ci.getinfo(cate1, cate2, mod))
+            ci.setinfo(cate1, cate2, mod, info)
+            ci.setindex(cate1, cate2, 'sales', mod, ci.getinfo(cate1, cate2, mod).get('sales', 0))
+    for cate1 in topcids:
+        for mod in ['mon', 'day']:
+            info = {
+                'shops': si.getshops(cate1, 'all'),
+                'brands': ci.getbrands(cate1, 'all'),
+            }
+            info.update(ci.getinfo(cate1, 'all', mod))
+            ci.setinfo(cate1, 'all', mod, info)
 
     ci.execute()
 

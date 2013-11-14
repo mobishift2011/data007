@@ -211,10 +211,10 @@ class ItemIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         CappedSortedSet(zkey, 1000, p, skey=self.make_skey(cate1, cate2)).zadd(itemid, amount)
     
-    def setinfo(self, itemid, iteminfo):
+    def setinfo(self, itemid, iteminfo, **kwargs):
         hkey = ItemIndex.iteminfo.format(self.date, itemid) 
         p = conn if self.pipeline is None else self.pipeline
-        p.hmset(hkey, iteminfo)
+        p.hmset(hkey, iteminfo, **kwargs)
 
 
 class BrandIndex(object):
@@ -373,9 +373,11 @@ class CategoryIndex(object):
 
     def setinfo(self, cate1, cate2, monorday, categoryinfo):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
-        p = conn if self.pipeline is None else self.pipeline
-        c12 = self.make_skey(cate1, cate2)
-        p.hmset(hkey, categoryinfo)
+        #p = conn if self.pipeline is None else self.pipeline
+        #c12 = self.make_skey(cate1, cate2)        
+        #p.hmset(hkey, categoryinfo, skey=c12)
+        for r in conn.conns:
+            r.hmset(hkey, categoryinfo)
 
     def incrinfo(self, cate1, cate2, monorday, categoryinfo):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
