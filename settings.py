@@ -11,6 +11,7 @@ if ENV == '':
 
 envs = {
     'DEV': {
+        'RECORD_URI': 'redis://localhost:6379/0',
         'QUEUE_URI': 'redis://localhost:6379/11',
         'CACHE_URIS': [
             'redis://localhost:6379/5',
@@ -27,6 +28,7 @@ envs = {
         'DB_HOSTS': ['localhost:9160'],
     },
     'TEST': {
+        'RECORD_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/0',
         'QUEUE_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/11',
         'CACHE_URIS': [
             'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6401/12',
