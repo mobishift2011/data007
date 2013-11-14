@@ -94,7 +94,7 @@ class Process(object):
     def duration(self):
         updated_at = conn.get(self.updated_at.format(self.name))
         started_at = conn.get(self.started_at.format(self.name))
-        if updated_at and updated_at:
+        if updated_at and started_at:
             seconds = int(float(updated_at)-float(started_at))
             if seconds < 60:
                 return '{}s'.format(seconds)
