@@ -35,22 +35,25 @@ class CateAggProcess(Process):
         self.date = date
 
     def generate_tasks(self):
-        pass
+        self.clear_redis()
+        self.add_task('aggregator.cateagg.aggregate_categories', self.date)
+        self.finish_generation()
 
-    def start(self):
-        print('starting process cateagg')
-        aggregate_categories(self.date)
-        print('ended process cateagg')
+    #def start(self):
+    #    print('starting process cateagg')
+    #    #aggregate_categories(self.date)
+    #    print('ended process cateagg')
 
     def add_child(self, child):
         raise NotImplementedError('this process can not have children')
 
-    def work(self):
-        """ we do our work directly in ``start``, no redis involved """
-        pass
+    #def work(self):
+    #    """ we do our work directly in ``start``, no redis involved """
+    #    pass
 
 
 cap = CateAggProcess()
 
 if __name__ == '__main__':
+    cap.date = '2013-11-14'
     cap.start()

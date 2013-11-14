@@ -34,6 +34,8 @@ class Process(object):
     processing = 'ataobao-process-processing-{}' # list
     dones = 'ataobao-process-dones-{}' # list
     generated = 'ataobao-process-generated-{}' # key
+    started_at = 'ataobao-process-started_at-{}' # key
+    updated_at = 'ataobao-process-updated_at-{}' # key
 
     def __init__(self, name):
         self.name = name
@@ -45,9 +47,23 @@ class Process(object):
         conn.delete(self.processing.format(self.name))
         conn.delete(self.dones.format(self.name))
         conn.delete(self.generated.format(self.name))
+        conn.delete(self.updated_at.format(self.name))
+        conn.delete(self.started_at.format(self.name))
 
     def task_left(self):
-        return conn.scard(self.tasks.format(self.name))
+        return conn.scard(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name))
+
+    def task_all(self):
+        return conn.scard(self.tasks.format(self.name)) +\
+                    conn.llen(self.processing.format(self.name)) +\
+                    conn.llen(self.dones.format(self.name))
+
+    def progress(self):
+        ta = self.task_all()
+        tl = self.task_left()
+        return 0
+        if ta:
+            return 1.*tl/ta
 
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
@@ -55,6 +71,7 @@ class Process(object):
 
     def finish_generation(self):
         conn.set(self.generated.format(self.name), 'true')
+        conn.set(self.started_at.format(self.name), time.mktime(time.gmtime()))
 
     def generate_tasks(self):
         """ generate tasks using ``add_task`` and ``finish_generation`` """
@@ -63,10 +80,52 @@ class Process(object):
     def add_child(self, child):
         self.children.append(child)
 
+    def check_zombie(self):
+        updated_at = conn.get(self.updated_at.format(self.name))
+        if updated_at:
+            updated_at = float(updated_at)
+            if (time.mktime(time.gmtime()) - updated_at) > 300:
+                while True:
+                    task = conn.lpop(self.processing.format(self.name))
+                    if task is None:
+                        break
+                    conn.rpush(self.dones.format(self.name), task)
+
+    def duration(self):
+        updated_at = conn.get(self.updated_at.format(self.name))
+        started_at = conn.get(self.started_at.format(self.name))
+        if updated_at and updated_at:
+            seconds = int(float(updated_at)-float(started_at))
+            if seconds < 60:
+                return '{}s'.format(seconds)
+            elif seconds < 3600:
+                return '{}m{}s'.format(seconds/60, seconds%60)
+            elif seconds < 86400:
+                return '{}h{}m'.format(seconds/3600, seconds%3600/60)
+            elif seconds > 86400:
+                return '{}d{}h'.format(seconds/86400, seconds%86400/3600)
+        else:
+            return '?'
+
+    def status(self):
+        updated_at = conn.get(self.updated_at.format(self.name))
+        started_at = conn.get(self.started_at.format(self.name))
+        if started_at is None:
+            return '?'
+        elif updated_at is None:
+            return 'W'
+        elif self.is_finished():
+            return 'F'
+        else:
+            return 'P'
+
     def is_finished(self):
         generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true' 
-        processing_complete = lambda : conn.scard(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name)) == 0
-        return generation_complete() and processing_complete()
+        processing_complete = lambda : self.task_left() == 0
+        finished = generation_complete() and processing_complete()
+        if not finished:
+            self.check_zombie()
+        return finished
 
     def start(self):
         print('starting process {}'.format(self.name))
@@ -100,6 +159,7 @@ class Process(object):
                 task = result
                 conn.rpush(self.processing.format(self.name), task)
                 caller, args, kwargs = unpack(task)
+                conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
                 print('work on {}, {}, {}'.format(caller, args[:5], kwargs))
                 if '.' in caller:
                     module, method = caller.rsplit('.', 1)
@@ -120,6 +180,7 @@ class Process(object):
             finally:
                 conn.lrem(self.processing.format(self.name), task, 1)
                 conn.rpush(self.dones.format(self.name), task)
+                conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
 
 
 if __name__ == '__main__':
