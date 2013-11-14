@@ -1,3 +1,18 @@
+/*
+ * Cassandra Schemas
+ * 
+ * Import this file into cassandra::
+ *
+ *     $cqlsh host port -f schema.cql
+ *
+ * Or, check schemas using script::
+ *     
+ *     $source env.sh DEV 
+ *     $python scripts/checkschema.py 
+ *     ...
+ *     $#if there are fix plans in output, review them, and execute them by
+ *     $python scripts/checkschema.py --fix
+ */
 CREATE KEYSPACE IF NOT EXISTS ataobao2
     WITH replication = {'class':'SimpleStrategy', 'replication_factor':3};
 

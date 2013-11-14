@@ -29,9 +29,9 @@ def get_table_defs():
                 pk = [x.strip() for x in re.compile(r'primary key \((.*)\)', re.IGNORECASE).search(c).group(1).split(',') if x]
             else:
                 cname, ctype = c.split(' ', 1)
-                ctype = ctype.strip()
+                ctype = ctype.strip().lower()
                 if ctype.lower().endswith('primary key'):
-                    ctype = ctype.rsplit(' ', 2)[0]
+                    ctype = ctype.rsplit(' ', 2)[0].lower()
                     pk = cname.split(', ')
                 cols[cname] = ctype
         tables[table] = {'cols':cols, 'pk':pk}
