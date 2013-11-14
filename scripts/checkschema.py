@@ -130,7 +130,7 @@ def check_schema(fix=False):
             print 'fixed'
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Check (and fix) cql schemas for cassandra')
     parser.add_argument('-f', '--fix', help='run plans against cassandra', action='store_true')
     args = parser.parse_args()
     check_schema(fix=args.fix)
