@@ -6,6 +6,8 @@ from aggregator import iap, sap, bap, cap, shp, iip
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from datetime import datetime, timedelta
 
+defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
+
 def clearall(date):
     for p in [iap, sap, bap, cap, shp, iip]:
         p.clear_redis()
@@ -15,10 +17,7 @@ def clearall(date):
     BrandIndex(date).clear()
     CategoryIndex(date).clear()
 
-def build_flow(date=None):
-    if date is None:
-        date = defaultdate
-
+def build_flow(date=defaultdate):
     for p in [iap, sap, bap, cap, shp, iip]:
         p.date = date
 
@@ -37,7 +36,7 @@ def main():
     if option.date:
         date = option.date 
     else:
-        date='2013-11-13'
+        date=(datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
     clearall(date)
     flow = build_flow(date)
     flow.start()

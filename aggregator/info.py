@@ -8,6 +8,7 @@ import logging
 import argparse
 
 from aggregator import iap, sap, bap, cap, shp, iip
+from doagg import build_flow
 
 def gettermsize():
     def ioctl_GWINSZ(fd):
@@ -187,28 +188,41 @@ def state_symbol(state):
     except KeyError:
         return state
 
+flow = build_flow()
+processes = []
+def tree_processes(cp, indent=0):
+    processes.append([cp, indent])
+    if cp.children:
+        for child in cp.children:
+            tree_processes(child, indent+1)
+
+tree_processes(flow)
 
 def show_processes(args):
-    processes = [iap, sap, bap, cap, shp, iip]
     termwidth, _ = gettermsize()
     chartwidth = min(20, termwidth - 20)
 
     max_count = 0
     counts = dict()
-    for p in processes:
+    for p, _ in processes:
         count = p.task_left()
         counts[p.name] = count
         max_count = max(max_count, count)
 
-    scale = get_scale(max_count)
-    ratio = chartwidth * 1.0 / scale
-
-    print('Agg Info:')
-    for p in processes:
-        count = counts[p.name]
-        chart = green('|' + '█' * int(ratio * count))
-        line = '    %-12s %s %d' % (p.name, chart, count)
+    print('Agg Gantt:')
+    for p, indent in processes:
+        ta = p.task_all()
+        td = ta - p.task_left()
+        colorsize = 0
+        if ta:
+            colorsize = chartwidth*td/ta
+            
+        chart = green('|'+'█'*colorsize+' '*(chartwidth-colorsize)+'|')
+        done = p.status()
+        line = '    '*indent + '    %-8s %s %d/%d %s:%s' % (p.name, chart, td, ta, done, p.duration())
         print(line)
+
+    print('\n  *?: Unknown, W: Waiting, P: Processing, F: Finished')
 
 def show_both(args):
     show_processes(args)
