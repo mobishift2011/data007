@@ -48,18 +48,8 @@ class CateAggProcess(Process):
         self.add_task('aggregator.cateagg.aggregate_categories', self.date)
         self.finish_generation()
 
-    #def start(self):
-    #    print('starting process cateagg')
-    #    #aggregate_categories(self.date)
-    #    print('ended process cateagg')
-
     def add_child(self, child):
         raise NotImplementedError('this process can not have children')
-
-    #def work(self):
-    #    """ we do our work directly in ``start``, no redis involved """
-    #    pass
-
 
 cap = CateAggProcess()
 
