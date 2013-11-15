@@ -122,7 +122,7 @@ def testmonitorview():
     data['sid'] = request.args.get('sid')
     
     return render_template('cfz/spider_monitor_pid.html', **data)
-    
+
 
 from flask.ext import admin
 admin = admin.Admin(app,  'taobao')

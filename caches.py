@@ -75,7 +75,7 @@ class LC(object):
         if not ids:
             return []
         ids = list(set(ids))
-        #ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
+        ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
         
         if not ids:
             return []
@@ -107,21 +107,14 @@ class LC(object):
                     else:
                         lastcheck = int(lastcheck)
                         
-                    offset = 0
-                    if len(str(lastcheck)) == 10:# 兼容原来的
-                        lastcheck = lastcheck
-                    else:
-                        offset = lastcheck & 0xf
-                        lastcheck = lastcheck >> 28
-                    
-                    #print lastcheck, offset, "=========="
+                    offset = lastcheck & 0xf
+                    lastcheck = lastcheck >> 28
                     
                     if offset == 0:
                         offset = offsets[i]
                     else:
                         offset = offset * 86400
                     
-                    #needs.append(ids[i])
                     if lastcheck + offset < int(tsnow):
                         needs.append(ids[i])
             else:
