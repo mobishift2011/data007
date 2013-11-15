@@ -107,12 +107,8 @@ class LC(object):
                     else:
                         lastcheck = int(lastcheck)
                         
-                    offset = 0
-                    if len(str(lastcheck)) == 10:# 兼容原来的
-                        lastcheck = lastcheck
-                    else:
-                        offset = lastcheck & 0xf
-                        lastcheck = lastcheck >> 28
+                    offset = lastcheck & 0xf
+                    lastcheck = lastcheck >> 28
                     
                     if offset == 0:
                         offset = offsets[i]
