@@ -18,23 +18,19 @@ def aggregate_categories(date=None):
     ci = CategoryIndex(date)
     si = ShopIndex(date)
     ci.multi()
+    l1l2s.extend([[c[0], 'all'] for c in topcids])
     for cate1, cate2 in l1l2s:
         for mod in ['mon', 'day']:
             info = {
-                        'shops': si.getshops(cate1, cate2),
-                        'brands': ci.getbrands(cate1, cate2),
-                    }
-            info.update(ci.getinfo(cate1, cate2, mod))
-            ci.setinfo(cate1, cate2, mod, info)
-            ci.setindex(cate1, cate2, 'sales', mod, ci.getinfo(cate1, cate2, mod).get('sales', 0))
-    for cate1 in topcids:
-        for mod in ['mon', 'day']:
-            info = {
-                'shops': si.getshops(cate1, 'all'),
-                'brands': ci.getbrands(cate1, 'all'),
+                'shops': si.getshops(cate1, cate2),
+                'brands': ci.getbrands(cate1, cate2),
             }
-            info.update(ci.getinfo(cate1, 'all', mod))
-            ci.setinfo(cate1, 'all', mod, info)
+            info.update(ci.getinfo(cate1, cate2, mod))
+            for field in ['deals', 'items', 'sales', 'delta_sales']:
+                if field not in info:
+                    info[field] = 0
+            ci.setinfo(cate1, cate2, mod, info)
+            ci.setindex(cate1, cate2, 'sales', mod, info.get('sales', 0))
 
     ci.execute()
 

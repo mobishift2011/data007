@@ -23,7 +23,8 @@ def get_l1_and_l2_cids(cids):
             try:
                 l1l2[ cidchain[0] ] = (cidchain[-1], cidchain[-2])
             except:
-                pass
+                if len(cidchain) == 1:
+                    l1l2 = [cid, 'all']
     return l1l2
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
@@ -73,11 +74,11 @@ def aggregate_items(start, end, date=None):
     except:
         traceback.print_exc()
 
-def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, name, image, date):
+
+def parse_iteminfo(date, itemid, items, price, cid):
     if not items:
         return
 
-    brand = brand.encode('utf-8')
     date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
     d1 = date
@@ -121,6 +122,20 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
     delta_sales_mon = deals_mon * price - i2[2] * price 
     delta_sales_day = deals_day * price - deals_day1 * price
 
+    return locals()
+
+
+def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, name, image, date):
+    info = parse_iteminfo(date, itemid, items, price, cid)
+    if not info:
+        return 
+
+    for key, value in info.items():
+        locals()[key] = value
+        globals()[key] = value
+
+    brand = brand.encode('utf-8')
+
     # inc category counters
     for mod in ['day', 'mon']:
         inc = {
@@ -130,15 +145,18 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
             'items': 1,
         }
         ci.incrinfo(l1, l2, mod, inc)
-        ci.incrinfo(l1, 'all', mod, inc)
+        if l2 != 'all':
+            ci.incrinfo(l1, 'all', mod, inc)
     ci.addbrand(l1, l2, brand)
-    ci.addbrand(l1, 'all', brand)
+    if l2 != 'all':
+        ci.addbrand(l1, 'all', brand)
 
     # inc brand counters
     bi.addbrand(brand)
     bi.addshop(brand, l1, l2, shopid)
     bi.addcates(brand, l1, l2)
-    bi.addcates(brand, l1, 'all')
+    if l2 != 'all':
+        bi.addcates(brand, l1, 'all')
     bi.addhots(brand, l2, itemid, shopid, sales_mon)
     inc = {
         'items': 1,
@@ -147,23 +165,29 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         'delta_sales': delta_sales_mon,
     }
     bi.incrinfo(brand, l1, l2, inc)
-    bi.incrinfo(brand, l1, 'all', inc)
+    if l2 != 'all':
+        bi.incrinfo(brand, l1, 'all', inc)
 
     # inc item counters
     ii.incrcates(l1, l2, sales_mon, deals_mon)
+    if l2 != 'all':
+        ii.incrcates(l1, 'all', sales_mon, deals_mon)
     ii.incrindex(l1, l2, 'sales', 'mon', itemid, sales_mon)
-    ii.incrindex(l1, 'all', 'sales', 'mon', itemid, sales_mon)
+    if l2 != 'all':
+        ii.incrindex(l1, 'all', 'sales', 'mon', itemid, sales_mon)
     ii.incrindex(l1, l2, 'sales', 'day', itemid, sales_day)
-    ii.incrindex(l1, 'all', 'sales', 'day', itemid, sales_day)
+    if l2 != 'all':
+        ii.incrindex(l1, 'all', 'sales', 'day', itemid, sales_day)
 
     # inc shop counters
-    si.addcates(shopid, l1, l2)
+    if l2 != 'all':
+        si.addcates(shopid, l1, l2)
     si.incrbrand(shopid, 'sales', brand, sales_mon)
     si.incrbrand(shopid, 'deals', brand, deals_mon)
     si.addhotitems(shopid, itemid, sales_mon)
 
     cate1 = l1
-    for cate2 in  ['all', l2]:
+    for cate2 in set(['all', l2]):
         for period in ['mon', 'day']:
             inc = {'sales':locals()['sales_'+period],
                    'deals':locals()['deals_'+period],

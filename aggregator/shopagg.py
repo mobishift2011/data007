@@ -66,11 +66,10 @@ def aggregate_shop(si, ci, shopid, name, logo, rank, rank_num):
                     si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
     
         cates = si.getcates(shopid)
-        c1s = list(set([c[0] for c in cates]))
-        for c1 in c1s:
-            update_with_cates(c1, 'all')
+        cates.extend(list(set([(c[0], 'all') for c in cates])))
         for cate1, cate2 in cates:
             update_with_cates(cate1, cate2)
+            si.setbase(shopid, update, skey='{}_{}'.format(cate1, cate2))
 
 
 class ShopAggProcess(Process):
@@ -95,4 +94,5 @@ class ShopAggProcess(Process):
 sap = ShopAggProcess()
 
 if __name__ == '__main__':
+    sap.date = '2013-11-14'
     sap.start()

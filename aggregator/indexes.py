@@ -98,7 +98,7 @@ class ShopIndex(object):
 
     def getrank(self, cate1, cate2, shopid):
         zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'sales', 'mon')
-        return conn.zrevrank(zkey, shopid)
+        return conn.zrevrank(zkey, shopid, skey=self.make_skey(cate1, cate2))
          
     def incrindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date
@@ -138,11 +138,11 @@ class ShopIndex(object):
         for key, value in shopinfo.items():
             p.hincrbyfloat(hkey, key, value)
 
-    def setbase(self, shopid, shopinfo):
+    def setbase(self, shopid, shopinfo, **kwargs):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
         hkey = ShopIndex.shopbase.format(date, shopid)
-        conn.hmset(hkey, shopinfo)
+        conn.hmset(hkey, shopinfo, **kwargs)
 
     def getbase(self, shopid):
         date = self.date
@@ -204,7 +204,7 @@ class ItemIndex(object):
 
     def gettopitemids(self, cate1, cate2, field, monorday):
         zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)
-        return [int(id) for id in conn.zrange(zkey, 0, -1)]
+        return [int(id) for id in conn.zrange(zkey, 0, -1, skey=self.make_skey(cate1, cate2))]
 
     def incrindex(self, cate1, cate2, field, monorday, itemid, amount):
         zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)
