@@ -183,7 +183,7 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
     * set: brand
     * 指定分类下品牌集合
 
-3. categoryindex_{date}_{cate1}_{cate2}_{monorday}
+3. categoryindex_{date}_{cate1}_{field}_{monorday}
     * sorted set: (cate2, sales)
     * 指定分类、指定周期下, 分类汇总的销售额排名
 

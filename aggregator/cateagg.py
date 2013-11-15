@@ -6,7 +6,7 @@ from aggregator.processes import Process
 
 from datetime import datetime, timedelta
 
-from crawler.cates import l1l2s
+from crawler.cates import l1l2s, topcids
 
 import traceback
 
@@ -18,14 +18,19 @@ def aggregate_categories(date=None):
     ci = CategoryIndex(date)
     si = ShopIndex(date)
     ci.multi()
+    l1l2s.extend([[c[0], 'all'] for c in topcids])
     for cate1, cate2 in l1l2s:
-        ci.setinfo(cate1, cate2, 'mon', {
-                        'shops': si.getshops(cate1, cate2),
-                        'brands': ci.getbrands(cate1, cate2),
-                    })
-        if cate2 != 'all':
-            ci.setindex(cate1, cate2, 'sales', 'day', ci.getinfo(cate1, cate2, 'day').get('sales', 0))
-            ci.setindex(cate1, cate2, 'sales', 'mon', ci.getinfo(cate1, cate2, 'mon').get('sales', 0))
+        for mod in ['mon', 'day']:
+            info = {
+                'shops': si.getshops(cate1, cate2),
+                'brands': ci.getbrands(cate1, cate2),
+            }
+            info.update(ci.getinfo(cate1, cate2, mod))
+            for field in ['deals', 'items', 'sales', 'delta_sales']:
+                if field not in info:
+                    info[field] = 0
+            ci.setinfo(cate1, cate2, mod, info)
+            ci.setindex(cate1, cate2, 'sales', mod, info.get('sales', 0))
 
     ci.execute()
 
@@ -35,22 +40,15 @@ class CateAggProcess(Process):
         self.date = date
 
     def generate_tasks(self):
-        pass
-
-    def start(self):
-        print('starting process cateagg')
-        aggregate_categories(self.date)
-        print('ended process cateagg')
+        self.clear_redis()
+        self.add_task('aggregator.cateagg.aggregate_categories', self.date)
+        self.finish_generation()
 
     def add_child(self, child):
         raise NotImplementedError('this process can not have children')
 
-    def work(self):
-        """ we do our work directly in ``start``, no redis involved """
-        pass
-
-
 cap = CateAggProcess()
 
 if __name__ == '__main__':
+    cap.date = '2013-11-14'
     cap.start()

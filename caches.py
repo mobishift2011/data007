@@ -20,6 +20,12 @@ conn = ShardRedis(conns=conns)
 WC = ThinSet('ataobao-wrongcategory-items', 3000*10000, connection=conn)
 IF = ThinSet('ataobao-infrequent-items', 15000*10000, connection=conn)
 
+
+from settings import RECORD_URI
+
+host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(RECORD_URI).groups()
+conn_record = redis.Redis(host=host, port=int(port), db=int(db))
+
 class LC(object):
     """ Item LastCheck Management 
 
@@ -69,7 +75,7 @@ class LC(object):
         if not ids:
             return []
         ids = list(set(ids))
-        #ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
+        ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
         
         if not ids:
             return []
@@ -101,21 +107,14 @@ class LC(object):
                     else:
                         lastcheck = int(lastcheck)
                         
-                    offset = 0
-                    if len(str(lastcheck)) == 10:# 兼容原来的
-                        lastcheck = lastcheck
-                    else:
-                        offset = lastcheck & 0xf
-                        lastcheck = lastcheck >> 28
-                    
-                    #print lastcheck, offset, "=========="
+                    offset = lastcheck & 0xf
+                    lastcheck = lastcheck >> 28
                     
                     if offset == 0:
                         offset = offsets[i]
                     else:
                         offset = offset * 86400
                     
-                    #needs.append(ids[i])
                     if lastcheck + offset < int(tsnow):
                         needs.append(ids[i])
             else:
@@ -131,20 +130,29 @@ class LC(object):
         hashkey = LC.hashkey.format(type)
         tsnow = time.mktime(time.gmtime())
         
+        today_key = time.strftime("%Y-%m-%d", time.gmtime())
+
         if LC.need_update(type, int(id)):
             info = None
-            
+            conn_record.hincrby(today_key, '{}:crawl-sum'.format(type))
             try:
                 info = on_update(id)
             except:
+                conn_record.hincrby(today_key, '{}:crawl-err-except'.format(type))
                 print('we do not set task_done for id {}, so we will pick them up in requeue'.format(id))
                 traceback.print_exc()
             else:
+                conn_record.hincrby(today_key, '{}:crawl-return'.format(type))
+                
                 queue.task_done(id)
                 if type == "item":
                     if not info or not info.has_key('num_sold30'):
+                        conn_record.hincrby(today_key, '{}:crawl-data-err'.format(type))
                         print "item err:", info
                         return
+                    
+                    conn_record.hincrby(today_key, '{}:crawl-success'.format(type))
+                    
                     src = LC.gethash(type).hmget(*[id])
                     if src[0]:
                         '''
