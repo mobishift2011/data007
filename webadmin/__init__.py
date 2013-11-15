@@ -29,7 +29,7 @@ db.init_app(app)
 app.conn = db.connection
 app.redis = redis.Redis("localhost", 6379)
 
-__all__ = ["app", "modes", "api", "views"]
+__all__ = ["app", "modes", "api", "views", "cqlui"]
 
 from webadmin import *
 
