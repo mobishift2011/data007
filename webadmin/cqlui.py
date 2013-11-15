@@ -66,8 +66,9 @@ def cqlui_table(table):
         if order_by:
             order_by_clause = 'order by {} {}'.format(order_by, request.args.get('scend')).strip()
 
-        count = int(db.execute('select count(*) from {}.{} {}'.format(\
-            KEYSPACE, table, where_clause), result=True)[1][0][0])
+        count = 1000000000000
+        # count = int(db.execute('select count(*) from {}.{} {}'.format(\
+        #     KEYSPACE, table, where_clause), result=True)[1][0][0])
         columns, rows = db.execute('select * from {}.{} {} {} {}'.format(\
             KEYSPACE, table, where_clause, order_by_clause, limit_clause), result=True)
     except:
