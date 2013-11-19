@@ -58,8 +58,12 @@ class LC(object):
         hashkey = LC.hashkey.format(type)
         if type == 'item':
             count = 2*10000*10000
-        else:
+        elif type == 'shop':
             count = 500*10000
+        elif type == 'shopinfo':
+            count = 500*10000
+        else:
+            raise ValueError('wrong LC type: {}'.format(type))
         return ThinHash(hashkey, count, connection=conn)
 
     @staticmethod

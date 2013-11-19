@@ -208,6 +208,16 @@ class ThinHash(object):
             r.update(d)
         return r
 
+    def hkeys(self):
+        buckets = self.conn.smembers(self.bucketskey)
+        p = self.conn.pipeline(transaction=False)
+        for bucket in buckets:
+            p.hkeys(bucket)
+        r = set()
+        for s in p.execute():
+            r.update(s)
+        return r
+
 class CappedSortedSet(object):
     """ Capped sorted set for redis
     
