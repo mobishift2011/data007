@@ -152,28 +152,65 @@ def get_misc(shopid, sid=None):
         return {}
     
 
-def get_interacts(itemid):
+def get_interacts(itemid, sid=None, type=None):
+    """ these information can be fetched in client side
+
+    treat this as an example implementation
+    """
+    if sid is None or type is None:
+        try:
+            d = get_json("mtop.wdetail.getItemDetailStatic", {"itemNumId":itemid})
+            sid = d['data']['seller']['userNumId']
+            type = 'tmall' if d['data']['seller']['type'] == 'B' else 'taobao'
+        except:
+            pass
     try:
-        j = get_json("mtop.wdetail.getItemRates", {"hasRateContent":0,"hasPic":0,"auctionNumId":itemid})
-        r = j['data']
-        i = {
-            'good': int(r.get("feedGoodCount", 0)),
-            'normal': int(r.get("feedNormalCount", 0)),
-            'bad': int(r.get('feedBadCount', 0)),
-            # item_as_description_rating, this sould go to query shopinfo.rating
-        }
-        if i['good'] + i['normal'] + i['bad'] > 0:
-            url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}'.format(itemid)
+        i = {}
+        if type is None or type == 'taobao':
+            #taobao
+            if sid:
+                url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}&userNumId={}'.format(itemid, sid)
+            else:
+                url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}'.format(itemid)
             try:
                 text = requests.get(url, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
             except:
                 raise NetworkError('fetch interacts error')
 
-            impress = json.loads(text.strip()[1:-1])['data']['impress']
+            summary = json.loads(text.strip()[1:-1])['data']
+            if sid:
+                i['num_rates'] = summary['correspondCount']
+                i['rate'] = summary['correspond']
+            impress = summary['impress']
             impress = [ {'title':x['title'], 'value':x['count']*x['value']} for x in impress ]
+            if sid:
+                i['good'] = summary['count']['good']
+                i['normal'] = summary['count']['normal']
+                i['bad'] = summary['count']['bad']
+            else:
+                i['good'] = sum(x['value'] for x in impress if x['value']>0)
+                i['normal'] = 0
+                i['bad'] = -sum(x['value'] for x in impress if x['value']<=0)
             i['impress'] = impress
         else:
-            i['impress'] = []
+            #tmall
+            rateurl = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(itemid)
+            tagurl = 'http://rate.tmall.com/listTagClouds.htm?itemId={}'.format(itemid)
+            try:
+                rates = requests.get(rateurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
+                tags = requests.get(tagurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
+            except:
+                pass
+            dsr = json.loads('{'+rates+'}')['dsr']
+            i['rate'] = str(dsr["gradeAvg"])
+            i['num_rates'] = dsr["rateTotal"]
+            tc = json.loads('{'+tags+'}')['tags']['tagClouds']
+            impress = [ {'title':x['tag'].strip(), 'value':x['count']*int(2*(int(x['posi'])-0.5))}
+                            for x in tc ]
+            i['impress'] = impress
+            i['good'] = sum(x['value'] for x in impress if x['value']>0)
+            i['normal'] = 0
+            i['bad'] = -sum(x['value'] for x in impress if x['value']<=0)
         return i 
     except NotFoundError:
         return {'good':0,'normal':0,'bad':0,'impress':[]}
@@ -334,26 +371,33 @@ def get_item(itemid):
                     raise ValueError('price cannot be found!')
 
         def get_counters():
-            counters = {
-                'ICE_3_feedcount-{}'.format(itemid): 'num_reviews',
-                'ICVT_7_{}'.format(itemid): 'num_views',
-            }
-            url = 'http://count.tbcdn.cn/counter3?keys={}&callback=jsonp'.format(','.join(counters.keys()))
-            try:
-                r = session.get(url, timeout=30)
-            except:
-                raise NetworkError('get counting error')
+            if s.get('type', 'C') == 'C':
+                # taobao shop counters
+                counters = {
+                    'ICE_3_feedcount-{}'.format(itemid): 'num_reviews',
+                    'ICVT_7_{}'.format(itemid): 'num_views',
+                }
+                url = 'http://count.tbcdn.cn/counter3?keys={}&callback=jsonp'.format(','.join(counters.keys()))
+                try:
+                    r = session.get(url, timeout=30)
+                except:
+                    raise NetworkError('get counting error')
 
-            d = json.loads(r.text[6:-2])
-            result = {}
-            for key, value in counters.items():
-                if key in d:
-                    result[value] = d[key] 
-            return result
+                d = json.loads(r.text[6:-2])
+                result = {}
+                for key, value in counters.items():
+                    if key in d:
+                        result[value] = d[key] 
+                return result
+            else:
+                # tmall shop counters
+                url = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(itemid)
+                data = '{'+session.get(url, timeout=30).content.strip()+'}'
+                return {'num_reviews':json.loads(data)['dsr']['rateTotal'], 'num_views':0}
 
         result.update({
             'id': itemid,
-            'type': {'B':'tmall', 'C':'taobao'}.get(i.get('type', 'B'), 'taobao'),
+            'type': {'B':'tmall', 'C':'taobao'}.get(s.get('type', 'B'), 'taobao'),
             'brand': get_brand(),
             'image': i.get('picsPath', [''])[0],
             'shopid': int(s.get('shopId', 0)),

@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS item (
     num_views       int,
     promo           text,
     delivery_type   int,
-    interacts       text,
 
     rcid            int,
     rating          float,
