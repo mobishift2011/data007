@@ -101,7 +101,9 @@ class LC(object):
             # try call on_update with id, if succeeded, update lastcheck in redis
             if type == 'item':
                 if lastcheck:
-                    print "get:", bin(int(lastcheck))
+                    if str(lastcheck).find('.') > 0:
+                        lastcheck = float(lastcheck)
+                    print "get:", bin(int(lastcheck)), len(bin(int(lastcheck))) - 2
                 if debouncing.can_update(lastcheck):
                     needs.append(ids[i])
             else:
@@ -139,7 +141,7 @@ class LC(object):
                     
                     ret_bins = LC.gethash(type).hmget(*[id])
                     new_bin = debouncing.get_update_bin(ret_bins[0], info)
-                    print bin(new_bin)
+                    print "update:", bin(new_bin), len(bin(new_bin))
                     LC.gethash(type).hset(id, new_bin)
                 else:
                     LC.gethash(type).hset(id, tsnow)
