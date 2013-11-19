@@ -18,8 +18,8 @@ def get_update_bin(ret_bin, info):
              56
         31(ts), 21(num_sold30), 4(offset)
     '''
-    if info.has_key('latest_buy_time'):
-        latest_time = int(time.mktime(time.strptime(info['latest_buy_time'], '%Y-%m-%d %H:%M:%S'))) / 3600
+    if info.has_key('num_instock'):
+        latest_time = int(info['num_instock'])
     else:
         latest_time = 0
         
