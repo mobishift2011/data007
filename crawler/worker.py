@@ -24,7 +24,7 @@ from crawler.tbitem import get_item, is_valid_item, is_banned
 from crawler.tbshop import list_shop
 from crawler.tbshopinfo2 import get_shop
 
-def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
+def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=600):
     """ calling a func with throttling
     
     Throttling the function call with ``threshold_per_minute`` calls per minute. This is useful 
@@ -38,7 +38,12 @@ def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
     """
     if not hasattr(call_with_throttling, 'logs'):
         call_with_throttling.logs = deque()
+        call_with_throttling.started_at = time.time()
+        call_with_throttling.count = 0
     logs = call_with_throttling.logs
+    started_at = call_with_throttling.started_at
+    call_with_throttling.count += 1
+    count = call_with_throttling.count
 
     def remove_outdated():
         # remove outdated from logs
@@ -55,18 +60,23 @@ def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=60):
             time.sleep(0.3)
 
     def smoothen_calling_interval():
-        average_processing_time = (time.time() - logs[0]) / len(logs)
+        average_processing_time = (time.time() - started_at) / count
         expected_processing_time = 60. / threshold_per_minute
         if expected_processing_time > average_processing_time:
             time.sleep((len(logs)+0.8)*expected_processing_time - len(logs)*average_processing_time)
     
+        
+    average_processing_time = (time.time() - started_at) / count
+    expected_processing_time = 60. / threshold_per_minute
+    #print expected_processing_time, average_processing_time, count, time.time()-started_at
+
     if logs and len(logs) < threshold_per_minute:
         smoothen_calling_interval()
     else:
         wait_for_threshold()
 
     logs.append(time.time())
-    
+
     return func(*args, **kwargs)
 
 class Worker(object):
@@ -99,16 +109,16 @@ class ItemWorker(Worker):
 
     def check_ban(self):
         while True:
-            time.sleep(10)
             try:
                 self.banned = is_banned()
             except:
                 traceback.print_exc()
+            time.sleep(10)
 
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=200)
             #d = get_item(itemid)
             if 'notfound' in d or 'error' in d:
                 try:
@@ -146,9 +156,12 @@ class ItemWorker(Worker):
             
         while True:
             try:
-                if self.banned:
+                while self.banned:
                     print('banned, sleeping 60 secs')
                     time.sleep(60)
+                    for attr in ['count', 'started_at', 'logs']:
+                        if hasattr(call_with_throttling, attr):
+                            delattr(call_with_throttling, attr)
                 result = poll([ai1, ai2], timeout=10)
                 if result:
                     queue, itemid = result
@@ -187,26 +200,18 @@ class ShopWorker(Worker):
 class ShopInfoWorker(Worker):
     """ Work on ShopInfo Queues """
     def work(self):
-        def update_shopinfo(id):
-            if LC.need_update('shop', id):
-                try:
-                    si = get_shop(id)
-                    if si and 'error' not in si:
-                        update_shop(si)
-                except:
-                    traceback.print_exc()
-                    print('id {} will be requeued some time later'.format(id))
-                else:
-                    asi1.task_done(id)
-            else:
-                asi1.task_done(id)
+        def on_update(id):
+            print('updating shopinfo of shopid {}'.format(id))
+            si = get_shop(id)
+            if si and 'error' not in si:
+                update_shop(si)
 
         while True:
             try:
                 result = poll([asi1], timeout=10)
                 if result:
                     queue, shopid = result
-                    self.pool.spawn(update_shopinfo, int(shopid))
+                    self.pool.spawn(LC.update_if_needed, 'shopinfo', int(shopid), on_update, asi1)
             except:
                 traceback.print_exc()
 
@@ -218,7 +223,9 @@ def main():
     parser.add_argument('--poolsize', '-p', type=int, default=100, help='gevent pool size for worker (default: %(default)s)')
     option = parser.parse_args()
     if option.worker == "item":
-        ItemWorker(option.poolsize).work()
+        worker = ItemWorker(option.poolsize)
+        worker.banned = is_banned()
+        worker.work()
     elif option.worker == "shop":
         ShopWorker(option.poolsize).work()
     elif option.worker == "shopinfo":
@@ -228,7 +235,7 @@ def main():
 
 def test_throttling():
     def printget():
-        print time.time(), get_item(22183623058) 
+        print time.time(), 'id' in get_item(22183623058) 
         
     import gevent.pool
     pool = gevent.pool.Pool(20)
@@ -238,3 +245,4 @@ def test_throttling():
 
 if __name__ == '__main__':
     main()
+    #test_throttling()

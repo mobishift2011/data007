@@ -79,6 +79,10 @@ def get_shop(id_or_url):
         info.update(get_collects_info(info['sid'], s))
         info.update(get_service_info(rateid, s))
         info.update(get_search_info(url, info, s))
+
+    for field in ['title', 'logo', 'main_cat']:
+        if info[field] is None:
+            info[field] = ''
         
     return info
 
@@ -176,6 +180,8 @@ def get_service_info(rateid, s):
                 info['area'] = PyQuery(e).text().replace(u"所在地区：", "").strip()
             elif u"创店时间： " in PyQuery(e).text():
                 info['create_shop'] = PyQuery(e).text().replace(u"创店时间： ", "").strip()                
+        if 'main_sale' not in info:
+            info['main_sale'] = ''
                 
         ele = body.find("div.info-block ul.sep li:first-child")
         if ele:

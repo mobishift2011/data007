@@ -21,6 +21,8 @@ USE ataobao2;
 CREATE TABLE IF NOT EXISTS shop (
     id              bigint PRIMARY KEY,
     sid             bigint,
+    type            text,
+    mobile          text,
     rateid          text,
     nick            text,
     charge          text,

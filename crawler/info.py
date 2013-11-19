@@ -222,7 +222,7 @@ def show_counts(args):
     termwidth, _ = gettermsize()
     chartwidth = min(20, termwidth - 20)
 
-    types = ['item', 'shop']
+    types = ['item', 'shop', 'shopinfo']
 
     max_count = 0
     counts = dict()
