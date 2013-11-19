@@ -85,8 +85,25 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
                 return {'error':True, 'reason':'i.life.taobao.com'}
             
             result.update(get_brand_image(id))
+            result.update(get_latest_buyer(id, content))
             
     return result
+    
+def get_latest_buyer(id, content):
+    ret = {}
+    rec = re.compile(u'http://detailskip.taobao.com/json/show_buyer_list.htm(.*?),showBuyerList', re.DOTALL)
+    rets = rec.findall(content)
+    if len(rets):
+        url = 'http://detailskip.taobao.com/json/show_buyer_list.htm{}&callback=Hub.data.records_reload'.format(rets[0])
+        req = requests.get(url)
+        rets2 = re.findall(r'tb-time\\">(.*?)<', req.content.decode('gbk'), flags=re.DOTALL)
+        if len(rets2) > 2:
+            print rets2[1] 
+            ret['latest_buy_time'] = rets2[1]
+        
+    return ret
+
+
     
 def get_brand_image(id):
     ret = {}
