@@ -411,6 +411,10 @@ def get_num_soldld(url):
     except:
         traceback.print_exc()
 
+def get_item_new(itemid):
+    from h5 import get_item
+    return get_item(itemid)
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Get item by id')
@@ -418,7 +422,7 @@ def main():
     option = parser.parse_args()
     from pprint import pprint
     print('Item {}:'.format(option.id))
-    pprint(get_item(option.id))
+    pprint(get_item_new(option.id))
 
 if __name__ == '__main__':
     main()
