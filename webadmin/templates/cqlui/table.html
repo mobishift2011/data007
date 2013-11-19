@@ -20,6 +20,9 @@
 
         <select class="span2 column">
             <option>id</option>
+            {% if table == 'item' %}
+            <option>shopid</option>
+            {% endif %}
         </select>
         <select class="span1">
             <option>=</option>
