@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}CQL UI{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap -->
+        <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" media="screen">
+        <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap-responsive.min.css') }}" rel="stylesheet" media="screen">
+        {% block style%}
+        <style type="text/css">
+          body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+          }
+          .sidebar-nav {
+            padding: 9px 0;
+          }
+
+          @media (max-width: 980px) {
+            /* Enable use of floated navbar text */
+            .navbar-text.pull-right {
+              float: none;
+              padding-left: 5px;
+              padding-right: 5px;
+            }
+          }
+        </style>
+        {% endblock %}
+    </head>
+    <body>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container-fluid">
+                    <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="brand" href="#">CQL UI</a>
+                    <div class="nav-collapse collapse">
+                        <p class="navbar-text pull-right">
+                            <a href="/" class="navbar-link">Exit</a>
+                        </p>
+                        <ul class="nav">
+                            <li class="active"><a href="#">Server</a></li>
+                            <li><a href="#">Status</a></li>
+                            <li><a href="#">Replica</a></li>
+                            <li><a href="#">Command</a></li>
+                            <li><a href="#">About</a></li>
+                        </ul>
+                    </div><!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+
+        {% block container %}
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span3">
+                    <div class="well sidebar-nav">
+                        <ul class="nav nav-list">
+                            <li class="nav-header">Tables</li>
+                            <li id="item"><a href="/cqlui/table/item/">item</a></li>
+                            <li id="item_by_date"><a href="/cqlui/table/item_by_date/">item_by_date</a></li>
+                            <li id="shop"><a href="/cqlui/table/shop/">shop</a></li>
+                            <li id="shop_by_date"><a href="/cqlui/table/shop_by_date/">shop_by_date</a></li>
+                            <li id="shop_by_item"><a href="/cqlui/table/shop_by_item/">shop_by_item</a></li>
+                            <li id="item_attr"><a href="/cqlui/table/item_attr/">item_attr</a></li>
+                        </ul>
+                    </div><!--/.well -->
+                </div><!--/span-->
+                <div class="span9">
+                    {% block content %}
+                        {% block breadcrumb %}{% endblock %}
+                    {% endblock %}
+                </div>
+            </div><!--/row-->
+
+            <hr>
+
+            <footer>
+                {% block footer %}<p>&copy; Favbuy 2013</p>{% endblock%}
+            </footer>
+
+        </div><!--/.fluid-container-->
+        {% endblock %}
+
+        <!-- Le javascript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="{{ url_for('static', filename='js/jquery-1.8.3.min.js') }}"></script>
+        <script src="{{ url_for('admin.static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
+
+        {% block js %}{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,141 @@
+{% extends 'cqlui/index.html' %}
+{% block content %}
+    {% block breadcrumb%}
+    <ul class="breadcrumb">
+        <li><a href="#">Table</a></li>
+        {% if table %}
+        <li><span class="divider">/</span></li>
+        <li class="active">{{ table }}</li>
+        {% endif %}
+    </ul>
+    {% endblock %}
+
+    <form class="form-search", method='POST'>
+        <select class="span2 column">
+            {% for column in columns %}
+            <option>{{ column }}</option>
+            {% endfor %}
+        </select>
+        <select class="span1">
+            <option>=</option>
+        </select>
+        <input type="text" class="input-medium search-query search_value" name={{ columns[0] }}>
+        <button type="submit" class="btn">Search</button>
+    </form>
+    <p>
+        Rows:
+        <select class="span1 rows">
+            <option>5</option>
+            <option>10</option>
+            <option>20</option>
+            <option>50</option>
+            <option>100</option>
+            <option>200</option>
+            <option>500</option>
+        </select>
+    </p>
+    <div class="pagination">
+        <ul>
+            {% if has_previous %}
+            <li><a class="prev"><<</a></li>
+            {% endif %}
+
+            {% for page in pages %}
+            <li {% if current == page %}class="active"{% endif %}><a>{{ page }}</a></li>
+            {% endfor %}
+
+            {% if has_next %}
+            <li><a class="next">>></a></li>
+            {% endif %}
+
+            <li></li>
+        </ul>
+        <p class="lead text-info"> ({{ next_offset }} / {{ count }})</p>
+    </div>
+
+    (点击字段名排序)
+    <table class="table table-striped table-bordered table-bordered table-hover">
+        <thead>
+            <tr>
+                {% for column in columns%}
+                <th class="column">{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for value in row %}
+                <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/bootstrap-dropdown.js') }}"></script>
+<script src="{{ url_for('static', filename='js/url.min.js') }}"></script>
+<script type="text/javascript">
+    $(function(){
+        $('select.rows').val({{ limit }});
+
+        var t = $('ul.breadcrumb li.active').text();
+        $('ul.nav li#'+t).attr('class', 'active');
+    });
+
+    $('form.form-search select.column').change(function(){
+        var column = $(this).find("option:selected").text().trim();
+        $('input.search_value').attr('name', column);
+    });
+
+    $('.pagination ul li a').click(function(){
+        var url = new Url(location.href);
+        var current_page = parseInt($('.pagination ul li.active a').text());
+        var page = $(this);
+
+        if(page.parent().attr('class') == 'active'){
+            return;
+        }
+
+        if(page.attr('class') == 'prev'){
+            current_page -= 1;
+        }
+        else if(page.attr('class') == 'next'){
+            current_page += 1;
+        }
+        else{
+            current_page = parseInt(page.text());
+        }
+
+        if(current_page){
+            url.query['page'] = current_page;
+            location.href = url.toString();
+        }
+    });
+
+    $('select.rows').change(function(){
+        var rows = $(this);
+        var limit = rows.find("option:selected").text();
+        var url = new Url(location.href);
+        url.query['limit'] = limit;
+        location.href = url.toString();
+    });
+
+    // $('th.column').click(function(){
+    //     var column = $(this).text().trim();
+    //     var url = new Url(location.href);
+
+    //     if(url.query['order_by'] == column){
+    //         url.query['scend'] = url.query['scend'] == 'asc' ? 'desc' : 'asc';
+    //     }else{
+    //         url.query['order_by'] = column;
+    //         url.query['scend'] = 'asc';
+    //     }
+
+    //     location.href = url.toString();
+    // });
+</script>
+{% endblock %}
+
