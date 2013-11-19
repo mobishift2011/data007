@@ -70,11 +70,14 @@ def pack_bin(cts, uts, offset):
     return (cts << 23) + (uts << 4) + offset
   
 def unpack_bin(sbin):
-    sbin = int(sbin)
-    offset = sbin & 0xf
-    uts = (sbin >> 4) & 0x7ffff
-    cts = sbin >> 23
-    return cts, uts, offset
+    try:
+        sbin = int(sbin)
+        offset = sbin & 0xf
+        uts = (sbin >> 4) & 0x7ffff
+        cts = sbin >> 23
+        return cts, uts, offset
+    except:
+        return 0, 0, 0
 
 
 import xdrlib
