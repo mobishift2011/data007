@@ -29,27 +29,40 @@ for table, schema in re.compile(r'CREATE TABLE IF NOT EXISTS (\S+) \((.*?)\);', 
 
 def sync_table(table, fields):
     f1 = ', '.join(fields)
-    print 'migrating {}'.format(table)
+    pieces = {
+        'ataobao2.item': 1000,
+        'ataobao2.item_by_date': 1000,
+        'ataobao2.brand_by_date': 100,
+        'ataobao2.shop_by_date': 10,
+        'ataobao2.shop_by_item': 1000,
+    }.get(table, 1)
+    start = -2**63
+    step = 2**64/pieces
+    print 'migrating {} {}'.format(table, f1)
 
-    with db1.connection() as cur:
-        print f1, table
-        cur.execute('select {} from {} limit 1000000'.format(f1, table), consistency_level='ONE')
-        for i, row in enumerate(cur):
-            if i % 1000 == 0:
-                print 'syncd {}'.format(i)
-            params = {}
-            fs = list(fields)
-            for k,v in zip(fields, row):
-                if k == 'date':
-                    v = struct.unpack('!q', v)[0]
-                if v is not None:
-                    params[k] = v 
-                else:
-                    fs.remove(k) 
-            f1 = ', '.join(fs)
-            f2 = ', '.join([':'+f for f in fs])
-            #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, f1, f2), params
-            db2.execute('insert into {} ({}) values ({})'.format(table, f1, f2), params)
+    for i in range(pieces):
+        start = -2**63 + step*i
+        end = min(2**63-1, -2**63+step*(i+1))
+        with db1.connection() as cur:
+            print 'piece', i+1
+            cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), 
+                        dict(v1=start, v2=end), consistency_level='ONE')
+            for i, row in enumerate(cur):
+                if i % 1000 == 0:
+                    print 'syncd {}'.format(i)
+                params = {}
+                fs = list(fields)
+                for k,v in zip(fields, row):
+                    if k == 'date':
+                        v = struct.unpack('!q', v)[0]
+                    if v is not None:
+                        params[k] = v 
+                    else:
+                        fs.remove(k) 
+                f1 = ', '.join(fs)
+                f2 = ', '.join([':'+f for f in fs])
+                #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, f1, f2), params
+                db2.execute('insert into {} ({}) values ({})'.format(table, f1, f2), params)
     
 def sync_all():
     for table, fields in schemas.iteritems():

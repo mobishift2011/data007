@@ -208,7 +208,7 @@ class ItemAggProcess(Process):
     def __init__(self, date=None):
         super(ItemAggProcess, self).__init__('itemagg')
         if ENV == 'DEV':
-            self.step = 2**64/100
+            self.step = 2**64/1000
         else:
             self.step = 2**64/100000
         self.date = date
@@ -228,3 +228,4 @@ iap = ItemAggProcess()
 if __name__ == '__main__':
     iap.date = '2013-11-11'
     iap.start()
+    # aggregate_items(start=-2968877088484347687, end=-2968877088484347687+1)

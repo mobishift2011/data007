@@ -26,13 +26,13 @@ def aggregate_shops(start, end, date=None):
         si.multi()
         ci.multi()
         with db.connection() as cur:
-            cur.execute('''select id, title, logo, rank, rank_num from ataobao2.shop
+            cur.execute('''select id, title, logo, type, credit_score from ataobao2.shop
                     where token(id)>=:start and token(id)<:end''',
                     dict(start=start, end=end), consistency_level='ONE')
             for row in cur:
-                shopid, name, logo, rank, rank_num = row
+                shopid, name, logo, type, credit_score = row
                 try:
-                    aggregate_shop(si, ci, shopid, name, logo, rank, rank_num)
+                    aggregate_shop(si, ci, shopid, name, logo, type, credit_score)
                 except:
                     traceback.print_exc()
         si.execute()
@@ -40,16 +40,14 @@ def aggregate_shops(start, end, date=None):
     except:
         traceback.print_exc()
 
-def aggregate_shop(si, ci, shopid, name, logo, rank, rank_num):
+def aggregate_shop(si, ci, shopid, name, logo, type, credit_score):
     shopinfo = si.getbase(shopid)
     if shopinfo:
         # create indexes
         active_index = float(shopinfo['active_index_mon'])
         sales = float(shopinfo['sales_mon'])
-        credit_score = bisect(credits, rank_num)
         worth = 2**credit_score + active_index/3000. + sales/30.
-        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth}
-        update['type'] = 'tmall' if rank == 'tmall' else 'taobao'
+        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth, 'type':type}
         si.setbase(shopid, update)
 
         def update_with_cates(cate1, cate2):
