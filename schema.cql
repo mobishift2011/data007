@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS shop (
     title           text,
     prov            text,
     city            text,
-    rank_num        int,
+    credit_score    int,
     num_collects    int,
     num_products    int,
     good_rating     text,
@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS shop (
     charge          text,
     main_sale       text,
 
+    rank_num        int,
     rank            text,
     rates           text,
     rateid          text,

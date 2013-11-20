@@ -20,9 +20,9 @@ from models import db, update_item, delete_item, update_shop
 from caches import LC, ItemCT, WC
 from queues import poll, ai1, ai2, as1, af1, asi1
 from crawler.cates import need_crawl
-from crawler.tbitem import get_item, is_valid_item, is_banned
+from crawler.tbitem import get_item
 from crawler.tbshop import list_shop
-from crawler.tbshopinfo2 import get_shop
+from crawler.tbshopinfo import get_shop
 
 def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=600):
     """ calling a func with throttling
@@ -110,36 +110,28 @@ class ItemWorker(Worker):
     def check_ban(self):
         while True:
             try:
-                self.banned = is_banned()
+                #self.banned = is_banned()
+                pass
             except:
                 traceback.print_exc()
             time.sleep(10)
 
+
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=200)
-            #d = get_item(itemid)
-            if 'notfound' in d or 'error' in d:
-                try:
-                    print('deleting id: {}'.format(itemid))
-                    LC.delete('item', itemid)
-                    ItemCT.delete(itemid)
-                    delete_item(itemid)
-                except:
-                    traceback.print_exc()
-                return d
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=3000)
 
             # check if we should save this item in the first place
             # we only accept a few cates
-            if 'rcid' in d and not need_crawl(d['cid']):
+            if 'cid' in d and not need_crawl(d['cid']):
                 WC.add(d['id'])
                 return d
 
             # for connection errors, we simply raise exception here
             # the exceptions will be captured in LC.update_if_needed
             # the task will not clean up and will be requeued by requeue worker
-            if d == {} or 'num_instock' not in d or 'num_sold30' not in d:
+            if not d:
                 raise ValueError('item incomplete error: {}'.format(d))
             elif d and 'shopid' in d:
                 try:
@@ -224,7 +216,7 @@ def main():
     option = parser.parse_args()
     if option.worker == "item":
         worker = ItemWorker(option.poolsize)
-        worker.banned = is_banned()
+        #worker.banned = is_banned()
         worker.work()
     elif option.worker == "shop":
         ShopWorker(option.poolsize).work()

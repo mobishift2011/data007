@@ -25,28 +25,49 @@ TABLES = ['item', 'shop', 'item_by_date', 'shop_by_date', 'shop_by_item', 'item_
 
 db = ConnectionPool(DB_HOSTS)
 
+def get_table_live(keyspace='ataobao2'):
+    """ get table schemas """
+    v2t = {
+        'org.apache.cassandra.db.marshal.UTF8Type': 'text',
+        'org.apache.cassandra.db.marshal.LongType': 'bigint',
+        'org.apache.cassandra.db.marshal.Int32Type': 'int',
+        'org.apache.cassandra.db.marshal.FloatType': 'float',
+        'org.apache.cassandra.db.marshal.TimestampType': 'timestamp',
+    }
+    tables = {}
+    cfs = db.execute('''select columnfamily_name, column_aliases, key_aliases
+                        from system.schema_columnfamilies where keyspace_name=:keyspace''',
+                    dict(keyspace=keyspace), result=True).results
+    for table, cols, keys in cfs:
+        pk = eval(keys)
+        pk.extend(eval(cols))
+        cols = {}
+        for cname, validator in db.execute('''select column_name, validator from system.schema_columns
+                        where keyspace_name=:keyspace and columnfamily_name=:cfname allow filtering''',
+                    dict(keyspace=keyspace, cfname=table), result=True).results:
+            cols[cname] = v2t.get(validator, validator)
+        tables[table] = {'cols':cols, 'pk':pk}
+    return tables
+
+tables = get_table_live()
+
 def update_item(item):
-    # Item Fields:
-    #   id, cid, rcid, shopid, pagetype, title, price, rating, 
-    #   num_collects, num_instock, num_reviews, num_sold30, num_views 
-    # Item_by_date Fields:
-    #   id, date, title, price, num_collects, num_instock, num_reviews, num_sold30, num_views
     d = item
     d['date'] = datetime.utcnow()
 
-    insert_into_item =  \
-        ('''INSERT INTO ataobao2.item
-                (id, cid, rcid, shopid, pagetype, title, price, rating, brand, image,
-                 num_collects, num_instock, num_reviews, num_sold30, num_views)
-            VALUES
-                (:id, :cid, :rcid, :shopid, :pagetype, :title, :price, :rating, :brand, :image,
-                 :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
+    table = tables['item']
+    keys = list(set(table['cols'].keys()) & set(d.keys()))
+    #print 'missing', list(set(table['cols'].keys()) - set(d.keys()))
+    arg1 = '('+', '.join(keys)+')'
+    arg2 = '(:'+', :'.join(keys)+')'
+    insert_into_item =  ('''INSERT INTO ataobao2.item {} VALUES {}'''.format(arg1, arg2), d)
 
-    insert_into_item_by_date = \
-        ('''INSERT INTO ataobao2.item_by_date
-                (id, date, price, num_collects, num_instock, num_reviews, num_sold30, num_views)
-            VALUES
-                (:id, :date, :price, :num_collects, :num_instock, :num_reviews, :num_sold30, :num_views)''', d)
+    table = tables['item_by_date']
+    keys = list(set(table['cols'].keys()) & set(d.keys()))
+    #print 'missing', list(set(table['cols'].keys()) - set(d.keys()))
+    arg1 = '('+', '.join(keys)+')'
+    arg2 = '(:'+', :'.join(keys)+')'
+    insert_into_item_by_date =  ('''INSERT INTO ataobao2.item_by_date {} VALUES {}'''.format(arg1, arg2), d)
 
     # Here we use :v1, :v2, :v3 instead of :id, :date, :iid
     # because in batch mode, arguments are passed in batch, 
@@ -69,44 +90,31 @@ def update_item(item):
     else:
         IF.delete(d['id'])
 
-    # batch insert attributes
-    insert_into_item_attr = \
-        [ ('''INSERT INTO ataobao2.item_attr
-                (id, attr_name, attr_value)
-              VALUES
-                (?, ?, ?)''', (d['id'], a[0], ':'.join(a[1:]))) for a in d['attributes'] ]
-
-    if insert_into_item_attr:
-        db.batch(insert_into_item_attr)
-
 def delete_item(itemid):
     db.execute('''delete from ataobao2.item where id=:itemid''', dict(itemid=itemid))
     db.execute('''delete from ataobao2.item_by_date where id=:itemid''', dict(itemid=itemid))
     db.execute('''delete from ataobao2.item_attr where id=:itemid''', dict(itemid=itemid))
 
-def update_shop(shopinfo):
-    d = shopinfo
-    if 'rank_num' not in d:
-        d['rank_num'] = 500001
+def update_shop(shop):
+    d = shop
     d['rating'] = json.dumps(d['rating'])
-    d['rates'] = json.dumps(d['rates'])
-    d['promise'] = json.dumps(d['promise'])
-    d['sid'] = int(d['sid'])
-    d['id'] = d['sid']
+    if 'promise' in d:
+        d['promise'] = json.dumps(d['promise'])
 
-    insert_into_shop =  \
-        '''INSERT INTO ataobao2.shop
-                (id, sid, rateid, nick, charge, promise, logo, rating, good_rating,
-                main_sale, rank, rank_num, num_collects, title, rates)
-            VALUES
-                (:id, :sid, :rateid, :nick, :charge, :promise, :logo, :rating, :good_rating,
-                :main_sale, :rank, :rank_num, :num_collects, :title, :rates)'''
-
+    table = tables['shop']
+    keys = list(set(table['cols'].keys()) & set(d.keys()))
+    arg1 = '('+', '.join(keys)+')'
+    arg2 = '(:'+', :'.join(keys)+')'
+    insert_into_shop =  '''INSERT INTO ataobao2.shop {} VALUES {}'''.format(arg1, arg2)
     db.execute(insert_into_shop, d)
 
 if __name__ == '__main__':
     from crawler.tbitem import get_item
+    from crawler.tbshopinfo import get_shop
     item = get_item(35056712044) 
     from pprint import pprint
     pprint(item)
     update_item(item)
+    shop = get_shop(63782021)
+    pprint(shop)
+    update_shop(shop)

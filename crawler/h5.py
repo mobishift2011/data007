@@ -80,7 +80,10 @@ import urllib
 import hashlib
 import requests
 import traceback
+import threading
 from requests.cookies import cookiejar_from_dict
+
+lock = threading.Lock()
 
 session = requests.Session()
 session.headers = {
@@ -107,6 +110,7 @@ class NotFoundError(Exception):
     pass
 
 def get_misc(shopid, sid=None):
+    """ get shop charge/main_sale info """
     try:
         r = {}
         if sid is None:
@@ -124,7 +128,7 @@ def get_misc(shopid, sid=None):
             r['charge'] = ''
 
         try:
-            r['main_sale'] = re.compile(ur'当前主营[^>]+>([^<]+)<').search(rates).group(1).replace('&nbsp;','')
+            r['main_sale'] = re.compile(ur'当前主营[^>]+>([^<]+)<').search(rates).group(1).replace('&nbsp;','').replace('\r\n', '').replace(' ', '')
         except:
             traceback.print_exc()
             r['main_sale'] = ''
@@ -194,14 +198,14 @@ def get_interacts(itemid, sid=None, type=None):
             i['impress'] = impress
         else:
             #tmall
-            rateurl = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(itemid)
+            rateurl = 'http://dsr.rate.tmall.com/list_dsr_info.htm?itemId={}&callback=jsonp'.format(itemid)
             tagurl = 'http://rate.tmall.com/listTagClouds.htm?itemId={}'.format(itemid)
             try:
                 rates = requests.get(rateurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
                 tags = requests.get(tagurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
             except:
                 pass
-            dsr = json.loads('{'+rates+'}')['dsr']
+            dsr = json.loads(rates[6:-1])['dsr']
             i['rate'] = str(dsr["gradeAvg"])
             i['num_rates'] = dsr["rateTotal"]
             tc = json.loads('{'+tags+'}')['tags']['tagClouds']
@@ -225,6 +229,8 @@ def get_cid(itemid):
     try:
         # we don't use session because taobao will return strange content
         r = requests.get(url, timeout=30, stream=True, headers={'User-Agent': 'Mozilla/4.0'})
+
+        # only first ~4k compressed content is needed
         i = r.iter_content(chunk_size=4000)
         html = i.next()
     except:
@@ -236,12 +242,14 @@ def get_cid(itemid):
 
 def setup_token():
     """ token will expire after an hour, 
-        so let's do it when we have 
+        
+    so let's do it when we have 
         1. first init
         2. request return "令牌过期"
     """
-    url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
-    r = session.get(url, timeout=30)
+    with lock:
+        url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
+        r = session.get(url, timeout=30)
 
 def get_request_url(api, data):
     apiurl = 'http://api.m.taobao.com/rest/h5ApiUpdate.do'
@@ -297,7 +305,12 @@ def get_mobile(shopid):
         return ''
     else:
         itemid = itemlist['data']['itemsArray'][0]['auctionId']
-        itemdetail = get_json(api="mtop.wdetail.getItemDetailStatic", data={"itemNumId":itemid})
+        try:
+            itemdetail = get_json(api="mtop.wdetail.getItemDetailStatic", data={"itemNumId":itemid})
+        except NotFoundError:
+            return ''
+        except:
+            return ''
         if itemdetail is None:
             return ''
         seller = itemdetail['data']['seller']
@@ -316,7 +329,7 @@ def get_shop(shopid):
             'title': d.get('title', ''), 
             'prov': d.get('prov', ''),
             'city': d.get('city', ''),
-            'rank_num': int(d.get('rateSum', 0)),
+            'credit_score': int(d.get('rateSum', 0)),
             'num_collects': int(d.get('collectorCount', 0)),
             'num_products': int(d.get('productCount', 0)),
             'good_rating': d.get('shopDSRScore', {}).get('sellerGoodPercent', ''),
@@ -331,6 +344,7 @@ def get_shop(shopid):
             # main_sale
 
             # for compability only
+            'rank_num': 0,
             'rank': '', 
             'rates': '',
             'promise': [],
@@ -358,7 +372,7 @@ def get_item(itemid):
         def get_price():
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
-                price = pu['price'].split('-')[0]
+                price = float(pu['price'].split('-')[0])
                 promo = pu['name']
                 return {'price': price, 'promo': promo}
             else:
@@ -391,15 +405,22 @@ def get_item(itemid):
                 return result
             else:
                 # tmall shop counters
-                url = 'http://rate.tmall.com/list_dsr_info.htm?itemId={}'.format(itemid)
-                data = '{'+session.get(url, timeout=30).content.strip()+'}'
+                url = 'http://dsr.rate.tmall.com/list_dsr_info.htm?itemId={}&callback=jsonp'.format(itemid)
+                data = session.get(url, timeout=30).content.strip()[6:-1]
                 return {'num_reviews':json.loads(data)['dsr']['rateTotal'], 'num_views':0}
+
+        def get_image():
+            image = i.get('picsPath', [''])
+            if not image:
+                return ''
+            else:
+                return image[0]
 
         result.update({
             'id': itemid,
             'type': {'B':'tmall', 'C':'taobao'}.get(s.get('type', 'B'), 'taobao'),
             'brand': get_brand(),
-            'image': i.get('picsPath', [''])[0],
+            'image': get_image(),
             'shopid': int(s.get('shopId', 0)),
             'title': i.get('title', ''),
             'oprice': int(i.get('price', 0))/100.,
@@ -420,6 +441,8 @@ def get_item(itemid):
         result.update(get_price())
         result.update(get_counters())
         return result
+    except NotFoundError:
+        return {'error': 'not found'}
     except:
         traceback.print_exc()
         return {}
@@ -427,19 +450,17 @@ def get_item(itemid):
 def test_ban():
     t0 = time.time()
     for i in range(10000):
-        print i
         j = get_json("mtop.wdetail.getItemDetailDynForH5", 19725558910)
-        j['ret'][0].startswith('SUCCESS') == True
-        print 1.*(time.time()-t0)/(i+1)
+        print i, 1.*(time.time()-t0)/(i+1), j['ret'][0].startswith('SUCCESS') == True
 
 def main():
     import argparse
     from pprint import pprint
     parser = argparse.ArgumentParser(description='Get Info from h5 api/mobiles/others')
     parser.add_argument('--method', '-m', choices=['item', 'shop', 'cid', 'interacts', 'misc'], type=str, help='method to call')
-    parser.add_argument('--id', '-i', type=int, help='taobao item id, e.g. 21825059650', required=True)
+    parser.add_argument('--id', '-i', type=int, help='taobao item/shop id, e.g. 35515810124/61775664', required=True)
     option = parser.parse_args()
-    pprint(eval('get_'+option.method)(option.id))
+    pprint(globals()['get_'+option.method](option.id))
 
 if __name__ == '__main__':
     main()
