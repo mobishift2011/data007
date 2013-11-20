@@ -67,7 +67,7 @@ def pack_bin(cts, uts, offset):
                      31+21+4=56                                        
         31(ts), 21(update_ts), 4(offset)
     '''
-    return (cts << 23) + (uts << 4) + offset
+    return (cts << 25) + (uts << 4) + offset
   
 def unpack_bin(sbin):
     try:
