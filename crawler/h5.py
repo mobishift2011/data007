@@ -296,6 +296,21 @@ def get_json(api, data):
         else:
             return resp
 
+def get_shopitems(shopid):
+    itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
+                        data={"shopId":shopid, "sort":"hotsell", "pageSize":30}) 
+    ids = []
+    if itemlist:
+        total = int(itemlist['data']['totalResults'])
+        if total>0:
+            ids.extend( [ int(x['auctionId']) for x in itemlist['data']['itemsArray'] ] )
+            if total > 30:
+                for page in range(2, min(101, (total-1)/30+2)):
+                    itemlist = get_json(api="com.taobao.search.api.getShopItemList",
+                                data={"shopId":shopid, "sort":"hotsell", "pageSize":30, "currentPage":page})
+                    ids.extend( [ int(x['auctionId']) for x in itemlist['data']['itemsArray'] ] )
+    return ids
+
 def get_mobile(shopid):
     itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
                         data={"shopId":shopid, "sort":"hotsell", "pageSize":10}) 
@@ -457,7 +472,7 @@ def main():
     import argparse
     from pprint import pprint
     parser = argparse.ArgumentParser(description='Get Info from h5 api/mobiles/others')
-    parser.add_argument('--method', '-m', choices=['item', 'shop', 'cid', 'interacts', 'misc'], type=str, help='method to call')
+    parser.add_argument('--method', '-m', choices=['item', 'shop', 'cid', 'interacts', 'misc', 'shopitems', 'mobile'], type=str, help='method to call')
     parser.add_argument('--id', '-i', type=int, help='taobao item/shop id, e.g. 35515810124/61775664', required=True)
     option = parser.parse_args()
     pprint(globals()['get_'+option.method](option.id))
