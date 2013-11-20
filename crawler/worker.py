@@ -127,6 +127,8 @@ class ItemWorker(Worker):
                     LC.delete('item', itemid)
                     ItemCT.delete(itemid)
                     delete_item(itemid)
+                    ai1.task_done(itemid)
+                    ai2.task_done(itemid)
                 except:
                     traceback.print_exc()
                 return d

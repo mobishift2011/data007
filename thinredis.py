@@ -132,6 +132,15 @@ class ThinHash(object):
     def _get_bucket(self, field):
         return 'thinhash_{}_{}'.format(self.name, int(field) % self.modulo)
 
+    def delete(self):
+        p = self.conn.pipeline(transaction=False)
+        for i in range(self.modulo):
+            bucket = 'thinhash_{}_{}'.format(self.name, i)
+            p.delete(bucket)
+        p.delete(self.counterkey)
+        p.delete(self.bucketskey)
+        p.execute()
+
     def count(self):
         r = self.conn.get(self.counterkey)
         return 0 if r is None else int(r)

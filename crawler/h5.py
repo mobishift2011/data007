@@ -128,7 +128,7 @@ def get_misc(shopid, sid=None):
             r['charge'] = ''
 
         try:
-            r['main_sale'] = re.compile(ur'当前主营[^>]+>([^<]+)<').search(rates).group(1).replace('&nbsp;','').replace('\r\n', '').replace(' ', '')
+            r['main_sale'] = re.compile(ur'当前主营[^>]+>([^<]+)<').findall(rates)[-1].replace('&nbsp;','').replace('\r\n', '').replace(' ', '')
         except:
             traceback.print_exc()
             r['main_sale'] = ''
@@ -339,7 +339,7 @@ def get_shop(shopid):
             'id': int(shopid),
             'sid': int(d.get('sellerId', 0)),
             'logo': d.get('picUrl', ''),
-            'type': 'tmall' if d.get('isMall') else 'taobao',
+            'type': 'tmall' if d.get('isMall', 'false') =='true' else 'taobao',
             'nick': d.get('nick', ''),
             'title': d.get('title', ''), 
             'prov': d.get('prov', ''),
