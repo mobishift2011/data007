@@ -64,8 +64,8 @@ def can_update(store_bin):
 def pack_bin(cts, uts, offset):
     '''
     latest_buy_time
-                                                             
-        31(ts), 19(update_ts), 4(offset)
+                     31+21+4=56                                        
+        31(ts), 21(update_ts), 4(offset)
     '''
     return (cts << 23) + (uts << 4) + offset
   
@@ -73,8 +73,8 @@ def unpack_bin(sbin):
     try:
         sbin = int(sbin)
         offset = sbin & 0xf
-        uts = (sbin >> 4) & 0x7ffff
-        cts = sbin >> 23
+        uts = (sbin >> 4) & 0x1fffff
+        cts = sbin >> 25
         return cts, uts, offset
     except:
         return 0, 0, 0
