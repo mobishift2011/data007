@@ -286,7 +286,7 @@ def get_json(api, data):
 
     if u'令牌过期' in text or u'令牌为空' in text:
         setup_token() 
-        return get_json(api, type, id)
+        return get_json(api, data)
     elif u'宝贝不存在' in text or u'ID错误' in text or u'没有查询到记录' in text:
         raise NotFoundError("Shop/Item Not Found")
     else:
