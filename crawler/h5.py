@@ -287,8 +287,10 @@ def get_json(api, data):
     if u'令牌过期' in text or u'令牌为空' in text:
         setup_token() 
         return get_json(api, data)
-    elif u'宝贝不存在' in text or u'ID错误' in text or u'没有查询到记录' in text:
+    elif u'宝贝不存在' in text or u'ID错误' in text or u'没有查询到记录' in text or u'类目不存在' in text:
         raise NotFoundError("Shop/Item Not Found")
+    elif u'网络系统异常' in text:
+        raise NotFoundError("Taobao Api Error")
     else:
         resp = json.loads(text.strip()[6:-1])
         if not resp['ret'][0].startswith('SUCCESS'):
@@ -404,7 +406,8 @@ def get_item(itemid):
                     promo = u'聚划算'
                     return {'price': price, 'promo': promo}
                 else:
-                    raise ValueError('price cannot be found!')
+                    #raise ValueError('price cannot be found!')
+                    return {'price': int(i.get('price', 0))/100., 'promo': ''}
 
         def get_counters():
             if s.get('type', 'C') == 'C':
