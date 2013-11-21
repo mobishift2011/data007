@@ -297,18 +297,24 @@ def get_json(api, data):
             return resp
 
 def get_shopitems(shopid):
+    ids = []
+    def extend(itemlist):
+        for item in itemlist['data']['itemsArray']:
+            if int(item['sold']) == 0:
+                return False
+            ids.append(int(item['auctionId']))
+                
     itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
                         data={"shopId":shopid, "sort":"hotsell", "pageSize":30}) 
-    ids = []
     if itemlist:
         total = int(itemlist['data']['totalResults'])
         if total>0:
-            ids.extend( [ int(x['auctionId']) for x in itemlist['data']['itemsArray'] ] )
-            if total > 30:
+            if extend(itemlist) and total > 30:
                 for page in range(2, min(101, (total-1)/30+2)):
                     itemlist = get_json(api="com.taobao.search.api.getShopItemList",
                                 data={"shopId":shopid, "sort":"hotsell", "pageSize":30, "currentPage":page})
-                    ids.extend( [ int(x['auctionId']) for x in itemlist['data']['itemsArray'] ] )
+                    if not extend(itemlist):
+                        break
     return ids
 
 def get_mobile(shopid):
