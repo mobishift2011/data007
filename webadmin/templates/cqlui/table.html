@@ -11,15 +11,23 @@
     {% endblock %}
 
     <form class="form-search", method='POST'>
+        {% for column in full_columns%}
+        <label class="checkbox inline">
+            <input type="checkbox" name="select_columns" value="{{ column[0] }}"> {{ column[0] }}
+        </label>
+        {% endfor %}
+        <br />
+
         <select class="span2 column">
-            {% for column in columns %}
-            <option>{{ column }}</option>
-            {% endfor %}
+            <option>id</option>
+            {% if table == 'item' %}
+            <option>shopid</option>
+            {% endif %}
         </select>
         <select class="span1">
             <option>=</option>
         </select>
-        <input type="text" class="input-medium search-query search_value" name={{ columns[0] }}>
+        <input type="text" class="input-medium search-query search_value" name="id">
         <button type="submit" class="btn">Search</button>
     </form>
     <p>

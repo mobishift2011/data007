@@ -9,6 +9,7 @@ import traceback
 from thinredis import ThinSet, ThinHash 
 from shardredis import ShardRedis
 from settings import CACHE_URIS
+import debouncing
 
 conns = []
 for uri in CACHE_URIS:
@@ -98,34 +99,16 @@ class LC(object):
         for i, lastcheck in enumerate(lastchecks): 
             # if there's no lastcheck, or lastcheck happened some time ago
             # try call on_update with id, if succeeded, update lastcheck in redis
-            
             if type == 'item':
-                #cfz
-                if lastcheck is None:
-                    needs.append(ids[i])
-                else:
-                    
+                if lastcheck:
                     if str(lastcheck).find('.') > 0:
-                        lastcheck = int(float(lastcheck))
-                        lastcheck = lastcheck << 28 
-                    else:
-                        lastcheck = int(lastcheck)
-                        
-                    offset = lastcheck & 0xf
-                    lastcheck = lastcheck >> 28
-                    
-                    if offset == 0:
-                        offset = offsets[i]
-                    else:
-                        offset = offset * 86400
-                    
-                    if lastcheck + offset < int(tsnow):
-                        needs.append(ids[i])
+                        lastcheck = float(lastcheck)
+                    print "get:", bin(int(lastcheck)), len(bin(int(lastcheck))) - 2
+                if debouncing.can_update(lastcheck):
+                    needs.append(ids[i])
             else:
                 if lastcheck is None or float(lastcheck) + offsets[i] < tsnow:
                     needs.append(ids[i])
-
-
         return needs
 
     @staticmethod
@@ -135,7 +118,7 @@ class LC(object):
         tsnow = time.mktime(time.gmtime())
         
         today_key = time.strftime("%Y-%m-%d", time.gmtime())
-
+        
         if LC.need_update(type, int(id)):
             info = None
             conn_record.hincrby(today_key, '{}:crawl-sum'.format(type))
@@ -154,52 +137,12 @@ class LC(object):
                         conn_record.hincrby(today_key, '{}:crawl-data-err'.format(type))
                         print "item err:", info
                         return
-                    
                     conn_record.hincrby(today_key, '{}:crawl-success'.format(type))
                     
-                    src = LC.gethash(type).hmget(*[id])
-                    if src[0]:
-                        '''
-                                                                                    共用59位
-                            31(ts), 24(num_sold30), 4(offset)
-                        '''
-                        
-                        if str(src[0]).find('.') > 0:
-                            src = int(float(src[0]))
-                            src = src << 28 
-                        else:
-                            src = int(src[0])
-                        
-                        #info['num_sold30'] += 5
-                        #print "src", bin(src)
-                            
-                        num_sold30 = (src >> 4) & 0xffffff
-                        offset = src & 0xf
-                        ts = src >> 28
-                        
-                        sold0, sold1 = map(int, [num_sold30, info['num_sold30']])
-                        
-                        if sold0 == sold1:
-                            if offset == 0:
-                                offset = 1
-                            elif offset == 1:
-                                offset = 2
-                            elif offset == 2:
-                                offset = 4
-                            elif offset == 4:
-                                offset = 8
-                            elif offset == 8:
-                                offset = 15
-                        else:
-                            offset = 0
-                        new_deb = (int(tsnow) << 28) + (sold1 << 4) + offset
-                        print "update"
-                    else:
-                        new_deb = (int(tsnow) << 28) + (int(info['num_sold30']) << 4 )
-                        print "new"
-                        
-                    print "save:", bin(new_deb)
-                    LC.gethash(type).hset(id, new_deb)
+                    ret_bins = LC.gethash(type).hmget(*[id])
+                    new_bin = debouncing.get_update_bin(ret_bins[0], info)
+                    print "update:", bin(new_bin), len(bin(new_bin))
+                    LC.gethash(type).hset(id, new_bin)
                 else:
                     LC.gethash(type).hset(id, tsnow)
         else:
