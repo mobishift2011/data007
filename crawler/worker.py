@@ -121,17 +121,20 @@ class ItemWorker(Worker):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
             d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=3000)
-            if 'error' in d and d['error'] in ['not found']:
-                try:
-                    print('deleting id: {}'.format(itemid))
-                    LC.delete('item', itemid)
-                    ItemCT.delete(itemid)
-                    delete_item(itemid)
-                    ai1.task_done(itemid)
-                    ai2.task_done(itemid)
-                except:
-                    traceback.print_exc()
-                return d
+            if 'error' in d:
+                if d['error'] in ['not found']:
+                    try:
+                        print('deleting id: {}'.format(itemid))
+                        LC.delete('item', itemid)
+                        ItemCT.delete(itemid)
+                        delete_item(itemid)
+                        ai1.task_done(itemid)
+                        ai2.task_done(itemid)
+                    except:
+                        traceback.print_exc()
+                    return d
+                else:
+                    raise ValueError('unknown error: {}'.format(d))
 
             # check if we should save this item in the first place
             # we only accept a few cates

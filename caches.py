@@ -139,8 +139,8 @@ class LC(object):
                         return
                     conn_record.hincrby(today_key, '{}:crawl-success'.format(type))
                     
-                    ret_bins = LC.gethash(type).hmget(*[id])
-                    new_bin = debouncing.get_update_bin(ret_bins[0], info)
+                    ret_bin = LC.gethash(type).hget(id)
+                    new_bin = debouncing.get_update_bin(ret_bin, info)
                     print "update:", bin(new_bin), len(bin(new_bin))
                     LC.gethash(type).hset(id, new_bin)
                 else:

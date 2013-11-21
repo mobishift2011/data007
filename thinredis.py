@@ -17,7 +17,6 @@ The concept comes from `this stackoverflow question
 """
 import redis
 import hashlib
-import gevent.coros
 
 class ThinSet(object):
     def __init__(self, name, totalcount, connection=None):
@@ -159,6 +158,10 @@ class ThinHash(object):
         deleted = self.conn.hdel(bucket, field) 
         if deleted:
             self.conn.decr(self.counterkey, deleted)
+
+    def hget(self, field):
+        bucket = self._get_bucket(field)
+        return self.conn.hget(bucket, field)
        
     def hmset(self, *args):
         if len(args) == 0:
