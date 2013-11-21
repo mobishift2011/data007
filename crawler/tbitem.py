@@ -84,8 +84,11 @@ def get_item(id, prefix='http://item.taobao.com/item.htm?id={}'):
                 # we will ignore products in i.life.taobao.com
                 return {'error':True, 'reason':'i.life.taobao.com'}
             
-            result.update(get_brand_image(id))
-            result.update(get_latest_buyer(id, content))
+            try:
+                result.update(get_brand_image(id))
+                result.update(get_latest_buyer(id, content))
+            except:
+                traceback.print_exc()
             
     return result
     
