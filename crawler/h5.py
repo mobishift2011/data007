@@ -303,6 +303,7 @@ def get_shopitems(shopid):
             if int(item['sold']) == 0:
                 return False
             ids.append(int(item['auctionId']))
+        return True
                 
     itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
                         data={"shopId":shopid, "sort":"hotsell", "pageSize":30}) 
