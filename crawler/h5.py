@@ -133,7 +133,7 @@ def get_misc(shopid, sid=None):
             sid = j['data']['sellerId']
         url = 'http://rate.taobao.com/user-rate-{}.htm'.format(sid)
 
-        rates = session.get(url, timeout=30).text
+        rates = retry(3, session.get, url, timeout=30).text
 
         try:
             r['charge'] = re.compile(r'class="charge".*?([0-9,.]+)').search(rates).group(1)
@@ -189,10 +189,8 @@ def get_interacts(itemid, sid=None, type=None):
                 url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}&userNumId={}'.format(itemid, sid)
             else:
                 url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}'.format(itemid)
-            try:
-                text = requests.get(url, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
-            except:
-                raise NetworkError('fetch interacts error')
+                
+            text = retry(3, requests.get, url, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
 
             summary = json.loads(text.strip()[1:-1])['data']
             if sid:
@@ -214,8 +212,8 @@ def get_interacts(itemid, sid=None, type=None):
             rateurl = 'http://dsr.rate.tmall.com/list_dsr_info.htm?itemId={}&callback=jsonp'.format(itemid)
             tagurl = 'http://rate.tmall.com/listTagClouds.htm?itemId={}'.format(itemid)
             try:
-                rates = requests.get(rateurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
-                tags = requests.get(tagurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
+                rates = retry(3, requests.get, rateurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
+                tags = retry(3, requests.get, tagurl, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
             except:
                 pass
             dsr = json.loads(rates[6:-1])['dsr']
@@ -436,7 +434,7 @@ def get_item(itemid):
             else:
                 # tmall shop counters
                 url = 'http://dsr.rate.tmall.com/list_dsr_info.htm?itemId={}&callback=jsonp'.format(itemid)
-                data = session.get(url, timeout=30).content.strip()[6:-1]
+                data = retry(3, session.get, url, timeout=30).content.strip()[6:-1]
                 return {'num_reviews':json.loads(data)['dsr']['rateTotal'], 'num_views':0}
 
         def get_image():
