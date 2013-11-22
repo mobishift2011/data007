@@ -80,21 +80,19 @@ class LC(object):
         if not ids:
             return []
         ids = list(set(ids))
-        ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
-        
-        if not ids:
-            return []
+
+        if type == 'item':
+            ids = [ ids[i] for i, wc in enumerate(WC.contains(*ids)) if not wc ]
+            if not ids:
+                return []
 
         thehash = LC.gethash(type)
         tsnow = time.mktime(time.gmtime())
-        lastchecks = thehash.hmget(*ids)
+        if len(ids) == 1:
+            lastchecks = [thehash.hget(ids[0])]
+        else:
+            lastchecks = thehash.hmget(*ids)
 
-        offset = 80000 if type == 'item' else 86400*7
-        offsets = [offset] * len(ids)
-        if type == 'item':
-            contains = IF.contains(*ids)
-            offsets = map(lambda o, c: o*7 if c else o, offsets, contains)
-        
         needs = []
         for i, lastcheck in enumerate(lastchecks): 
             # if there's no lastcheck, or lastcheck happened some time ago
@@ -107,7 +105,7 @@ class LC(object):
                 if debouncing.can_update(lastcheck):
                     needs.append(ids[i])
             else:
-                if lastcheck is None or float(lastcheck) + offsets[i] < tsnow:
+                if lastcheck is None or float(lastcheck) + 86400*7 < tsnow:
                     needs.append(ids[i])
         return needs
 
