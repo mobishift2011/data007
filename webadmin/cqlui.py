@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-from models import db
+
+try:
+    from models import db
+except Exception, e:
+    print "#########", e
+
 from webadmin import app
 from flask import request, render_template
 
