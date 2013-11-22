@@ -247,9 +247,8 @@ def setup_token():
         1. first init
         2. request return "令牌过期"
     """
-    with lock:
-        url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
-        r = session.get(url, timeout=30)
+    url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
+    r = session.get(url, timeout=30)
 
 def get_request_url(api, data):
     apiurl = 'http://api.m.taobao.com/rest/h5ApiUpdate.do'
