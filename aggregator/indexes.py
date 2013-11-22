@@ -31,7 +31,7 @@ class ShopIndex(object):
                                 # name, logo, credit_score, worth, ...
     shophotitems = 'shophotitems_{}_{}' # (date, shopid); sortedset for (id, sales), capped to 10
     shopcatescount = 'shopcatescount_{}_{}' #(date, shopid); hash(cate2 -> counts)
-    shopbrandinfo = 'shopbrandinfo_{}_{}_{}' # (date, shopid, deals/sales); hash(brand -> value) => should aggregate to shopinfo/cassandra
+    shopbrandinfo = 'shopbrandinfo_{}_{}_{}_{}' # (date, shopid, deals/sales, monorday); hash(brand -> value) => should aggregate to shopinfo/cassandra
 
     def __init__(self, date):
         self.date = date
@@ -85,8 +85,8 @@ class ShopIndex(object):
             1
         )
 
-    def incrbrand(self, shopid, field, brand, value):
-        hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field)
+    def incrbrand(self, shopid, field, mod, brand, value):
+        hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field, mod)
         p = conn if self.pipeline is None else self.pipeline
         p.hincrbyfloat(hkey, brand, value)
 

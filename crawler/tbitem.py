@@ -26,7 +26,9 @@ from h5 import get_item as get_item_h5, get_cid
 def get_item(itemid):
     i = get_item_h5(itemid)
     if i and 'error' not in i:
-        i['cid'] = get_cid(itemid)
+        cid = get_cid(itemid)
+        if cid:
+            i['cid'] = cid
     return i
     
 def main():

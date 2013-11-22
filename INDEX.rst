@@ -81,9 +81,9 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
     * hash: (cate2, counts)
     * 指定店铺品类(二级分类)所售商品数
     
-7. shopbrandinfo_{date}_{shopid}_{field}
+7. shopbrandinfo_{date}_{shopid}_{field}_{monorday}
     * hash: (brand -> value)
-    * 指定店铺、指定字段下, 品牌占比情况
+    * 指定店铺、指定字段、指定周期下, 品牌占比情况
     * field = 指定店铺字段:
         - sales: 品牌销量汇总
         - deals: 品牌成交笔数汇总

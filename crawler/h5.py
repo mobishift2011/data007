@@ -85,6 +85,7 @@ from requests.cookies import cookiejar_from_dict
 
 lock = threading.Lock()
 
+bsession = requests.Session()
 session = requests.Session()
 session.headers = {
     'Referer': 'http://h5.m.taobao.com/awp/core/detail.htm',
@@ -108,6 +109,18 @@ class NetworkError(Exception):
 
 class NotFoundError(Exception):
     pass
+
+def retry(times, func, *args, **kwargs):
+    count = times
+    while count >= 0:
+        try:
+            r = func(*args, **kwargs)
+        except Exception as e:
+            count -= 1
+            continue
+        else:
+            return r
+    raise e
 
 def get_misc(shopid, sid=None):
     """ get shop charge/main_sale info """
@@ -226,16 +239,14 @@ def get_interacts(itemid, sid=None, type=None):
 def get_cid(itemid):
     """ use m.taobao.com, fetch cid info """
     url = 'http://a.m.tmall.com/i{}.htm'.format(itemid)
+    count = 3
+    r = retry(3, bsession.get, url, timeout=30, stream=True, headers={'User-Agent': 'Mozilla/4.0'})
+    i = retry(3, r.iter_content, chunk_size=4000)
     try:
-        # we don't use session because taobao will return strange content
-        r = requests.get(url, timeout=30, stream=True, headers={'User-Agent': 'Mozilla/4.0'})
-
-        # only first ~4k compressed content is needed
-        i = r.iter_content(chunk_size=4000)
-        html = i.next()
+        html = retry(3, i.next)
     except:
-        traceback.print_exc()
-        return 0
+        print '!! get cid failed, retries={}'.format(3)
+        html = ''
 
     cids = re.compile(r'cat=(\d+)').findall(html)
     return int(cids[-1]) if cids else 0
@@ -249,7 +260,7 @@ def setup_token():
     """
     with lock:
         url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
-        r = session.get(url, timeout=30)
+        retry(3, session.get, url, timeout=30)
 
 def get_request_url(api, data):
     apiurl = 'http://api.m.taobao.com/rest/h5ApiUpdate.do'
@@ -279,10 +290,7 @@ def get_json(api, data):
         setup_token()
     url = get_request_url(api, data)
 
-    try:
-        text = session.get(url, timeout=30).text
-    except:
-        raise NetworkError("request timed out")
+    text = retry(3, session.get, url, timeout=30).text
 
     if u'令牌过期' in text or u'令牌为空' in text:
         setup_token() 
@@ -417,10 +425,7 @@ def get_item(itemid):
                     'ICVT_7_{}'.format(itemid): 'num_views',
                 }
                 url = 'http://count.tbcdn.cn/counter3?keys={}&callback=jsonp'.format(','.join(counters.keys()))
-                try:
-                    r = session.get(url, timeout=30)
-                except:
-                    raise NetworkError('get counting error')
+                r = retry(3, session.get, url, timeout=30)
 
                 d = json.loads(r.text[6:-2])
                 result = {}

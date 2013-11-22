@@ -182,8 +182,10 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
     # inc shop counters
     if l2 != 'all':
         si.addcates(shopid, l1, l2)
-    si.incrbrand(shopid, 'sales', brand, sales_mon)
-    si.incrbrand(shopid, 'deals', brand, deals_mon)
+    si.incrbrand(shopid, 'sales', 'mon', brand, sales_mon)
+    si.incrbrand(shopid, 'deals', 'mon', brand, deals_mon)
+    si.incrbrand(shopid, 'sales', 'day', brand, sales_day)
+    si.incrbrand(shopid, 'deals', 'day', brand, deals_day)
     si.addhotitems(shopid, itemid, sales_mon)
 
     cate1 = l1
