@@ -201,7 +201,8 @@ class TaskClientProtocol(WampClientProtocol):
         except Exception, e:
             log.msg('set_schd_name err:%s' % e)
 
-        self.restart_spiders_every(60*20)                
+        from random import randint
+        self.restart_spiders_every(randint(60*5, 60*10))
         reactor.callLater(30, self.init_session)
 
         
