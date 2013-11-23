@@ -45,6 +45,12 @@ class Queue(object):
     def qsize(self):
         return conn.scard(self.key)
 
+    def delete(self, *items):
+        if items:
+            return conn.srem(self.key, *items)
+        else:
+            return 0
+
     def put(self, *items):
         """ put item(s) into queue """
         if items:

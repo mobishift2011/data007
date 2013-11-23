@@ -106,6 +106,18 @@ class ItemWorker(Worker):
         self.pool = gevent.pool.Pool(poolsize+1)
         self.banned = False
         self.pool.spawn(self.check_ban)
+        #self.pool.spawn(self.reload)
+
+    def reload(self):
+        while True:
+            time.sleep(120)
+            print 'reloading'
+            import crawler.h5
+            import crawler.tbitem
+            reload(crawler.h5)
+            reload(crawler.tbitem)
+            global get_item
+            get_item = crawler.tbitem.get_item
 
     def check_ban(self):
         while True:
@@ -120,7 +132,7 @@ class ItemWorker(Worker):
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=600)
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=6000)
             if 'error' in d:
                 if d['error'] in ['not found']:
                     try:
