@@ -10,6 +10,35 @@ import argparse
 from queues import ai1, ai2, as1, af1, asi1
 from caches import LC, IF, WC
 
+from settings import RECORD_URI
+import re
+import redis
+from datetime import datetime
+host, port, db = re.compile('redis://(.*):(\d+)/(\d+)').search(RECORD_URI).groups()
+conn = redis.Redis(host=host, port=int(port), db=int(db))
+def get_counts(date = None):
+    if date is None:
+        date = datetime.now().strftime('%Y-%m-%d')
+    counts = conn.hgetall(date)
+    counts['time'] = time.time()
+    return counts
+
+last_counts = {}
+def get_throughput():
+    global last_counts
+    if last_counts == {}:
+        last_counts = get_counts() 
+        return {}
+    else:
+        throughput = {}
+        current_counts = get_counts()
+        time_passed = current_counts['time'] - last_counts['time']
+        for key in ['item:crawl-success', 'item:crawl-err-except']:
+            throughput[key] = (int(current_counts.get(key, '0')) -
+                                int(last_counts.get(key, '0'))) / time_passed 
+        last_counts = current_counts
+        return throughput
+             
 def gettermsize():
     def ioctl_GWINSZ(fd):
         try:
@@ -214,8 +243,13 @@ def show_queues(args):
 
         num_jobs += count
 
-    # Print summary when not in raw mode
-    print('    %d queues, %d jobs total\n' % (len(qs), num_jobs))
+    tp = get_throughput()
+    if tp:
+        print('\nThroughputs:')
+        for key in tp:
+            print('    {}: {:4.2f}/s'.format(key, tp[key]))
+    print('')
+
 
 def show_counts(args):
     num_items = 0
@@ -250,10 +284,6 @@ def show_counts(args):
     chart = green('|' + '█' * int(ratio * WC.count()))
     line = '    %-12s %s %d' % ('items(wrong cate)', chart, WC.count())
     print(line)
-
-    # Print summary when not in raw mode
-    print('    %d types, %d items total\n' % (len(types), num_items))
-
 
 def show_both(args):
     show_queues(args)
