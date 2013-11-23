@@ -116,7 +116,6 @@ class ItemWorker(Worker):
                 traceback.print_exc()
             time.sleep(10)
 
-
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))

@@ -41,7 +41,7 @@ def get_update_bin(ret_bin, info):
             offset = 0
             
         print "offset:%s" % offset
-        return pack_bin(cts, uts, offset)
+        return pack_bin(int(time.time()), latest_time, offset)
     else:
         return pack_bin(int(time.time()), latest_time, 0)
     
