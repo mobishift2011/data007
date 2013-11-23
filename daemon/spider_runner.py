@@ -97,10 +97,13 @@ class TaskClientProtocol(WampClientProtocol):
         
         if event["act"] == "start":
             self.spider_start(event["kw"])
-            
+
         elif event["act"] == "stop":
             self.spider_stop(event["pid_list"])
 
+        elif event["act"] == "restart":
+            self.spider_restart(event["kw"])
+        
         elif event["act"] == "status":
             self.status_refresh()
 
@@ -126,7 +129,27 @@ class TaskClientProtocol(WampClientProtocol):
             por_list.append(info)
         ret_msg["por_list"] = por_list
         self.publish("webadmin", ret_msg)
+
+    def restart_spiders_every(self, seconds=20*60):
+        """ restart spiders every ?? seconds """
+        print 'restarting all spiders', self.factory.spiders
+        for pid, kw in self.factory.spiders.items():
+            self.spider_restart(pid, kw)
+        reactor.callLater(seconds, self.restart_spiders_every, seconds)
     
+    def spider_restart(self, pid, kw):
+        """ restart spider process
+        
+        This method got called by factory every 20 minutes
+        OS(EC2's VM Controller) may degrade long running process's performance
+        We work around this problem by a brute force restart(Disgusting, but works)
+        """
+        try:
+            self.spider_stop([pid])
+            self.spider_start(kw)
+        except Exception, e:
+            print e
+
     def spider_stop(self, pid_list):
         for pid in pid_list:
             try:
@@ -134,7 +157,6 @@ class TaskClientProtocol(WampClientProtocol):
                 p.terminate()
             except Exception, e:
                 print e
-            
             
     def spider_start(self, kw):
         '''
@@ -178,8 +200,10 @@ class TaskClientProtocol(WampClientProtocol):
             
         except Exception, e:
             log.msg('set_schd_name err:%s' % e)
-                
+
+        self.restart_spiders_every(60*20)                
         reactor.callLater(30, self.init_session)
+
         
     def init_session(self):
         
@@ -259,3 +283,4 @@ if __name__ == "__builtin__":
     application = service.Application('spider_runner')
     
     
+

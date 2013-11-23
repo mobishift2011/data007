@@ -33,7 +33,7 @@ def get_throughput():
         throughput = {}
         current_counts = get_counts()
         time_passed = current_counts['time'] - last_counts['time']
-        for key in ['item:crawl-success', 'item:crawl-err-except']:
+        for key in ['item:crawl-success', 'item:crawl-err-except', 'item:crawl-data-err']:
             throughput[key] = (int(current_counts.get(key, '0')) -
                                 int(last_counts.get(key, '0'))) / time_passed 
         last_counts = current_counts
