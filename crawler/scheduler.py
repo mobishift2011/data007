@@ -120,6 +120,8 @@ class ItemScheduler(Scheduler):
 
     def should_run(self):
         ct = int(time.mktime(time.gmtime())%86400/60+480)
+        if ct >= 1435:
+            ct -= 1430
         if ct != self.ct:
             self.ct = ct
             return True
@@ -131,7 +133,7 @@ class ItemScheduler(Scheduler):
         if ids:
             print('ct = {}'.format(self.ct))
             print('scheduled {} items for lastcheck'.format(len(ids)))
-            #ids = LC.need_update('item', *ids)
+            ids = LC.need_update('item', *ids)
             ai1.put(*ids)
             print('putting {} items in queue'.format(len(ids)))
 
