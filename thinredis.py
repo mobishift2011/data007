@@ -53,8 +53,9 @@ class ThinSet(object):
 
         added = sum(p.execute())
 
-        self.conn.incr(self.counterkey, added)
-        self.conn.sadd(self.bucketskey, *list(buckets))
+        if added:
+            self.conn.incr(self.counterkey, added)
+            self.conn.sadd(self.bucketskey, *list(buckets))
     
 
     def delete(self, *items):
@@ -144,14 +145,20 @@ class ThinHash(object):
         r = self.conn.get(self.counterkey)
         return 0 if r is None else int(r)
 
+    def recount(self):
+        p = self.conn.pipeline(transaction=False)
+        for i in range(self.modulo):
+            bucket = 'thinhash_{}_{}'.format(self.name, i)
+            p.hlen(bucket) 
+        count = sum(p.execute())
+        return self.conn.set(self.counterkey, count)
+
     def hset(self, field, value):
         bucket = self._get_bucket(field)
-        p = self.conn.pipeline(transaction=False)
-        p.hset(bucket, field, value) 
-        p.sadd(self.bucketskey, bucket)
-        r = p.execute()
-        if r[0]:
-            self.conn.incr(self.counterkey, r[0])
+        r = self.conn.hset(bucket, field, value) 
+        self.conn.sadd(self.bucketskey, bucket)
+        if r:
+            self.conn.incr(self.counterkey, r)
 
     def hdel(self, field):
         bucket = self._get_bucket(field)
@@ -178,8 +185,9 @@ class ThinHash(object):
             p.hset(bucket, field, value)
 
         added = sum(p.execute())
-        self.conn.incr(self.counterkey, added)
-        self.conn.sadd(self.bucketskey, *buckets)
+        if added:
+            self.conn.incr(self.counterkey, added)
+            self.conn.sadd(self.bucketskey, *buckets)
 
     def hmget(self, *fields):
         """ order preserving hmget, works only for shardredis """
