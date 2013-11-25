@@ -70,7 +70,7 @@ class BrandAggProcess(Process):
         self.clear_redis()
         bi = BrandIndex(self.date)
         from aggregator.brands import brands as brands1
-        brands2 = set(bi.getbrands())
+        brands2 = set(b.decode('utf-8') for b in bi.getbrands()))
         brands = list(brands1 & brands2)
         for i in range(len(brands)/self.step):
             bs = brands[i*self.step:(i+1)*self.step]

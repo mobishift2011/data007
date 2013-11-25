@@ -39,7 +39,12 @@ def save_history_shop(si, date, shopid, num_collects):
         cates = si.getcates(shopid)
         c1s = list(set([c[0] for c in cates]))
         for c1 in c1s:
-            rank[c1] = si.getrank(c1, 'all', shopid)
+            rank[c1] = {'rank': si.getrank(c1, 'all', shopid)}
+            info = si.getinfo(c1, 'all', 'day', shopid)
+            if info:
+                rank[c1]['sales'] = float(info.get('sales', 0))
+                rank[c1]['deals'] = int(info.get('deals', 0))
+        print rank
         db.execute('''insert into ataobao2.shop_by_date (id, date, worth, rank, num_collects) values
                     (:shopid, :date, :worth, :rank, :num_collects)''', 
                     dict(worth=worth, rank=json.dumps(rank), num_collects=num_collects, shopid=shopid, date=date))
@@ -63,4 +68,5 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
+    shp.date = '2013-11-24'
     shp.start()
