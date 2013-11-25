@@ -166,7 +166,10 @@ class ItemCT(object):
     cache = {}
     @staticmethod
     def ct():
-        return int(time.mktime(time.gmtime())%86400/60+480)
+        r = int(time.mktime(time.gmtime())%86400/60+480)
+        if r >= 1435:
+            r -= 1430
+        return r
 
     @staticmethod
     def getset(setkey):
