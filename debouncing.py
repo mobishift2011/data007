@@ -22,12 +22,10 @@ def get_update_bin(ret_bin, info):
         latest_time = int(info['num_instock'])
     else:
         latest_time = 0
-        
     ret_bin = replace_old(ret_bin)
     
     if ret_bin:
         cts, uts, offset = unpack_bin(int(ret_bin))
-        print cts, uts, offset
         if latest_time == uts:
             if offset == 0:
                 offset = 1
@@ -39,8 +37,7 @@ def get_update_bin(ret_bin, info):
                 offset *= 2
         else:
             offset = 0
-            
-        print "offset:%s" % offset
+        #print "offset:%s" % offset
         return pack_bin(int(time.time()), latest_time, offset)
     else:
         return pack_bin(int(time.time()), latest_time, 0)
@@ -55,11 +52,10 @@ def can_update(store_bin):
         if offset == 0:
             offset = 80000
         else:
-            offset *= 86400
+            offset = (offset + 1)*86400
         if cts + offset < int(time.time()):
             return True
     return False
-
 
 def pack_bin(cts, uts, offset):
     '''
@@ -68,7 +64,7 @@ def pack_bin(cts, uts, offset):
         31(ts), 21(update_ts), 4(offset)
     '''
     return (cts << 25) + (uts << 4) + offset
-  
+
 def unpack_bin(sbin):
     try:
         sbin = int(sbin)
@@ -80,25 +76,40 @@ def unpack_bin(sbin):
         return 0, 0, 0
 
 
-import xdrlib
+import random
+import unittest
 
+class TestFunctions(unittest.TestCase):
 
-def main():
-    p = xdrlib.Packer()
-    p.pack_int(1111)
-    p.pack_int(1111)
-    p.pack_int(1111)
+    def setUp(self):
+        print "setUp"
+        self.seq = range(10)
     
-    unp = xdrlib.Unpacker(p.get_buf())
-    print unp.get_buffer()
+    def test_shuffle(self):
+        random.shuffle(self.seq)
+        self.seq.sort()
 
+    def test_choice(self):
+        element = random.choice(self.seq)
+        self.assertTrue(element in self.seq)
 
-          
+    def test_error(self):
+        element = random.choice(self.seq)
+        self.assertTrue(element not in self.seq)
+
+    def tearDown(self):
+        print "tearDown"
+
 if __name__ == "__main__":
-    main()                  
-                        
-                        
-                        
-                        
-                        
-                        
+    unittest.main()
+
+
+
+
+
+
+
+
+
+
+
