@@ -60,7 +60,7 @@ def aggregate_items(start, end, date=None):
 
         for itemid, shopid, cid, nc, price, brand, name, image in iteminfos:
             if brand == '' or brand is None:
-                brand = u'其他'
+                brand = u'无品牌'
             if nc > 0 and itemid in itemtsdict and itemtsdict[itemid]:
                 try:
                     aggregate_item(si, ii, bi, ci, itemid, itemtsdict[itemid], shopid, cid, price, brand, name, image, date)

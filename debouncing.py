@@ -43,7 +43,18 @@ def get_update_bin(ret_bin, info):
         print "offset:%s" % offset
         return pack_bin(int(time.time()), latest_time, offset)
     else:
-        return pack_bin(int(time.time()), latest_time, 0)
+        offset = 0
+        # this is a new item
+        # initialize offset according to solds
+        # if the item isn't sold that gold
+        # we biased and offset it larger than 0 initially
+        if 'num_sold30' in info:
+            ns = int(info.get('num_sold30', 0))
+            if ns == 0:
+                offset = 4
+            elif ns < 30:
+                offset = 1
+        return pack_bin(int(time.time()), latest_time, offset)
     
     
 def can_update(store_bin):

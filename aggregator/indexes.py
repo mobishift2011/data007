@@ -85,6 +85,10 @@ class ShopIndex(object):
             1
         )
 
+    def getbrandinfo(self, shopid, field, mod):
+        hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field, mod)
+        return conn.hgetall(hkey)
+
     def incrbrand(self, shopid, field, mod, brand, value):
         hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field, mod)
         p = conn if self.pipeline is None else self.pipeline

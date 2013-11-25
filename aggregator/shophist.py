@@ -5,6 +5,7 @@ from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
 
 from datetime import datetime, timedelta
+from operator import itemgetter
 
 import json
 import traceback
@@ -35,19 +36,67 @@ def save_history_shop(si, date, shopid, num_collects):
     shopinfo = si.getbase(shopid)
     if shopinfo:
         worth = float(shopinfo.get('worth', 0))
-        rank = {}
+        sales = 0
+        catetrend = {}
         cates = si.getcates(shopid)
         c1s = list(set([c[0] for c in cates]))
         for c1 in c1s:
-            rank[c1] = {'rank': si.getrank(c1, 'all', shopid)}
+            catetrend[c1] = {'rank': si.getrank(c1, 'all', shopid)}
             info = si.getinfo(c1, 'all', 'day', shopid)
             if info:
-                rank[c1]['sales'] = float(info.get('sales', 0))
-                rank[c1]['deals'] = int(info.get('deals', 0))
-        print rank
-        db.execute('''insert into ataobao2.shop_by_date (id, date, worth, rank, num_collects) values
-                    (:shopid, :date, :worth, :rank, :num_collects)''', 
-                    dict(worth=worth, rank=json.dumps(rank), num_collects=num_collects, shopid=shopid, date=date))
+                catetrend[c1]['sales'] = float(info.get('sales', 0))
+                sales += catetrend[c1]['sales']
+                catetrend[c1]['deals'] = int(info.get('deals', 0))
+        brandshare = {}
+
+        for mod in ['mon', 'day']:
+            brandshare[mod] = {}
+            info = si.getbrandinfo(shopid, 'sales', mod)
+            dealsinfo = si.getbrandinfo(shopid, 'deals', mod)
+            binfo = [(brand, float(value), int(dealsinfo.get(brand, 0)) ) 
+                        for brand, value in info.iteritems() if float(value)>0]
+            total_sales = sum(sales for brand, sales, deals in binfo)
+            if total_sales == 0:
+                top10 = []
+            else:
+                tops = sorted(binfo, key=itemgetter(1), reverse=True)
+                other_sales = sum(sales for brand, sales, deals in tops[10:])
+                other_deals = sum(deals for brand, sales, deals in tops[10:])
+                tops = [(brand.decode('utf-8'), '{:4.2f}%'.format(sales*100/total_sales), sales, deals)
+                                for brand, sales, deals in tops[:9] ]
+                if other_sales > 0:
+                    tops.append((u'其他', '{:4.2f}%'.format(other_sales*100/total_sales), other_sales, other_deals))
+                top10 = tops
+
+            brandshare[mod] = top10
+
+        cateshare = {}
+        for mod in ['mon', 'day']:
+            cinfo = []
+            total_sales = 0
+            for cate1, cate2 in cates:
+                info = si.getinfo(cate1, cate2, mod, shopid)
+                if info and float(info.get('sales', 0)) > 0:
+                    total_sales += float(info.get('sales', 0))
+                    cinfo.append((cate2, float(info.get('sales', 0)), int(info.get('deals', 0))))
+            if total_sales == 0:
+                top10 = []
+            else:
+                tops = sorted(cinfo, key=itemgetter(1), reverse=True)
+                other_sales = sum(sales for cate2, sales, deals in tops[10:])
+                other_deals = sum(deals for cate2, sales, deals in tops[10:])
+                tops = [(cate2, '{:4.2f}%'.format(sales*100/total_sales), sales, deals)
+                            for cate2, sales, deals in tops[:9]]
+                if other_sales > 0:
+                    tops.append((u'其他', '{:4.2f}'.format(other_sales*100/total_sales), other_sales, other_deals))
+                top10 = tops
+            cateshare[mod] = top10
+
+        db.execute('''insert into ataobao2.shop_by_date 
+                    (id, date, worth, sales, num_collects, catetrend, brandshare, cateshare) values
+                    (:shopid, :date, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''', 
+                    dict(worth=worth, num_collects=num_collects, shopid=shopid, date=date, sales=sales,
+                        catetrend=json.dumps(catetrend), brandshare=json.dumps(brandshare), cateshare=json.dumps(cateshare)))
 
 class ShopHistProcess(Process):
     def __init__(self, date=None):
