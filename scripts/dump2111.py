@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from gevent import monkey; monkey.patch_all()
+import gevent.pool
+
 import os
 import re
 import time
@@ -7,6 +10,9 @@ import redis
 import struct
 import socket
 from cqlutils import ConnectionPool
+
+
+pool = gevent.pool.Pool(8)
 
 r1 = redis.Redis()
 r2 = redis.Redis(host='192.168.2.111')
@@ -63,15 +69,18 @@ def sync_table(table, fields):
                 fs = params.keys()
                 fs1 = ', '.join(fs)
                 fs2 = ', '.join([':'+f for f in fs])
-                if 'id' in params and 'date' in params:
+                if 'id' in params:
+                    if table == 'ataobao2.item_by_date' and 'date' not in params:
+                        continue
                     #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, fs1, fs2), params
-                    db2.execute('insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
+                    pool.spawn(db2.execute, 'insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
     
 def sync_all():
     for table, fields in schemas.iteritems():
         if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
         #if table == 'ataobao2.item':
             sync_table(table, fields)
+    pool.join()
 
 def sync_redis():
     r2.slaveof('no', 'one')
