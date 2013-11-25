@@ -30,11 +30,10 @@ for table, schema in re.compile(r'CREATE TABLE IF NOT EXISTS (\S+) \((.*?)\);', 
 def sync_table(table, fields):
     f1 = ', '.join(fields)
     pieces = {
-        'ataobao2.item': 1000,
+        'ataobao2.item': 100,
         'ataobao2.item_by_date': 1000,
-        'ataobao2.brand_by_date': 100,
+        'ataobao2.brand_by_date': 10,
         'ataobao2.shop_by_date': 10,
-        'ataobao2.shop_by_item': 1000,
     }.get(table, 1)
     start = -2**63
     step = 2**64/pieces
@@ -48,9 +47,9 @@ def sync_table(table, fields):
             #print 'select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), dict(v1=start, v2=end)
             cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), 
                         dict(v1=start, v2=end), consistency_level='ONE')
-            for i, row in enumerate(cur):
-                if i % 1000 == 0:
-                    print 'syncd {}'.format(i)
+            for j, row in enumerate(cur):
+                if j % 1000 == 0:
+                    print 'syncd {}'.format(j)
                 params = {}
                 fs = list(fields)
                 for k,v in zip(fields, row):
@@ -71,6 +70,7 @@ def sync_table(table, fields):
 def sync_all():
     for table, fields in schemas.iteritems():
         if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
+        #if table == 'ataobao2.item':
             sync_table(table, fields)
 
 def sync_redis():
