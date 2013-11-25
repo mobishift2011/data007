@@ -43,7 +43,7 @@ def get_update_bin(ret_bin, info):
         offset = 0
         # this is a new item
         # initialize offset according to solds
-        # if the item isn't sold that gold
+        # if the item isn't sold that good
         # we biased and offset it larger than 0 initially
         if 'num_sold30' in info:
             ns = int(info.get('num_sold30', 0))
