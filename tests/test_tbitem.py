@@ -1,4 +1,4 @@
-from crawler.tbitem import get_item, get_counters
+from crawler.tbitem import get_item
 
 def test_counters():
     # do not test this

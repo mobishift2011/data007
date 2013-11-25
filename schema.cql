@@ -92,7 +92,9 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
     date            timestamp,
     rating          text,
     cid             int,
-    rank            text,
+    brandshare      text,
+    cateshare       text
+    catetrend       text,
     sales           float,
     worth           float,
     num_collects    int,

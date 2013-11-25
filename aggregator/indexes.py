@@ -55,15 +55,16 @@ class ShopIndex(object):
                     'shopinfo_{}*'.format(date),
                     'shopbase_{}*'.format(date),
                     'shophotitems_{}*'.format(date),
-                    'shopcatescount_{}'.format(date),
+                    'shopcatescount_{}*'.format(date),
                     'shopbrandinfo_{}*'.format(date),
                     ]
         for pattern in patterns:
             print('clearing pattern {}'.format(pattern))
-            p = conn.pipeline()
-            for key in conn.keys(pattern):
-                p.delete(key)
-            p.execute()
+            for r in conn.conns:
+                p = r.pipeline()
+                for key in r.keys(pattern):
+                    p.delete(key)
+                p.execute()
 
     def getshops(self, cate1, cate2):
         zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'sales', 'mon')
@@ -84,6 +85,10 @@ class ShopIndex(object):
             cate1,
             1
         )
+
+    def getbrandinfo(self, shopid, field, mod):
+        hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field, mod)
+        return conn.hgetall(hkey)
 
     def incrbrand(self, shopid, field, mod, brand, value):
         hkey = ShopIndex.shopbrandinfo.format(self.date, shopid, field, mod)
@@ -185,10 +190,11 @@ class ItemIndex(object):
                     ]
         for pattern in patterns:
             print('clearing pattern {}'.format(pattern))
-            p = conn.pipeline()
-            for key in conn.keys(pattern):
-                p.delete(key)
-            p.execute()
+            for r in conn.conns:
+                p = r.pipeline()
+                for key in r.keys(pattern):
+                    p.delete(key)
+                p.execute()
 
     def incrcates(self, cate1, cate2, sales, deals):
         hkey1 = ItemIndex.itemcatescount.format(self.date)
@@ -255,10 +261,11 @@ class BrandIndex(object):
                     ]
         for pattern in patterns:
             print('clearing pattern {}'.format(pattern))
-            p = conn.pipeline()
-            for key in conn.keys(pattern):
-                p.delete(key)
-            p.execute()
+            for r in conn.conns:
+                p = r.pipeline()
+                for key in r.keys(pattern):
+                    p.delete(key)
+                p.execute()
 
     def getcates(self, brand):
         return [unpack(x) for x in conn.smembers(BrandIndex.brandcates.format(self.date, brand))]
@@ -351,10 +358,11 @@ class CategoryIndex(object):
                     ]
         for pattern in patterns:
             print('clearing pattern {}'.format(pattern))
-            p = conn.pipeline()
-            for key in conn.keys(pattern):
-                p.delete(key)
-            p.execute()
+            for r in conn.conns:
+                p = r.pipeline()
+                for key in r.keys(pattern):
+                    p.delete(key)
+                p.execute()
 
     def setindex(self, cate1, cate2, field, monorday, amount):
         zkey = CategoryIndex.categoryindex.format(self.date, cate1, field, monorday)

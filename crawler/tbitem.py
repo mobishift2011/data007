@@ -21,6 +21,9 @@ Usage::
      'shopid': 62393798}
 
 """
+import re
+import traceback
+from session import get_session, get_blank_session
 from h5 import get_item as get_item_h5, get_cid
 
 def get_item(itemid):
@@ -30,6 +33,47 @@ def get_item(itemid):
         if cid:
             i['cid'] = cid
     return i
+
+def get_buyhistory(itemid):
+    """ get buy history, first page only
+    
+    :param itemid: itemid for item
+    :returns: list of (price/sold, sold/price, date) tuple
+    """
+    s = get_session()
+    content = s.get('http://item.taobao.com/item.htm?id={}'.format(itemid)).content
+    url = re.compile(r'detail:params="(.*?),showBuyerList').search(content).group(1)
+    url += '&callback=jsonp'
+    patjsonp = re.compile(r'jsonp\((.*?)\);?', re.DOTALL)
+    s = get_blank_session()
+    s.headers['Referer'] = 'http://detail.tmall.com/item.htm'
+    try:
+        content = s.get(url+'&callback=jsonp', timeout=30).content
+        content = content.replace('\\"', '"')
+        if content == 'jsonp({"status":1111,"wait":5})':
+            print 'baned, sleeping for 5 mins'
+            time.sleep(5*60)
+            return get_buyhistory(itemid)
+        ret1 = re.compile('<em class="tb-rmb-num">([^<]+)</em>.*?<td class="tb-amount">(\d+)</td>.*?<td class="tb-time">([^>]+)</td>', re.DOTALL).findall(content)
+        ret2 = re.compile('<em>(\d+)</em>.*?<td>(\d+)</td>.*?<td>([^<]+)</td>', re.DOTALL).findall(content)
+        ret1.extend(ret2)
+        return ret1
+    except:
+        print '!!!', itemid
+        traceback.print_exc()
+
+def get_lastbuy(itemid):
+    history = get_buyhistory(itemid)
+    return max([h[-1] for h in history])
+
+def get_offset(itemid):
+    now = datetime.now()
+    try:
+        lb = datetime.strptime(get_lastbuy(itemid), '%Y-%m-%d %H:%M:%S')
+    except:
+        traceback.print_exc()
+        return None
+    return (now - lb).days
     
 def main():
     import argparse

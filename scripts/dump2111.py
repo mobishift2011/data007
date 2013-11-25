@@ -45,6 +45,7 @@ def sync_table(table, fields):
         end = min(2**63-1, -2**63+step*(i+1))
         with db1.connection() as cur:
             print 'piece', i+1
+            #print 'select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), dict(v1=start, v2=end)
             cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), 
                         dict(v1=start, v2=end), consistency_level='ONE')
             for i, row in enumerate(cur):
@@ -54,19 +55,22 @@ def sync_table(table, fields):
                 fs = list(fields)
                 for k,v in zip(fields, row):
                     if k == 'date':
-                        v = struct.unpack('!q', v)[0]
+                        if v is not None and len(v)==8:
+                            v = struct.unpack('!q', v)[0]
+                        else:
+                            continue
                     if v is not None:
                         params[k] = v 
-                    else:
-                        fs.remove(k) 
-                f1 = ', '.join(fs)
-                f2 = ', '.join([':'+f for f in fs])
-                #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, f1, f2), params
-                db2.execute('insert into {} ({}) values ({})'.format(table, f1, f2), params)
+                fs = params.keys()
+                fs1 = ', '.join(fs)
+                fs2 = ', '.join([':'+f for f in fs])
+                if 'id' in params and 'date' in params:
+                    #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, fs1, fs2), params
+                    db2.execute('insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
     
 def sync_all():
     for table, fields in schemas.iteritems():
-        if table not in ['ataobao2.item_attr']:
+        if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
             sync_table(table, fields)
 
 def sync_redis():
