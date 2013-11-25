@@ -73,7 +73,7 @@ def get_offset(itemid):
     except:
         traceback.print_exc()
         return None
-    return min(15, (now - lb).days)
+    return (now - lb).days
     
 def main():
     import argparse
