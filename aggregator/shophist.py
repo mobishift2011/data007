@@ -60,8 +60,8 @@ def save_history_shop(si, date, shopid, num_collects):
                 top10 = []
             else:
                 tops = sorted(binfo, key=itemgetter(1), reverse=True)
-                other_sales = sum(sales for brand, sales, deals in tops[10:])
-                other_deals = sum(deals for brand, sales, deals in tops[10:])
+                other_sales = sum(sales for brand, sales, deals in tops[9:])
+                other_deals = sum(deals for brand, sales, deals in tops[9:])
                 tops = [(brand.decode('utf-8'), '{:4.2f}%'.format(sales*100/total_sales), sales, deals)
                                 for brand, sales, deals in tops[:9] ]
                 if other_sales > 0:
@@ -83,8 +83,8 @@ def save_history_shop(si, date, shopid, num_collects):
                 top10 = []
             else:
                 tops = sorted(cinfo, key=itemgetter(1), reverse=True)
-                other_sales = sum(sales for cate2, sales, deals in tops[10:])
-                other_deals = sum(deals for cate2, sales, deals in tops[10:])
+                other_sales = sum(sales for cate2, sales, deals in tops[9:])
+                other_deals = sum(deals for cate2, sales, deals in tops[9:])
                 tops = [(cate2, '{:4.2f}%'.format(sales*100/total_sales), sales, deals)
                             for cate2, sales, deals in tops[:9]]
                 if other_sales > 0:
@@ -117,5 +117,5 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
-    shp.date = '2013-11-24'
+    shp.date = '2013-11-25'
     shp.start()
