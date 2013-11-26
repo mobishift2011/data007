@@ -3,7 +3,7 @@ from thinredis import ThinHash, ThinSet, CappedSortedSet
 from redis import Redis
 
 def _test_thinhash(conn):
-    conn.flushall()
+    conn.delete('test')
     h = ThinHash('test', 10000, connection=conn)
     l = range(10)
     l.extend(range(10))
@@ -12,7 +12,7 @@ def _test_thinhash(conn):
 
 def _test_thinset(conn):
     conn = Redis(db=1)
-    conn.flushall()
+    conn.delete('test')
     s = ThinSet('test', 10000, connection=conn)
     l = range(10) 
     s.add(*l)
