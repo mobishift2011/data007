@@ -21,7 +21,7 @@ import traceback
 from caches import ItemCT, LC
 from queues import ai1, ai2, af1
 from crawler.tbcat import list_cat, get_json, get_ids
-from crawler.topcates import crawlids
+from crawler.cates import fecids
 
 class Scheduler(object):
     def start(self):
@@ -56,7 +56,7 @@ class AllScheduler(Scheduler):
             ai2.put(*ids)
             ItemCT.add_items(*ids)
         
-        for cid in crawlids:
+        for cid in fecids:
             self.pool.spawn(list_cat, cid, on_ids=on_ids, use_pool=False)
         self.pool.join()
 
