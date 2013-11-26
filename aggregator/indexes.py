@@ -111,6 +111,10 @@ class ShopIndex(object):
         key = ShopIndex.shopindex.format(date, cate1, cate2, field, monorday)
         p.zincrby(key, shopid, amount, skey=self.make_skey(cate1, cate2))
 
+    def getindex(self, cate1, cate2, field, monorday, offset=0, limit=10):
+        zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, field, monorday)
+        return conn.zrevrange(zkey, offset, offset+limit-1, withscores=True, skey=self.make_skey(cate1, cate2))
+
     def setindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date
         p = conn if self.pipeline is None else self.pipeline
@@ -216,7 +220,15 @@ class ItemIndex(object):
         zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)
         p = conn if self.pipeline is None else self.pipeline
         CappedSortedSet(zkey, 1000, p, skey=self.make_skey(cate1, cate2)).zadd(itemid, amount)
+
+    def getindex(self, cate1, cate2, field, monorday, offset=0, limit=10):
+        zkey = ItemIndex.itemindex.format(self.date, cate1, cate2, field, monorday)
+        return conn.zrevrange(zkey, offset, offset+limit-1, withscores=True, skey=self.make_skey(cate1, cate2))
     
+    def getinfo(self, itemid, cate1):
+        hkey = ItemIndex.iteminfo.format(self.date, itemid)
+        return conn.hgetall(hkey, skey=self.make_skey(cate1, 'all'))
+
     def setinfo(self, itemid, iteminfo, **kwargs):
         hkey = ItemIndex.iteminfo.format(self.date, itemid) 
         p = conn if self.pipeline is None else self.pipeline
@@ -304,6 +316,10 @@ class BrandIndex(object):
         skey = BrandIndex.brands.format(self.date)
         p = conn if self.pipeline is None else self.pipeline
         p.sadd(skey, brand) # will be converted to utf-8 if it is unicode
+
+    def getindex(self, cate1, cate2, offset=0, limit=10):
+        zkey = BrandIndex.brandindex.format(self.date, cate1, cate2, 'sales')
+        return conn.zrevrange(zkey, offset, offset+limit-1, withscores=True, skey=self.make_skey(cate1, cate2))
 
     def setindex(self, brand, cate1, cate2, sales):
         p = conn if self.pipeline is None else self.pipeline

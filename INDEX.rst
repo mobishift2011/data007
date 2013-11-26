@@ -28,7 +28,7 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
     * 任意字段均为utf-8编码
     * date = %Y-%m-%d类型的日期, e.g. 2013-11-11
     * cate1 = 一级分类id, e.g. 16
-    * cate2 = 二级分类id, e.g. 50008563
+    * cate2 = 二级分类id, e.g. 50008563, 如无二级分类则取值为'all'
     * monorday = 按日统计/按月统计, e.g. day/mon
 
 
@@ -57,7 +57,8 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
 
 3. shopcates_{date}_{shopid}:
     * set: pack(cate1,cate2)
-    * 指定店铺所含商品的分类情况 
+    * 指定店铺所含商品的分类情况
+        - 解包需要用 msgpack.unpackb
 
 4. shopbase_{date}_{shopid}:
     * hash: (field, value)

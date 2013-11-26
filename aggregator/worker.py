@@ -11,7 +11,7 @@ import traceback
 import gevent.pool
 import gevent
 
-from aggregator import iap, sap, bap, cap, shp, iip
+from aggregator import all_processes
 from aggregator.indexes import *
 from models import db
 
@@ -28,7 +28,7 @@ class AggregateWorker(Worker):
     """ worker for general aggregation """
     def __init__(self, poolsize=5):
         self.poolsize = poolsize
-        self.processes = [iap, sap, bap, cap, shp, iip]
+        self.processes = all_processes
 
     def work(self):
         def workon(iap):

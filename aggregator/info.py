@@ -7,7 +7,6 @@ import time
 import logging
 import argparse
 
-from aggregator import iap, sap, bap, cap, shp, iip
 from doagg import build_flow
 
 def gettermsize():

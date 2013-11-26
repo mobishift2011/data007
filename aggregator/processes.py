@@ -40,6 +40,7 @@ class Process(object):
     def __init__(self, name):
         self.name = name
         self.children = []
+        self.parents = []
 
     def clear_redis(self):
         conn.sadd(self.processes, self.name)
@@ -79,12 +80,13 @@ class Process(object):
 
     def add_child(self, child):
         self.children.append(child)
+        child.parents.append(self)
 
     def check_zombie(self):
         updated_at = conn.get(self.updated_at.format(self.name))
         if updated_at:
             updated_at = float(updated_at)
-            if (time.mktime(time.gmtime()) - updated_at) > 300:
+            if (time.mktime(time.gmtime()) - updated_at) > 600:
                 while True:
                     task = conn.lpop(self.processing.format(self.name))
                     if task is None:
@@ -127,7 +129,15 @@ class Process(object):
             self.check_zombie()
         return finished
 
+    def wait_for_parents(self):
+        if self.parents:
+            for p in self.parents:
+                while not p.is_finished():
+                    print('agg {} is waiting agg {} for finish'.format(self.name, p.name))
+                    time.sleep(2)
+
     def start(self):
+        self.wait_for_parents()
         print('starting process {}'.format(self.name))
         self.generate_tasks()
 

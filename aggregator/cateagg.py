@@ -18,7 +18,7 @@ def aggregate_categories(date=None):
     ci = CategoryIndex(date)
     si = ShopIndex(date)
     ci.multi()
-    l1l2s.extend([[c[0], 'all'] for c in topcids])
+    l1l2s.extend([[c, 'all'] for c in topcids])
     for cate1, cate2 in l1l2s:
         for mod in ['mon', 'day']:
             info = {
@@ -44,11 +44,8 @@ class CateAggProcess(Process):
         self.add_task('aggregator.cateagg.aggregate_categories', self.date)
         self.finish_generation()
 
-    def add_child(self, child):
-        raise NotImplementedError('this process can not have children')
-
 cap = CateAggProcess()
 
 if __name__ == '__main__':
-    cap.date = '2013-11-14'
+    cap.date = '2013-11-24'
     cap.start()

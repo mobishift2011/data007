@@ -116,8 +116,18 @@ def check_schema(fix=False):
                 wtype = t2t['cols'][cname]
                 print '... {} has wrong type {}, != {}'.format(cname, wtype, ctype)
                 problems += 1
-                plans.append('alter table {}.{} drop {} '.format(keyspace, table, cname))
-                plans.append('alter table {}.{} add {} {}'.format(keyspace, table, cname, ctype))
+                if cname in t2t['pk']:
+                    print '... unfortunately this field is in primary key, we need to rebuild the whole table!!!'
+                    plans.append('drop table {}.{}'.format(keyspace, table))
+                    stmt = ['create table {}.{} ('.format(keyspace, table)]
+                    for cname, ctype in t1t['cols'].items():
+                        stmt.append('  {} {},'.format(cname, ctype))
+                    stmt.append('  primary key ({})'.format(', '.join(t1t['pk'])))
+                    stmt.append(');')
+                    plans.append('\n'.join(stmt))
+                else:
+                    plans.append('alter table {}.{} drop {} '.format(keyspace, table, cname))
+                    plans.append('alter table {}.{} add {} {}'.format(keyspace, table, cname, ctype))
     
     print 'check finished, {} problems found'.format(problems)
     if plans:
