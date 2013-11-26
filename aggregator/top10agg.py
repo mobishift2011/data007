@@ -31,8 +31,8 @@ def top10_brands(date=None):
         deals = branddeals[brand]
         brand = brand.decode('utf-8')
         top10brand.append((brand, deals, sales))
-    db.execute('''insert into ataobao2.top10 (date, field, value) values
-                    (:date, :field, :value)''', dict(date=date, field='brand', value=json.dumps(top10brand)))
+    db.execute('''insert into ataobao2.top10 (datestr, field, value) values
+                    (:datestr, :field, :value)''', dict(datestr=date, field='brand', value=json.dumps(top10brand)))
         
 
 def top10_categories(date=None):
@@ -49,8 +49,8 @@ def top10_categories(date=None):
     for cate, sales in top10.most_common(10):
         deals = catedeals[cate]
         top10cate.append((int(cate), deals, sales))
-    db.execute('''insert into ataobao2.top10 (date, field, value) values
-                    (:date, :field, :value)''', dict(date=date, field='category', value=json.dumps(top10cate)))
+    db.execute('''insert into ataobao2.top10 (datestr, field, value) values
+                    (:datestr, :field, :value)''', dict(datestr=date, field='category', value=json.dumps(top10cate)))
 
 def top10_shops(date=None):
     if date is None:
@@ -66,8 +66,8 @@ def top10_shops(date=None):
     for shopid, sales in top10.most_common(10):
         deals = shopdeals[shopid]
         top10shop.append((int(shopid), deals, sales))
-    db.execute('''insert into ataobao2.top10 (date, field, value) values
-                    (:date, :field, :value)''', dict(date=date, field='shop', value=json.dumps(top10shop)))
+    db.execute('''insert into ataobao2.top10 (datestr, field, value) values
+                    (:datestr, :field, :value)''', dict(datestr=date, field='shop', value=json.dumps(top10shop)))
 
 def top10_items(date=None):
     if date is None:
@@ -83,8 +83,8 @@ def top10_items(date=None):
     for itemid, sales in top10.most_common(10):
         deals = itemdeals[itemid]
         top10item.append((int(itemid), deals, sales))
-    db.execute('''insert into ataobao2.top10 (date, field, value) values
-                    (:date, :field, :value)''', dict(date=date, field='item', value=json.dumps(top10item)))
+    db.execute('''insert into ataobao2.top10 (datestr, field, value) values
+                    (:datestr, :field, :value)''', dict(datestr=date, field='item', value=json.dumps(top10item)))
 
 class Top10AggProcess(Process):
     def __init__(self, date=None):

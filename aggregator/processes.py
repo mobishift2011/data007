@@ -8,7 +8,6 @@ import traceback
 import threading
 from msgpack import packb as pack, unpackb as unpack
 
-
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
 from aggregator.indexes import conn
@@ -41,6 +40,8 @@ class Process(object):
         self.name = name
         self.children = []
         self.parents = []
+        self.lock = threading.Lock()
+        self.gened = False
 
     def clear_redis(self):
         conn.sadd(self.processes, self.name)
@@ -139,7 +140,12 @@ class Process(object):
     def start(self):
         self.wait_for_parents()
         print('starting process {}'.format(self.name))
-        self.generate_tasks()
+
+        # locking to make sure we only generate tasks once
+        with self.lock:
+            if not self.gened:
+                self.generate_tasks()
+                self.gened = True
 
         while True:
             time.sleep(2)

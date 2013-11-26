@@ -93,9 +93,9 @@ def save_history_shop(si, date, shopid, num_collects):
             cateshare[mod] = top10
 
         db.execute('''insert into ataobao2.shop_by_date 
-                    (id, date, worth, sales, num_collects, catetrend, brandshare, cateshare) values
-                    (:shopid, :date, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''', 
-                    dict(worth=worth, num_collects=num_collects, shopid=shopid, date=date, sales=sales,
+                    (id, datestr, worth, sales, num_collects, catetrend, brandshare, cateshare) values
+                    (:shopid, :datestr, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''', 
+                    dict(worth=worth, num_collects=num_collects, shopid=shopid, datestr=date, sales=sales,
                         catetrend=json.dumps(catetrend), brandshare=json.dumps(brandshare), cateshare=json.dumps(cateshare)))
 
 class ShopHistProcess(Process):

@@ -109,7 +109,17 @@ def check_schema(fix=False):
             print '... unused columns {}'.format(unused)
             for cname in unused:
                 problems += 1
-                plans.append('alter table {}.{} drop {}'.format(keyspace, table, cname))
+                if cname in t2t['pk']:
+                    print('... oops you are going to delete a primary key, the only way of doing it is to recreate the table')
+                    plans.append('drop table {}.{}'.format(keyspace, table))
+                    stmt = ['create table {}.{} ('.format(keyspace, table)]
+                    for cname, ctype in t1t['cols'].items():
+                        stmt.append('  {} {},'.format(cname, ctype))
+                    stmt.append('  primary key ({})'.format(', '.join(t1t['pk'])))
+                    stmt.append(');')
+                    plans.append('\n'.join(stmt))
+                else:
+                    plans.append('alter table {}.{} drop {}'.format(keyspace, table, cname))
 
         for cname, ctype in t1t['cols'].items():
             if cname in t2t['cols'] and t2t['cols'][cname] != ctype:

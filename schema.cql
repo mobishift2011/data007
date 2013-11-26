@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS item_by_date (
 
 CREATE TABLE IF NOT EXISTS shop_by_date (
     id              bigint,
-    date            text,
+    datestr         text,
     rating          text,
     cid             int,
     brandshare      text,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
     num_collects    int,
     title           text,
     good_rating     float,
-    PRIMARY KEY (id, date)
+    PRIMARY KEY (id, datestr)
 );
 
 CREATE TABLE IF NOT EXISTS item_attr (
@@ -118,17 +118,17 @@ CREATE TABLE IF NOT EXISTS brand (
 
 CREATE TABLE IF NOT EXISTS brand_by_date (
     name            text,
-    date            text, 
+    datestr         text, 
     cate1           int,
     sales           float,
     share           float,
     num_shops       int,
-    PRIMARY KEY (name, date, cate1)
+    PRIMARY KEY (name, datestr, cate1)
 );
 
 CREATE TABLE IF NOT EXISTS top10 (
-    date            text,
+    datestr         text,
     field           text,
     value           text,
-    PRIMARY KEY (date, field)
+    PRIMARY KEY (datestr, field)
 );
