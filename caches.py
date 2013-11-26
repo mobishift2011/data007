@@ -101,7 +101,7 @@ class LC(object):
                 if lastcheck:
                     if str(lastcheck).find('.') > 0:
                         lastcheck = float(lastcheck)
-                    print "get:", bin(int(lastcheck)), len(bin(int(lastcheck))) - 2
+                    #print "get:", bin(int(lastcheck)), len(bin(int(lastcheck))) - 2
                 if debouncing.can_update(lastcheck):
                     needs.append(ids[i])
             else:

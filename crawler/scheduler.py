@@ -149,7 +149,7 @@ def main():
     elif option.worker == "all":
         AllScheduler().start()
     elif option.worker == "update":
-        ItemScheduler().start()
+        UpdateScheduler().start()
     elif option.worker == "item":
         ItemScheduler().start()
 
