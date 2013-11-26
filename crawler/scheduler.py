@@ -144,12 +144,14 @@ def main():
     parser.add_argument('--cid', '-c', type=int, help='category id if worker type in "full" or "update"')
     parser.add_argument('--pool', '-p', action='store_true', help='use gevent pool')
     option = parser.parse_args()
-    {
-        "full": FullScheduler(option.cid, option.pool),
-        "all": AllScheduler(),
-        "update": UpdateScheduler(option.cid),
-        "item": ItemScheduler(),
-    }.get(option.worker).start()
+    if option.worker == "full":
+        FullScheduler(option.cid, option.pool).start()
+    elif option.worker == "all":
+        AllScheduler().start()
+    elif option.worker == "update":
+        ItemScheduler().start()
+    elif option.worker == "item":
+        ItemScheduler().start()
 
 if __name__ == '__main__':
     main()
