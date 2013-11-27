@@ -122,15 +122,16 @@ def retry(times, func, *args, **kwargs):
             return r
     raise e
 
-def get_misc(shopid, sid=None):
+def get_misc(shopid, sid=None, type='taobao'):
     """ get shop charge/main_sale info """
     try:
         r = {}
-        if sid is None:
+        if sid is None or type is None:
             j = get_json("mtop.shop.getWapShopInfo", {"shopId":shopid})
             if not j:
                 return r
             sid = j['data']['sellerId']
+            type = 'tmall' if j['data'].get('isMall', 'false') == 'true' else 'taobao'
         url = 'http://rate.taobao.com/user-rate-{}.htm'.format(sid)
 
         rates = retry(3, session.get, url, timeout=30).text
@@ -162,6 +163,15 @@ def get_misc(shopid, sid=None):
         #     traceback.print_exc()
         # else:
         #     r.update(s30)
+
+        # promises
+        promise = []
+        if type == 'taobao':
+            for cname in ["xiaofei", "seven", "fake", "thirty", "lightning", "safe", "xb-three"]:
+                token = 'class="{}"'.format(cname)
+                if token in rates:
+                    promise.append(cname) 
+        r['promise'] = promise
 
         return r
     except:
@@ -371,13 +381,13 @@ def get_shop(shopid):
             # unimplemented
             # see get_misc
             # charge
+            # promise
             # main_sale
 
             # for compability only
             'rank_num': 0,
             'rank': '', 
             'rates': '',
-            'promise': [],
             'rateid': '',
         }
         return s

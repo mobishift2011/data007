@@ -6,7 +6,7 @@ import json
 def get_shop(shopid):
     s = get_shop_h5(shopid)
     if s:
-        s.update(get_misc(shopid, sid=s['sid']))
+        s.update(get_misc(shopid, sid=s['sid'], type=s['type']))
     return s
 
 def main():

@@ -36,13 +36,13 @@ CREATE TABLE IF NOT EXISTS shop (
     mobile          text,
 
     charge          text,
+    promise         text,
     main_sale       text,
 
     rank_num        int,
     rank            text,
     rates           text,
     rateid          text,
-    promise         text,
 );
 
 CREATE TABLE IF NOT EXISTS item (
