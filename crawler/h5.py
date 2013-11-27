@@ -77,7 +77,6 @@ import re
 import time
 import json
 import urllib
-import base64
 import hashlib
 import requests
 import traceback
