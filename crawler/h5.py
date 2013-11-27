@@ -366,7 +366,7 @@ def get_shop(shopid):
                 return url
             else:
                 if '80x80' not in url:
-                    return url[:-4] + '_80x80' + url[-4:]
+                    return url[:-4] + '_80x80.jpg'
                 else:
                     return url
         s = {
