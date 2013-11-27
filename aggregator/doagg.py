@@ -26,9 +26,11 @@ def build_flow(date=defaultdate):
     sap.add_child(bap)
     sap.add_child(shp)
     sap.add_child(cap)
+
     bap.add_child(tap)
     shp.add_child(tap)
     cap.add_child(tap)
+    iip.add_child(tap)
     
     return iap
 
