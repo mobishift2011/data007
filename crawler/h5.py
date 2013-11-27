@@ -77,6 +77,7 @@ import re
 import time
 import json
 import urllib
+import base64
 import hashlib
 import requests
 import traceback
@@ -360,10 +361,19 @@ def get_shop(shopid):
     try:
         j = get_json("mtop.shop.getWapShopInfo", {"shopId":shopid})
         d = j['data'] 
+
+        def fix_logo(url):
+            if url == '':
+                return url
+            else:
+                if '80x80' not in url:
+                    return url[:-4] + '_80x80' + url[-4:]
+                else:
+                    return url
         s = {
             'id': int(shopid),
             'sid': int(d.get('sellerId', 0)),
-            'logo': d.get('picUrl', ''),
+            'logo': fix_logo(d.get('picUrl', '')),
             'type': 'tmall' if d.get('isMall', 'false') =='true' else 'taobao',
             'nick': d.get('nick', ''),
             'title': d.get('title', ''), 
