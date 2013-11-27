@@ -69,7 +69,7 @@ def sync_table(table, fields):
                 fs = params.keys()
                 fs1 = ', '.join(fs)
                 fs2 = ', '.join([':'+f for f in fs])
-                if 'id' in params:
+                if 'id' in params or 'datestr' in params or 'name' in params:
                     if table == 'ataobao2.item_by_date' and 'date' not in params:
                         continue
                     #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, fs1, fs2), params
@@ -78,7 +78,7 @@ def sync_table(table, fields):
 def sync_all():
     for table, fields in schemas.iteritems():
         if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
-        #if table == 'ataobao2.shop_by_date':
+        #if table == 'ataobao2.top10':
             sync_table(table, fields)
     pool.join()
 
