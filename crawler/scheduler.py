@@ -85,35 +85,30 @@ class FullScheduler(Scheduler):
 class UpdateScheduler(Scheduler):
     def __init__(self, cid=None):
         self.cid = cid
-        self.itemid = None
+        self.hour = None
 
     def should_run(self):
-        return True
+        hour = int(time.mktime(time.gmtime())/3600)
+        if hour != self.hour:
+            self.hour = hour
+            return True
+        else:
+            return False
 
     def run(self):
-        latest_itemid = None
-        page = 1
-        while page < 10:
-            print('fetching page {}'.format(page))
-            data = get_json(self.cid, page=page, sort='_oldstart')
-            ids = get_ids(data)
-            if ids:
-                if page == 1:
-                    latest_itemid = ids[0]
-                    print('last id {}'.format(latest_itemid))
-                print('found {} items'.format(len(ids)))
-                for id in ids:
-                    if id == self.itemid:
-                        page = 9999
-                        break
-                    elif LC.need_update('item', id):
-                        print('put {}'.format(id))
-                        ai2.put(id)
-                page += 1
-            else:
-                time.sleep(5)
-        self.itemid = latest_itemid
-    
+        def update_latest_ids(cid):
+            data = get_json(cid, page=1, sort='_oldstart')
+            nids = get_ids(data)
+            if nids:
+                print 'found {} ids in category {}'.format(len(nids), cid)
+                ai2.put(*list(nids))
+
+        pool = gevent.pool.Pool(10)
+        for cid in fecids:
+            pool.spawn(update_latest_ids, cid)
+        pool.join()
+
+
 class ItemScheduler(Scheduler):
     def __init__(self):
         self.ct = None
