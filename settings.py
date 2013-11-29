@@ -26,6 +26,7 @@ envs = {
             'redis://localhost:6379/4',
         ],
         'DB_HOSTS': ['localhost:9160'],
+        'ES_HOSTS': ['localhost:9500'],
     },
     'TEST': {
         'RECORD_URI': 'redis://ec2-107-22-142-71.compute-1.amazonaws.com:6379/0',

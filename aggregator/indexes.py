@@ -95,6 +95,10 @@ class ShopIndex(object):
         p = conn if self.pipeline is None else self.pipeline
         p.hincrbyfloat(hkey, brand, value)
 
+    def gethotitems(self, shopid):
+        zkey = ShopIndex.shophotitems.format(self.date, shopid)
+        return conn.zrevrange(zkey, 0, -1)
+
     def addhotitems(self, shopid, itemid, sales):
         zkey = ShopIndex.shophotitems.format(self.date, shopid)
         p = conn if self.pipeline is None else self.pipeline

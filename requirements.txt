@@ -29,3 +29,4 @@ txmongo
 txredisapi
 pyquery
 hash_ring
+pyes

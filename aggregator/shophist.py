@@ -3,6 +3,7 @@
 from models import db
 from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
+from settings import ENV
 
 from datetime import datetime, timedelta
 from operator import itemgetter
@@ -95,13 +96,16 @@ def save_history_shop(si, date, shopid, num_collects):
         db.execute('''insert into ataobao2.shop_by_date 
                     (id, datestr, worth, sales, num_collects, catetrend, brandshare, cateshare) values
                     (:shopid, :datestr, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''', 
-                    dict(worth=worth, num_collects=num_collects, shopid=shopid, datestr=date, sales=sales,
+                    dict(worth=worth, num_collects=num_collects, shopid=shopid, datestr=date, sales=total_sales,
                         catetrend=json.dumps(catetrend), brandshare=json.dumps(brandshare), cateshare=json.dumps(cateshare)))
 
 class ShopHistProcess(Process):
     def __init__(self, date=None):
         super(ShopHistProcess, self).__init__('shophist')
-        self.step = 2**64/100
+        if ENV == 'DEV':
+            self.step = 2**64/100
+        else:
+            self.step = 2**64/1000
         self.date = date
 
     def generate_tasks(self):

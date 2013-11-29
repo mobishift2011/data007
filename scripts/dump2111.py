@@ -6,6 +6,7 @@ import gevent.pool
 import os
 import re
 import time
+import pyes
 import redis
 import struct
 import socket
@@ -18,6 +19,8 @@ r1 = redis.Redis()
 r2 = redis.Redis(host='192.168.2.111')
 db1 =  ConnectionPool(['localhost:9160'])
 db2 =  ConnectionPool(['192.168.2.111:9160'])
+es1 = pyes.ES('localhost:9200')
+es2 = pyes.ES('192.168.2.111:9200')
 
 schemafile = os.path.join(os.path.dirname(__file__), '..', 'schema.cql')
 
@@ -75,10 +78,10 @@ def sync_table(table, fields):
                     #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, fs1, fs2), params
                     pool.spawn(db2.execute, 'insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
     
-def sync_all():
+def sync_cassandra():
     for table, fields in schemas.iteritems():
         if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
-        #if table == 'ataobao2.shop':
+        #if table == 'ataobao2.shop_by_date':
             sync_table(table, fields)
     pool.join()
 
@@ -107,6 +110,25 @@ def sync_redis():
             break
     r2.slaveof('no', 'one')
 
+def sync_elasticsearch():
+    from aggregator.esindex import mapping
+    es2.ensure_index('ataobao2')
+    for type in mapping:
+        m = mapping[type]
+        es2.indices.put_mapping(type, m, ['ataobao2'])
+
+    for type in ['shop', 'brand']:
+        print 'syncing elasticsearch', type
+        hits = es1.search_raw({'size':50000}, 'ataobao2', type)
+        hits = hits['hits']['hits']
+        for hit in hits:
+            shopid = hit['_id']
+            info = hit['_source']
+            es2.index(info, 'ataobao2', type, shopid, bulk=True)
+        es2.flush_bulk(forced=True)
+        es2.refresh()
+
 if __name__ == '__main__':
     sync_redis()
-    sync_all()
+    sync_cassandra()
+    sync_elasticsearch()
