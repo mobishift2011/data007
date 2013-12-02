@@ -218,7 +218,7 @@ class ItemAggProcess(Process):
             self.max_workers = 10
         else:
             self.step = 2**64/100000
-            self.max_workers = 100
+            self.max_workers = 500
         self.date = date
 
     def generate_tasks(self):
