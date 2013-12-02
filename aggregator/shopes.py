@@ -79,9 +79,11 @@ class ShopESProcess(Process):
     def __init__(self, date=None):
         super(ShopESProcess, self).__init__('shopes')
         if ENV == 'DEV':
-            self.step = 2**64/100
+            self.step = 2**64/5
+            self.max_workers = 1
         else:
-            self.step = 2**64/1000
+            self.step = 2**64/10000
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):

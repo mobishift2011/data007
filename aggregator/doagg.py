@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 
-from aggregator import iap, sap, bap, cap, shp, iip, tap, all_processes
+from aggregator import iap, sap, bap, cap, shp, iip, tap, sep, bep, all_processes
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from datetime import datetime, timedelta
 
@@ -31,6 +31,8 @@ def build_flow(date=defaultdate):
     shp.add_child(tap)
     cap.add_child(tap)
     iip.add_child(tap)
+
+    sap.add_child(sep)
     
     return iap
 

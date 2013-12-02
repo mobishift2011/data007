@@ -62,8 +62,10 @@ class BrandAggProcess(Process):
         super(BrandAggProcess, self).__init__('brandagg')
         if ENV == 'DEV':
             self.step = 100
+            self.max_workers = 10
         else:
             self.step = 1000
+            self.max_workers = 100
         self.date = date or defaultdate
 
     def generate_tasks(self):

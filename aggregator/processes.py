@@ -4,6 +4,7 @@ import re
 import sys
 import time
 import redis
+import random
 import traceback
 import threading
 from msgpack import packb as pack, unpackb as unpack
@@ -11,6 +12,8 @@ from msgpack import packb as pack, unpackb as unpack
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
 from aggregator.indexes import conn
+
+random = random.SystemRandom()
 
 class Process(object):
     """ Distributed task processing manager
@@ -36,12 +39,13 @@ class Process(object):
     started_at = 'ataobao-process-started_at-{}' # key
     updated_at = 'ataobao-process-updated_at-{}' # key
 
-    def __init__(self, name):
+    def __init__(self, name, max_workers=None):
         self.name = name
         self.children = []
         self.parents = []
         self.lock = threading.Lock()
         self.gened = False
+        self.max_workers = max_workers
 
     def clear_redis(self):
         conn.sadd(self.processes, self.name)
@@ -166,16 +170,24 @@ class Process(object):
         print('ended process {}'.format(self.name))
 
     def work(self):
+        time.sleep(random.random())
         while True:
             try:
+                if self.max_workers is not None and \
+                    conn.llen(self.processing.format(self.name)) >= self.max_workers:
+                    time.sleep(1)
+                    continue
+
                 result = conn.spop(self.tasks.format(self.name))
                 if result is None:
                     time.sleep(0.05)
                     continue
+
                 task = result
                 conn.rpush(self.processing.format(self.name), task)
                 caller, args, kwargs = unpack(task)
                 conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
+
                 print('work on {}, {}, {}'.format(caller, args[:5], kwargs))
                 if '.' in caller:
                     module, method = caller.rsplit('.', 1)

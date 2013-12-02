@@ -211,8 +211,10 @@ class ItemAggProcess(Process):
         super(ItemAggProcess, self).__init__('itemagg')
         if ENV == 'DEV':
             self.step = 2**64/1000
+            self.max_workers = 10
         else:
             self.step = 2**64/100000
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):

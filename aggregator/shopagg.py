@@ -75,8 +75,10 @@ class ShopAggProcess(Process):
         super(ShopAggProcess, self).__init__('shopagg')
         if ENV == 'DEV':
             self.step = 2**64/100
+            self.max_workers = 10
         else:
             self.step = 2**64/1000
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):
