@@ -16,6 +16,8 @@ import gevent.pool
 from functools import partial
 from collections import deque
 
+from settings import ENV
+
 from models import db, update_item, delete_item, update_shop
 from caches import LC, ItemCT, WC
 from queues import poll, ai1, ai2, as1, af1, asi1
@@ -119,7 +121,11 @@ class ItemWorker(Worker):
     def work(self):
         def on_update(itemid):
             print('updating item id: {}'.format(itemid))
-            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=6000)
+            if ENV == 'DEV':
+                tpm = 6000
+            else:
+                tpm = 600
+            d = call_with_throttling(get_item, args=(itemid,), threshold_per_minute=tpm)
             if 'error' in d:
                 if d['error'] in ['not found']:
                     try:

@@ -3,7 +3,7 @@
 from models import db
 from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
-from aggregator.esindex import index_shop
+from aggregator.esindex import index_shop, flush
 from settings import ENV
 
 from datetime import datetime, timedelta
@@ -30,6 +30,7 @@ def es_shops(start, end, date=None):
                     es_shop(si, date, shopid, num_products, credit_score, good_rating, title, logo, type)
                 except:
                     traceback.print_exc()
+        flush()
     except:
         traceback.print_exc()
 
