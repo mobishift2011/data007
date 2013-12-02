@@ -217,7 +217,7 @@ class ItemAggProcess(Process):
             self.step = 2**64/1000
             self.max_workers = 10
         else:
-            self.step = 2**64/100000
+            self.step = 2**64/500000
             self.max_workers = 500
         self.date = date
 
