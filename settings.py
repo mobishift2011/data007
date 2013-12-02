@@ -59,6 +59,7 @@ envs = {
             'ec2-204-236-222-157.compute-1.amazonaws.com:9160',
             'ec2-107-22-10-40.compute-1.amazonaws.com:9160',
         ],
+        'ES_HOSTS': ['ec2-54-237-107-126.compute-1.amazonaws.com:9500'],
     },
 }
 
