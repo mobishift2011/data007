@@ -44,12 +44,16 @@ def aggregate_items(start, end, date=None):
         bi.multi()
         ci.multi()
 
-        iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image 
+        try:
+            iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image 
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)), result=True).results 
-        itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+            itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
                     where token(id)>=:start and token(id)<:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=date1, date2=date2), result=True).results
+        except:
+            return aggregate_items(start, end, date)
+            
 
         itemtsdict = {}
         for row in itemts:
