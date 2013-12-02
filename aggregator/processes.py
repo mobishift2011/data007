@@ -175,12 +175,12 @@ class Process(object):
             try:
                 if self.max_workers is not None and \
                     conn.llen(self.processing.format(self.name)) >= self.max_workers:
-                    time.sleep(1)
+                    time.sleep(2)
                     continue
 
                 result = conn.spop(self.tasks.format(self.name))
                 if result is None:
-                    time.sleep(0.05)
+                    time.sleep(2)
                     continue
 
                 task = result
