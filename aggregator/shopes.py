@@ -25,6 +25,7 @@ def es_shops(start, end, date=None):
                     dict(start=start, end=end), consistency_level='ONE')
             for row in cur:
                 shopid, num_products, credit_score, good_rating, title, logo, type = row
+                credit_score = credit_score or 1
                 try:
                     es_shop(si, date, shopid, num_products, credit_score, good_rating, title, logo, type)
                 except:
