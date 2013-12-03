@@ -13,29 +13,28 @@ import traceback
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
-def es_shops(start, end, date=None):
+def es_shops(shopids, date=None):
     try:
         if date is None:
             date = defaultdate
         si = ShopIndex(date)
-        with db.connection() as cur:
-            cur.execute('''select id, num_products, credit_score, good_rating, title, logo, type
-                    from ataobao2.shop
-                    where token(id)>=:start and token(id)<:end''',
-                    dict(start=start, end=end), consistency_level='ONE')
-            for row in cur:
-                shopid, num_products, credit_score, good_rating, title, logo, type = row
-                credit_score = credit_score or 1
-                try:
-                    es_shop(si, date, shopid, num_products, credit_score, good_rating, title, logo, type)
-                except:
-                    traceback.print_exc()
+        for shopid in shopids:
+            try:
+                es_shop(si, date, shopid)
+            except:
+                traceback.print_exc()
         flush()
     except:
         traceback.print_exc()
 
-def es_shop(si, date, shopid, num_products, credit_score, good_rating, title, logo, type):
+def es_shop(si, date, shopid):
     shopinfo = si.getbase(shopid)
+    num_products = int(shopinfo.get('num_products', 0))
+    credit_score = int(shopinfo.get('credit_score', 0)) or 1
+    good_rating = shopinfo.get('good_rating', '')
+    title = shopinfo.get('title', '')
+    logo = shopinfo.get('title', '')
+    type = shopinfo.get('type', '')
     worth = float(shopinfo.get('worth', 0))
     cates = si.getcates(shopid)
     sales = 0
@@ -50,7 +49,7 @@ def es_shop(si, date, shopid, num_products, credit_score, good_rating, title, lo
 
     items = si.gethotitems(shopid) or []
     hot_items = []
-    if items:
+    if items and sales >= 10000 and credit_score >= 5:
         items = [int(id) for id in items]
         if len(items) == 1:
             r = db.execute('select id, image, num_sold30 from ataobao2.item where id=:id', dict(id=items[0]), result=True)
@@ -90,12 +89,11 @@ class ShopESProcess(Process):
 
     def generate_tasks(self):
         self.clear_redis()
-        count = 0
-        for start in range(-2**63, 2**63, self.step):
-            end = start + self.step
-            if end > 2**63-1:
-                end = 2**63-1
-            self.add_task('aggregator.shopes.es_shops', start, end, date=self.date)
+        ts = ShopIndex(self.date).allshopids
+        for bucket in ts.conn.smembers(ts.bucketskey):
+            shopids = ts.conn.smembers(bucket)
+            shopids = [int(id) for id in shopids]
+            self.add_task('aggregator.shopes.es_shops', shopids, date=self.date)
         self.finish_generation()
 
 sep = ShopESProcess()

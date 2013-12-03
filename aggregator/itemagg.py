@@ -52,6 +52,7 @@ def aggregate_items(start, end, date=None):
                     where token(id)>=:start and token(id)<:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=date1, date2=date2), result=True).results
         except:
+            traceback.print_exc()
             return aggregate_items(start, end, date)
             
 

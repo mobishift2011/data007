@@ -11,6 +11,7 @@ from msgpack import unpackb as unpack, packb as pack
 
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
+from thinredis import ThinSet
 from thinredis import CappedSortedSet
 
 conns = []
@@ -23,6 +24,7 @@ conn = ShardRedis(conns=conns)
 
 
 class ShopIndex(object):
+    shopids = 'shopids_{}' # (date); sets for shopids
     shopindex = 'shopindex_{}_{}_{}_{}_{}' # (date, cate1, cate2, field, monorday); sortedsets for indexes
     shopinfo = 'shopinfo_{}_{}_{}_{}_{}' # (date, cate1, cate2, monorday, shopid); hash for shopinfo 
                                          # sales, deals, active_index, delta_sales, delta_active_index
@@ -36,6 +38,7 @@ class ShopIndex(object):
     def __init__(self, date):
         self.date = date
         self.pipeline = None
+        self.allshopids = ThinSet(self.shopids.format(self.date), 5000000, conn)
 
     def make_skey(self, cate1, cate2):
         return '{}_{}'.format(cate1, cate2)
@@ -57,6 +60,7 @@ class ShopIndex(object):
                     'shophotitems_{}*'.format(date),
                     'shopcatescount_{}*'.format(date),
                     'shopbrandinfo_{}*'.format(date),
+                    'shopids_{}*'.format(date),
                     ]
         for pattern in patterns:
             print('clearing pattern {}'.format(pattern))

@@ -73,7 +73,7 @@ class Process(object):
 
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
-        conn.sadd(self.tasks.format(self.name), pack((caller, args, kwargs))) 
+        conn.sadd(self.tasks.format(self.name), pack((caller, args, kwargs)))
 
     def finish_generation(self):
         conn.set(self.generated.format(self.name), 'true')
@@ -172,15 +172,24 @@ class Process(object):
     def work(self):
         time.sleep(random.random())
         while True:
+            # check status, sleep longer if not processing, break if finished
+            status = self.status()
+            # print self.name, status
+            if status == 'F':
+                break
+            elif status in ['?']:
+                time.sleep(random.randint(15, 30))
+                continue
+
             try:
                 if self.max_workers is not None and \
                     conn.llen(self.processing.format(self.name)) >= self.max_workers:
-                    time.sleep(2)
+                    time.sleep(1)
                     continue
 
                 result = conn.spop(self.tasks.format(self.name))
                 if result is None:
-                    time.sleep(2)
+                    time.sleep(3)
                     continue
 
                 task = result

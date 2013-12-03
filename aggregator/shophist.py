@@ -13,29 +13,25 @@ import traceback
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
-def save_history_shops(start, end, date=None):
+def save_history_shops(shopids, date=None):
     try:
         if date is None:
             date = defaultdate
         si = ShopIndex(date)
         si.multi()
-        with db.connection() as cur:
-            cur.execute('''select id, num_collects from ataobao2.shop
-                    where token(id)>=:start and token(id)<:end''',
-                    dict(start=start, end=end), consistency_level='ONE')
-            for row in cur:
-                shopid, num_collects = row
-                try:
-                    save_history_shop(si, date, shopid, num_collects)
-                except:
-                    traceback.print_exc()
+        for shopid in shopids:
+            try:
+                save_history_shop(si, date, shopid)
+            except:
+                traceback.print_exc()
         si.execute()
     except:
         traceback.print_exc()
 
-def save_history_shop(si, date, shopid, num_collects):
+def save_history_shop(si, date, shopid):
     shopinfo = si.getbase(shopid)
     if shopinfo:
+        num_collects = int(shopinfo.get('num_collects', 0))
         worth = float(shopinfo.get('worth', 0))
         sales = 0
         catetrend = {}
@@ -103,21 +99,18 @@ class ShopHistProcess(Process):
     def __init__(self, date=None):
         super(ShopHistProcess, self).__init__('shophist')
         if ENV == 'DEV':
-            self.step = 2**64/100
             self.max_workers = 10
         else:
-            self.step = 2**64/1000
             self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):
         self.clear_redis()
-        count = 0
-        for start in range(-2**63, 2**63, self.step):
-            end = start + self.step
-            if end > 2**63-1:
-                end = 2**63-1
-            self.add_task('aggregator.shophist.save_history_shops', start, end, date=self.date)
+        ts = ShopIndex(self.date).allshopids
+        for bucket in ts.conn.smembers(ts.bucketskey):
+            shopids = ts.conn.smembers(bucket)
+            shopids = [int(id) for id in shopids]
+            self.add_task('aggregator.shophist.save_history_shops', shopids, date=self.date)
         self.finish_generation()
 
 shp = ShopHistProcess()

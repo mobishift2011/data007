@@ -25,29 +25,36 @@ def aggregate_shops(start, end, date=None):
         ci = CategoryIndex(date)
         si.multi()
         ci.multi()
+        shopids = set()
         with db.connection() as cur:
-            cur.execute('''select id, title, logo, type, credit_score from ataobao2.shop
+            cur.execute('''select id, title, logo, type, credit_score, num_products, good_rating, num_collects
+                    from ataobao2.shop
                     where token(id)>=:start and token(id)<:end''',
                     dict(start=start, end=end), consistency_level='ONE')
+
             for row in cur:
-                shopid, name, logo, type, credit_score = row
+                shopid, name, logo, type, credit_score, num_products, good_rating, num_collects = row
+                shopids.add(shopid)
                 try:
-                    aggregate_shop(si, ci, shopid, name, logo, type, credit_score)
+                    aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products, good_rating, num_collects)
                 except:
                     traceback.print_exc()
+        si.allshopids.add(*shopids)
         si.execute()
         ci.execute()
     except:
         traceback.print_exc()
 
-def aggregate_shop(si, ci, shopid, name, logo, type, credit_score):
+def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products, good_rating, num_collects):
     shopinfo = si.getbase(shopid)
     if shopinfo:
         # create indexes
         active_index = float(shopinfo['active_index_mon'])
         sales = float(shopinfo['sales_mon'])
         worth = 2**credit_score + active_index/3000. + sales/30.
-        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth, 'type':type}
+        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth, 
+                    'type':type, 'num_products':num_products, 'good_rating':good_rating, 
+                    'num_collects':num_collects}
         si.setbase(shopid, update)
 
         def update_with_cates(cate1, cate2):
@@ -77,7 +84,7 @@ class ShopAggProcess(Process):
             self.step = 2**64/100
             self.max_workers = 10
         else:
-            self.step = 2**64/1000
+            self.step = 2**64/10000
             self.max_workers = 100
         self.date = date
 
