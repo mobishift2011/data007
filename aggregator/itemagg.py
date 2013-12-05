@@ -35,7 +35,7 @@ def get_l1_and_l2_cids(cids):
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
 def aggregate_items(start, end, hosts=[], date=None, retry=0):
-    if retry >= 3:
+    if retry >= 9:
         return
     try:
         if date is None:

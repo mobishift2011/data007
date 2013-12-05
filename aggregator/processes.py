@@ -176,6 +176,8 @@ class Process(object):
     def work(self):
         time.sleep(random.random())
         while True:
+            task = None
+
             # check status, sleep longer if not processing, break if finished
             status = self.status()
             # print self.name, status
@@ -212,6 +214,9 @@ class Process(object):
             except:
                 print("can't obtain caller, locals: {}".format(locals()))
                 traceback.print_exc() 
+                if task is not None:
+                    conn.lrem(self.processing.format(self.name), task, 1)
+                    conn.rpush(self.dones.format(self.name), task)
                 continue
 
             try:
