@@ -9,7 +9,12 @@ from datetime import datetime, timedelta
 
 from crawler.cates import cates
 
+import random
+import struct
+import calendar
 import traceback
+
+random = random.SystemRandom()
 
 def get_l1_and_l2_cids(cids): 
     l1l2 = {}
@@ -29,7 +34,9 @@ def get_l1_and_l2_cids(cids):
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
-def aggregate_items(start, end, date=None):
+def aggregate_items(start, end, hosts=[], date=None, retry=0):
+    if retry >= 3:
+        return
     try:
         if date is None:
             date = defaultdate
@@ -45,20 +52,41 @@ def aggregate_items(start, end, date=None):
         ci.multi()
 
         try:
-            iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image 
+            if hosts:
+                d2 = calendar.timegm(date2.utctimetuple())*1000
+                d1 = calendar.timegm(date1.utctimetuple())*1000
+                host = random.choice(hosts)
+                conn = db.get_connection(host)
+                cur = conn.cursor()
+                cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
-                    dict(start=int(start), end=int(end)), result=True).results 
-            itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
-                    where token(id)>=:start and token(id)<:end and date>=:date1 and date<:date2 allow filtering''',
-                    dict(start=int(start), end=int(end), date1=date1, date2=date2), result=True).results
+                    dict(start=int(start), end=int(end)))
+                iteminfos = list(cur)
+                cur.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
+                    dict(start=int(start), end=int(end), date1=d1, date2=d2))
+                itemts = list(cur)
+                conn.close()
+            else:
+                iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image
+                    from ataobao2.item where token(id)>=:start and token(id)<:end''',
+                    dict(start=int(start), end=int(end)), result=True).results
+                itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
+                    dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
             traceback.print_exc()
-            return aggregate_items(start, end, date)
+            return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
             
 
         itemtsdict = {}
         for row in itemts:
-            itemid, date, values = row[0], (row[1]+timedelta(hours=8)).strftime("%Y-%m-%d"), row[2:]
+            itemid, date, values = row[0], row[1], row[2:]
+            if isinstance(date, datetime):
+                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d") 
+            else:
+                date = datetime.utcfromtimestamp(struct.unpack('!q', date)[0]/1000)
+                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d") 
             if itemid not in itemtsdict:
                 itemtsdict[itemid] = {}
             itemtsdict[itemid][date] = values
@@ -157,21 +185,24 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         ci.addbrand(l1, 'all', brand)
 
     # inc brand counters
-    bi.addbrand(brand)
-    bi.addshop(brand, l1, l2, shopid)
-    bi.addcates(brand, l1, l2)
-    if l2 != 'all':
-        bi.addcates(brand, l1, 'all')
-    bi.addhots(brand, l2, itemid, shopid, sales_mon)
-    inc = {
-        'items': 1,
-        'deals': deals_mon,
-        'sales': sales_mon,
-        'delta_sales': delta_sales_mon,
-    }
-    bi.incrinfo(brand, l1, l2, inc)
-    if l2 != 'all':
-        bi.incrinfo(brand, l1, 'all', inc)
+    from aggregator.brands import brands as needaggbrands
+    if brand.decode('utf-8') in needaggbrands:
+        bi.addbrand(brand)
+
+        bi.addshop(brand, l1, l2, shopid)
+        bi.addcates(brand, l1, l2)
+        if l2 != 'all':
+            bi.addcates(brand, l1, 'all')
+        bi.addhots(brand, l2, itemid, shopid, sales_mon)
+        inc = {
+            'items': 1,
+            'deals': deals_mon,
+            'sales': sales_mon,
+            'delta_sales': delta_sales_mon,
+        }
+        bi.incrinfo(brand, l1, l2, inc)
+        if l2 != 'all':
+            bi.incrinfo(brand, l1, 'all', inc)
 
     # inc item counters
     ii.incrcates(l1, l2, sales_mon, deals_mon)
@@ -215,26 +246,45 @@ class ItemAggProcess(Process):
     def __init__(self, date=None):
         super(ItemAggProcess, self).__init__('itemagg')
         if ENV == 'DEV':
-            self.step = 2**64/1000
+            self.step = 256*4
             self.max_workers = 10
         else:
-            self.step = 2**64/500000
+            self.step = 256*10*100
             self.max_workers = 500
         self.date = date
 
     def generate_tasks(self):
         self.clear_redis()
-        count = 0
-        for start in range(-2**63, 2**63, self.step):
-            end = start + self.step
-            if end > 2**63-1:
-                end = 2**63-1
-            self.add_task('aggregator.itemagg.aggregate_items', start, end, date=self.date)
+        conn = db.get()
+        tclient = conn.client
+        ring = tclient.describe_ring('ataobao2')
+        conn.close()
+        tokens = len(ring)
+        slicepertoken = self.step/tokens
+        tasks = []
+        v264 = 2**64
+        v263_1 = 2**63-1
+        for tokenrange in ring:
+            ostart = int(tokenrange.start_token)
+            oend = int(tokenrange.end_token)
+            step = (oend - ostart) // slicepertoken if ostart < oend else (v264+oend - ostart) // slicepertoken
+            for i in range(slicepertoken-1):
+                start = ostart + step * i
+                end = start + step
+                if start > v263_1:
+                    start -= v264
+                if end > v263_1:
+                    end -= v264
+                tasks.append(['aggregator.itemagg.aggregate_items', [start, end], dict(date=self.date, hosts=tokenrange.endpoints)])
+            start += step
+            end = oend
+            tasks.append(['aggregator.itemagg.aggregate_items', [start, end], dict(date=self.date, hosts=tokenrange.endpoints)])
+        self.add_tasks(*tasks)
         self.finish_generation()
 
 iap = ItemAggProcess()
 
 if __name__ == '__main__':
-    iap.date = '2013-11-11'
+    iap.date = '2013-12-04'
     iap.start()
     # aggregate_items(start=-2968877088484347687, end=-2968877088484347687+1)

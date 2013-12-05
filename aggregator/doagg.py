@@ -33,6 +33,7 @@ def build_flow(date=defaultdate):
     iip.add_child(tap)
 
     sap.add_child(sep)
+    bap.add_child(bep)
     
     return iap
 

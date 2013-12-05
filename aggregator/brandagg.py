@@ -41,8 +41,8 @@ def aggregate_brand(bi, ci, date, brand):
             share = 0
 
         if cate2 == 'all':
-            num_shops = bi.getshops(brand, cate1, cate2)
-            bi.setinfo(brand, cate1, cate2, {'share':share})
+            num_shops = bi.getshops(brand, cate1, cate2) or 0
+            bi.setinfo(brand, cate1, cate2, {'share':share, 'shops': num_shops})
             db.execute('''insert into ataobao2.brand_by_date (name, datestr, cate1, sales, share, num_shops)
                 values (:name, :datestr, :cate1, :sales, :share, :num_shops)''',
                 dict(name=brand.decode('utf-8'), datestr=date, cate1=cate1, sales=sales, share=share, num_shops=num_shops))

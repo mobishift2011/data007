@@ -109,9 +109,12 @@ class ShopIndex(object):
         # equals to p.zadd(zkey, itemid, sales), capped to 10, shared by skey
         CappedSortedSet(zkey, 10, p, skey=zkey).zadd(itemid, sales)
 
-    def getrank(self, cate1, cate2, shopid):
-        zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'sales', 'mon')
-        return conn.zrevrank(zkey, shopid, skey=self.make_skey(cate1, cate2))
+    def getrank(self, cate1, cate2, shopid, mod):
+        zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'score', mod)
+        try:
+            return int(conn.zrevrank(zkey, shopid, skey=self.make_skey(cate1, cate2)))+1
+        except:
+            return 0
          
     def incrindex(self, cate1, cate2, field, monorday, shopid, amount):
         date = self.date

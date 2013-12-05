@@ -41,7 +41,7 @@ def index_shop(shopid, info):
     conn.index(info, 'ataobao2', 'shop', shopid, bulk=True)
 
 def index_brand(brand, info):
-    conn.index(info, 'ataobao2', 'brand', shopid, bulk=True)
+    conn.index(info, 'ataobao2', 'brand', brand, bulk=True)
 
 def flush():
     """ flushes bulk operations """

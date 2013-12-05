@@ -12,7 +12,8 @@ cql
 pycassa
 pymongo
 mongoengine
-redis
+# redis-py master branch, for scan related support
+-e git://github.com/andymccurdy/redis-py.git#egg=redis
 #txredisapi>=0.1.1
 
 # framework used

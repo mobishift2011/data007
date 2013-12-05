@@ -71,6 +71,10 @@ class Process(object):
         if ta:
             return 1.*tl/ta
 
+    def add_tasks(self, *tasktuples):
+        tasks = [ pack((caller, args, kwargs)) for caller, args, kwargs in tasktuples ]
+        conn.sadd(self.tasks.format(self.name), *tasks)
+
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
         conn.sadd(self.tasks.format(self.name), pack((caller, args, kwargs)))

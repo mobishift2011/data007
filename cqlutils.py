@@ -58,6 +58,8 @@ import logging
 from collections import namedtuple
 from contextlib import contextmanager
 
+random = random.SystemRandom()
+
 class RowResult(tuple):
     pass
 
@@ -119,6 +121,12 @@ class ConnectionPool(object):
             conn.close()
         else:
             self.queue.put(conn)
+
+    def get_connection(self, host, port=9160):
+        """ get connection to specified host """
+        conn = cql.connect(host, port, user=self.username, password=self.password, consistency_level='ONE') 
+        conn.set_cql_version('3.0.0')
+        return conn
 
     def _create_connection(self):
         """

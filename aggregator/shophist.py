@@ -38,7 +38,7 @@ def save_history_shop(si, date, shopid):
         cates = si.getcates(shopid)
         c1s = list(set([c[0] for c in cates]))
         for c1 in c1s:
-            catetrend[c1] = {'rank': si.getrank(c1, 'all', shopid)}
+            catetrend[c1] = {'rank': si.getrank(c1, 'all', shopid, 'day')}
             info = si.getinfo(c1, 'all', 'day', shopid)
             if info:
                 catetrend[c1]['sales'] = float(info.get('sales', 0))
@@ -116,5 +116,5 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
-    shp.date = '2013-11-25'
+    shp.date = '2013-12-03'
     shp.start()
