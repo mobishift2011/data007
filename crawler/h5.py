@@ -422,7 +422,7 @@ def get_item(itemid):
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
                 price = float(pu['price'].split('-')[0])
-                promo = pu['name']
+                promo = '' if pu['name'] == u'价格' else pu['name']
                 return {'price': price, 'promo': promo}
             else:
                 o = get_json('mtop.wdetail.getItemDetailOther', {"itemNumId": itemid})
