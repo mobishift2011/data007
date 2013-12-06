@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from crawler.cates import cates
 
+import time
 import random
 import struct
 import calendar
@@ -76,6 +77,8 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
             traceback.print_exc()
+            print('sleeping 5 secs...')
+            time.sleep(5)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
             
 
