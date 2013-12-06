@@ -3,7 +3,7 @@
 import argparse
 
 from aggregator import iap, sap, bap, cap, shp, iip, tap, sep, bep, all_processes
-from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
+from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex, clear_date
 from datetime import datetime, timedelta
 
 defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
@@ -12,10 +12,7 @@ def clearall(date):
     for p in all_processes:
         p.clear_redis()
 
-    ShopIndex(date).clear()
-    ItemIndex(date).clear()
-    BrandIndex(date).clear()
-    CategoryIndex(date).clear()
+    clear_date(date)
 
 def build_flow(date=defaultdate):
     for p in all_processes:

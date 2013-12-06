@@ -22,6 +22,20 @@ for uri in AGGRE_URIS:
 
 conn = ShardRedis(conns=conns)
 
+def clear_date(date):
+    pattern = '*_{}*'.format(date)
+    for r in conn.conns:
+        print 'clearing {}'.format(r)
+        p = r.pipeline()
+        cursor = 0
+        while True:
+            cursor, keys = r.scan(cursor, match=pattern, count=100000) 
+            print 'curosr {}, keys {}'.format(cursor, len(keys))
+            if int(cursor) == 0:
+                break
+            if len(keys):
+                p.delete(*keys) 
+        p.execute()
 
 class ShopIndex(object):
     shopids = 'shopids_{}' # (date); sets for shopids
@@ -66,8 +80,13 @@ class ShopIndex(object):
             print('clearing pattern {}'.format(pattern))
             for r in conn.conns:
                 p = r.pipeline()
-                for key in r.keys(pattern):
-                    p.delete(key)
+                cursor = 0
+                while True:
+                    cursor, keys = r.scan(cursor, match=pattern, count=10000) 
+                    if int(cursor) == 0:
+                        break
+                    if len(keys):
+                        p.delete(*keys) 
                 p.execute()
 
     def getshops(self, cate1, cate2):
@@ -207,8 +226,13 @@ class ItemIndex(object):
             print('clearing pattern {}'.format(pattern))
             for r in conn.conns:
                 p = r.pipeline()
-                for key in r.keys(pattern):
-                    p.delete(key)
+                cursor = 0
+                while True:
+                    cursor, keys = r.scan(cursor, match=pattern, count=10000) 
+                    if int(cursor) == 0:
+                        break
+                    if len(keys):
+                        p.delete(*keys) 
                 p.execute()
 
     def incrcates(self, cate1, cate2, sales, deals):
@@ -286,8 +310,13 @@ class BrandIndex(object):
             print('clearing pattern {}'.format(pattern))
             for r in conn.conns:
                 p = r.pipeline()
-                for key in r.keys(pattern):
-                    p.delete(key)
+                cursor = 0
+                while True:
+                    cursor, keys = r.scan(cursor, match=pattern, count=10000) 
+                    if int(cursor) == 0:
+                        break
+                    if len(keys):
+                        p.delete(*keys) 
                 p.execute()
 
     def getcates(self, brand):
@@ -387,8 +416,13 @@ class CategoryIndex(object):
             print('clearing pattern {}'.format(pattern))
             for r in conn.conns:
                 p = r.pipeline()
-                for key in r.keys(pattern):
-                    p.delete(key)
+                cursor = 0
+                while True:
+                    cursor, keys = r.scan(cursor, match=pattern, count=10000) 
+                    if int(cursor) == 0:
+                        break
+                    if len(keys):
+                        p.delete(*keys) 
                 p.execute()
 
     def setindex(self, cate1, cate2, field, monorday, amount):
@@ -429,3 +463,7 @@ class CategoryIndex(object):
         hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
         p.sadd(hkey, brand)
+
+
+if __name__ == '__main__':
+    clear_date('2013-12-06')
