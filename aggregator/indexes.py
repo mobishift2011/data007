@@ -6,6 +6,7 @@ import redis
 import hashlib
 import binascii
 import traceback
+import threading
 
 from msgpack import unpackb as unpack, packb as pack
 
@@ -24,7 +25,7 @@ conn = ShardRedis(conns=conns)
 
 def clear_date(date):
     pattern = '*_{}*'.format(date)
-    for r in conn.conns:
+    def clear_conn(r):
         print 'clearing {}'.format(r)
         p = r.pipeline()
         cursor = 0
@@ -36,6 +37,15 @@ def clear_date(date):
             if len(keys):
                 p.delete(*keys) 
         p.execute()
+
+    tasks = []
+    for r in conn.conns:
+        t = threading.Thread(target=clear_conn, args=(r,))      
+        t.start() 
+        tasks.append(t)
+
+    for t in tasks:
+        t.join()
 
 class ShopIndex(object):
     shopids = 'shopids_{}' # (date); sets for shopids
