@@ -126,8 +126,8 @@ class EC2Monitor(threading.Thread):
                     run_instances = int(row['instance_num']) - len([x.id for x in instance_list if x.state in ["running", "pending"]]) - len([x.id for x in req_list if x.state == "open"])
                     if run_instances > 0:
                         print "run_instances,need", run_instances
-                        if run_instances > 3:
-                            run_instances = 3
+                        if run_instances > 10:
+                            run_instances = 10
                         
                         print "run_instances,real", run_instances
                         try:
@@ -143,7 +143,8 @@ class EC2Monitor(threading.Thread):
                                 #security_groups = ['general'],
                                 security_group_ids = map(str, row['security_group_ids']), 
                                 instance_type = row['instance_type'], 
-                                user_data = row['script_code']
+                                user_data = row['script_code'],
+                                #dry_run = True
                             )
                             log.msg("run_instances:{}".format(rets))
                         except Exception, e:
@@ -153,9 +154,8 @@ class EC2Monitor(threading.Thread):
                         try:
                             for ret in rets:
                                 ret.add_tag('Name', tag_name)
-                        except:
-                            pass
-                        
+                        except Exception, e:
+                            print e
                         
                         rcnd = 0
                         while 1:
@@ -206,7 +206,7 @@ def main():
     #ret = request_instances()
     print "finish!!!"
     #conn.create_tags(['r-75625877'], {'Name':'aaaaaaaaa'})
-    
+
 def request_instances():
     ret = conn.run_instances(
         "ami-a579efa4", 
@@ -220,7 +220,6 @@ def request_instances():
         #user_data=get_init_script(*(NUMS.get(itype, (10, 10))),burst=burst)
     )
     return ret
-
 
 if __name__ == "__main__":
     log.startLogging(sys.stdout)

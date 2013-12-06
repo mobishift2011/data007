@@ -32,10 +32,10 @@ def clear_date(date):
         while True:
             cursor, keys = r.scan(cursor, match=pattern, count=100000) 
             print 'curosr {}, keys {}'.format(cursor, len(keys))
-            if int(cursor) == 0:
-                break
             if len(keys):
                 p.delete(*keys) 
+            if int(cursor) == 0:
+                break
         p.execute()
 
     tasks = []
