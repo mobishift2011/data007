@@ -37,7 +37,7 @@ defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
 def aggregate_items(start, end, hosts=[], date=None, retry=0):
     if retry >= 9:
-        return
+        raise Exception('retry over 9 times, give up')
     try:
         if date is None:
             date = defaultdate
@@ -76,8 +76,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
-            traceback.print_exc()
-            print('sleeping 5 secs...')
+            print('cluster error, sleeping 5 secs...')
             time.sleep(5)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
             
