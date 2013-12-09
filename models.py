@@ -83,7 +83,7 @@ def update_item(item):
     db.batch([
             insert_into_item,
             insert_into_item_by_date,
-            insert_into_shop_by_item])
+    ])
 
     if d['num_sold30'] == 0:
         IF.add(d['id'])
