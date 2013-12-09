@@ -57,7 +57,7 @@ class AllScheduler(Scheduler):
             ItemCT.add_items(*ids)
         
         for cid in fecids:
-            self.pool.spawn(list_cat, cid, on_ids=on_ids, use_pool=False)
+            self.pool.spawn(list_cat, cid, on_ids=on_ids, use_pool=False, num_paths=1, max_page=1)
         self.pool.join()
 
 class FullScheduler(Scheduler):
