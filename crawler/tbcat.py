@@ -65,7 +65,7 @@ def get_json(cid, paths=[], page=1, sort=None):
     return data
 
 
-def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
+def list_cat(cid=None, sort=None, on_ids=None, use_pool=False, max_page=10, num_paths=2):
     """ listing category by cid, find all item ids, callback on ``on_ids`` 
        
     :param cid: taobao category id, can be rootcid or leafcid or None(listing all)
@@ -97,13 +97,13 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False):
 
         if page == 1:
             count = get_count(data)
-            for p in range(2, 2+min(count/95, 30)):
+            for p in range(2, min(2+count/95, max_page+1)):
                 if pathpool is not None:
                     pathpool.spawn(list_paths, paths, p, cid=cid)
                 else:
                     list_paths(paths, p, cid=cid)
         
-    list_cat_paths(cid, pool=catpool, on_paths=list_paths)
+    list_cat_paths(cid, pool=catpool, on_paths=list_paths, num_paths=num_paths)
 
     if use_pool:
         catpool.join()
