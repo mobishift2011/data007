@@ -59,13 +59,6 @@ CREATE TABLE IF NOT EXISTS item (
     delivery_type   int,
 );
 
-CREATE TABLE IF NOT EXISTS shop_by_item (
-    id              bigint,
-    date            timestamp,
-    iid             bigint,
-    PRIMARY KEY (id, date)
-);
- 
 CREATE TABLE IF NOT EXISTS item_by_date (
     id              bigint,
     date            timestamp,
@@ -92,13 +85,6 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
     title           text,
     good_rating     float,
     PRIMARY KEY (id, datestr)
-);
-
-CREATE TABLE IF NOT EXISTS item_attr (
-    id              bigint,
-    attr_name       text,
-    attr_value      text,
-    PRIMARY KEY (id, attr_name)
 );
 
 CREATE TABLE IF NOT EXISTS brand (

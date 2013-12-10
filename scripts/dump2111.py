@@ -86,9 +86,8 @@ def sync_table(table, fields):
     
 def sync_cassandra():
     for table, fields in schemas.iteritems():
-        if table not in ['ataobao2.item_attr', 'ataobao2.shop_by_item']:
         #if table == 'ataobao2.shop_by_date':
-            sync_table(table, fields)
+        sync_table(table, fields)
     pool.join()
 
 def sync_redis():
