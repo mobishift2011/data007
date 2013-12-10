@@ -72,6 +72,37 @@ shop
         + imagePath
         + subCates. id, name, imagePath
 
+
+item rates
+==========
+There are two catogory of ataobao items: tmall's or taobao's
+
+for taobao items, they don't have rates per item, their rates are seller's rates
+    use link like this:
+        http://count.tbcdn.cn/counter3?keys=SM_368_sm-{sellerId},ICE_3_feedcount-{itemId}&callback=jsonp#
+        e.g. http://count.tbcdn.cn/counter3?keys=SM_368_sm-1762232325,ICE_3_feedcount-19607285733&callback=jsonp#
+    which returns like this:
+        jsonp(
+        {
+            ICE_3_feedcount-19607285733: 364,
+            SM_368_sm-1762232325: 4.7
+        }
+        )
+
+for tmall items, their rates can be retrieved from 
+    link formated: 
+        http://dsr.rate.tmall.com/list_dsr_info.htm?itemId={itemId}&sellerId={sellerId}
+        e.g. http://dsr.rate.tmall.com/list_dsr_info.htm?itemId=36272886944&sellerId=379092568
+    which returns like this:
+    jsonp128(
+    {
+        dsr: {
+            gradeAvg: 5,
+            rateTotal: 1
+        }
+    }
+    )
+
 """
 import re
 import time
@@ -101,7 +132,7 @@ vs = {
     "mtop.wdetail.getItemDetailDynForH5": 4.0,
     "mtop.wdetail.getItemDetailStatic": 4.0,
     "mtop.wdetail.getItemDetailOther": 4.0,
-    "mtop.wdetail.getItemRates": 2.0,
+    "mtop.wdetail.getItemRates": 4.0,
 }
 
 class NetworkError(Exception):

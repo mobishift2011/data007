@@ -13,7 +13,7 @@ def clearall(date):
         p.clear_redis()
 
     d = datetime.strptime(date, '%Y-%m-%d')
-    for delta in range(5):
+    for delta in range(2, 5):
         date = (d - timedelta(days=delta)).strftime("%Y-%m-%d")
         clear_date(date)
 
