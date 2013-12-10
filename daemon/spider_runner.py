@@ -202,10 +202,10 @@ class TaskClientProtocol(WampClientProtocol):
             log.msg('set_schd_name err:%s' % e)
 
         else:
-            if 'crawler' in runner_info["spider_name"]:
+            if 'spider' in runner_info["spider_name"]:
                 from random import randint
                 self.restart_spiders_every(randint(60*5, 60*10))
-                reactor.callLater(30, self.init_session)
+            reactor.callLater(30, self.init_session)
 
         
     def init_session(self):
