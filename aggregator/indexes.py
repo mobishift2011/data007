@@ -26,7 +26,7 @@ conn = ShardRedis(conns=conns)
 def clear_date(date):
     pattern = '*_{}*'.format(date)
     def clear_conn(r):
-        print 'clearing {}'.format(r)
+        print 'clearing {} on {}'.format(r, date)
         p = r.pipeline()
         cursor = 0
         while True:

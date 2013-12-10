@@ -38,11 +38,6 @@ CREATE TABLE IF NOT EXISTS shop (
     charge          text,
     promise         text,
     main_sale       text,
-
-    rank_num        int,
-    rank            text,
-    rates           text,
-    rateid          text,
 );
 
 CREATE TABLE IF NOT EXISTS item (
@@ -62,10 +57,6 @@ CREATE TABLE IF NOT EXISTS item (
     num_views       int,
     promo           text,
     delivery_type   int,
-
-    rcid            int,
-    rating          float,
-    pagetype        text,
 );
 
 CREATE TABLE IF NOT EXISTS shop_by_item (

@@ -11,6 +11,7 @@ import redis
 import struct
 import socket
 from cqlutils import ConnectionPool
+from datetime import datetime, timedelta
 
 
 pool = gevent.pool.Pool(8)
@@ -54,7 +55,12 @@ def sync_table(table, fields):
         with db1.connection() as cur:
             print 'piece', i+1
             #print 'select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), dict(v1=start, v2=end)
-            cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), 
+            if table.endswith('_by_date') and 'datestr' in fields:
+                d0 = (datetime.utcnow() + timedelta(hours=8) - timedelta(days=2)).strftime('%Y-%m-%d')
+                cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2 and datestr>=:d0 allow filtering'.format(f1, table, fields[0], fields[0]), 
+                        dict(v1=start, v2=end, d0=d0), consistency_level='ONE')
+            else:
+                cur.execute('select {} from {} where token({})>=:v1 and token({})<:v2'.format(f1, table, fields[0], fields[0]), 
                         dict(v1=start, v2=end), consistency_level='ONE')
             for j, row in enumerate(cur):
                 if j % 1000 == 0:

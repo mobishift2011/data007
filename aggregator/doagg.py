@@ -12,7 +12,10 @@ def clearall(date):
     for p in all_processes:
         p.clear_redis()
 
-    clear_date(date)
+    d = datetime.strptime(date, '%Y-%m-%d')
+    for delta in range(5):
+        date = (d - timedelta(days=delta)).strftime("%Y-%m-%d")
+        clear_date(date)
 
 def build_flow(date=defaultdate):
     for p in all_processes:
