@@ -110,7 +110,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False, max_page=10, num_
         pathpool.join()
     return list(set(ids))
 
-def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, on_paths=None, sort=None):
+def list_cat_paths(cid, depth=0, paths=[], allpath=None, pool=None, num_paths=2, on_paths=None, sort=None):
     """ try filter category by paths, and list all paths have less than 9500 items
     
     :param cid: category id
@@ -135,7 +135,7 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, o
         for scid in cids:
             list_cat_paths(scid, pool=pool, on_paths=on_paths)
 
-    if allpath == [] and data and data['propertyList']:
+    if allpath is None and data and data['propertyList']:
         allpath = [ [p2['value'] for p2 in p1['propertyList']] for p1 in data['propertyList'] ]
         allpath = sorted(allpath, key=len, reverse=True)[:num_paths]
         paths = [''] * len(allpath)
@@ -144,9 +144,9 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=[], pool=None, num_paths=2, o
         for ppath in chain(allpath[depth], ['']):
             paths[depth] = ppath
             if pool is not None:
-                pool.spawn(list_cat_paths, cid, depth+1, list(paths), allpath, on_paths=on_paths)
+                pool.spawn(list_cat_paths, cid, depth+1, list(paths), allpath, pool=pool, num_paths=num_paths, on_paths=on_paths, sort=sort)
             else:
-                list_cat_paths(cid, depth+1, paths, allpath, on_paths=on_paths)
+                list_cat_paths(cid, depth+1, list(paths), allpath, pool=pool, num_paths=num_paths, on_paths=on_paths, sort=sort)
     else:
         if on_paths is None:
             print(paths)
@@ -161,16 +161,18 @@ def main():
     parser = argparse.ArgumentParser(description='Listing ids of a (leaf) category')
     parser.add_argument('--cid', '-c', type=int, help='taobao cid, e.g. 51106012', required=True)
     parser.add_argument('--pool', '-p', action='store_true', help='use gevent pool to boost execution')
+    parser.add_argument('--num_paths', '-n', type=int, default=2, help='number of paths, default to 2')
+    parser.add_argument('--max_page', '-m', type=int, default=1, help='max page, default to 1')
     option = parser.parse_args()
-    print('total items: {}'.format(len(test_list(option.cid, option.pool))))
+    print('total items: {}'.format(len(test_list(option.cid, option.pool, option.num_paths, option.max_page))))
 
-def test_list(cid, use_pool=False):
+def test_list(cid, use_pool=False, num_paths=2, max_page=1):
     allids = set()
     def on_ids(ids):
         allids.update(ids)
         print('total ids: {}'.format(len(allids)))
     
-    list_cat(cid, on_ids, use_pool=use_pool)
+    return list_cat(cid, on_ids, use_pool=use_pool, num_paths=num_paths, max_page=max_page)
 
 if __name__ == '__main__':
     main()

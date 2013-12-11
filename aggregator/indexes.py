@@ -25,15 +25,24 @@ conn = ShardRedis(conns=conns)
 
 def clear_date(date):
     pattern = '*_{}*'.format(date)
+
+    def clear_conn_lua(r):
+        script = '''
+        for _, k in ipairs(redis.call('keys', ARGV[1])) do 
+            redis.call('del', k) 
+        end
+        '''
+        r.eval(script, 0, pattern)
+
     def clear_conn(r):
         print 'clearing {} on {}'.format(r, date)
         p = r.pipeline()
         cursor = 0
         while True:
-            cursor, keys = r.scan(cursor, match=pattern, count=100000) 
+            cursor, keys = r.scan(cursor, match=pattern, count=10000) 
             print 'curosr {}, keys {}'.format(cursor, len(keys))
             if len(keys):
-                p.delete(*keys) 
+                conn.delete(*keys) 
             if int(cursor) == 0:
                 break
         p.execute()

@@ -44,7 +44,7 @@ class AllScheduler(Scheduler):
         self.pool = gevent.pool.Pool(100)
 
     def should_run(self):
-        week = int(time.mktime(time.gmtime())/86400/7)
+        week = int(time.mktime(time.gmtime())/86400)
         if week != self.week:
             self.week = week
             return True
