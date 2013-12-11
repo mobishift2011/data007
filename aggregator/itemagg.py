@@ -6,16 +6,14 @@ from aggregator.processes import Process
 
 from settings import ENV
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 from crawler.cates import cates
 
 import time
-import random
 import struct
 import calendar
 import traceback
-
-random = random.SystemRandom()
 
 def get_l1_and_l2_cids(cids): 
     l1l2 = {}
@@ -36,8 +34,8 @@ def get_l1_and_l2_cids(cids):
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
 def aggregate_items(start, end, hosts=[], date=None, retry=0):
-    if retry >= 9:
-        raise Exception('retry over 9 times, give up')
+    if hosts == []:
+        raise Exception('retry too many times, give up')
     try:
         if date is None:
             date = defaultdate
@@ -56,7 +54,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
             if hosts:
                 d2 = calendar.timegm(date2.utctimetuple())*1000
                 d1 = calendar.timegm(date1.utctimetuple())*1000
-                host = random.choice(hosts)
+                host = hosts[0]
                 conn = db.get_connection(host)
                 cur = conn.cursor()
                 cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image
@@ -76,7 +74,11 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
-            print('cluster error, sleeping 5 secs...')
+            print('cluster error on host {}, range {}, sleeping 5 secs...'.format(hosts[0], (start, end)))
+            if retry >= 3:
+                # for each host, we try it 3 times at maximum
+                retry = -1
+                hosts = hosts[1:]
             time.sleep(5)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
             
@@ -263,13 +265,14 @@ class ItemAggProcess(Process):
         conn.close()
         tokens = len(ring)
         slicepertoken = self.step/tokens
-        tasks = []
+        tasks = defaultdict(list)
         v264 = 2**64
         v263_1 = 2**63-1
         for tokenrange in ring:
             ostart = int(tokenrange.start_token)
             oend = int(tokenrange.end_token)
             step = (oend - ostart) // slicepertoken if ostart < oend else (v264+oend - ostart) // slicepertoken
+            hosts = tokenrange.endpoints
             for i in range(slicepertoken-1):
                 start = ostart + step * i
                 end = start + step
@@ -277,11 +280,17 @@ class ItemAggProcess(Process):
                     start -= v264
                 if end > v263_1:
                     end -= v264
-                tasks.append(['aggregator.itemagg.aggregate_items', [start, end], dict(date=self.date, hosts=tokenrange.endpoints)])
+                tasks[hosts[0]].append(('aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)))
             start += step
             end = oend
-            tasks.append(['aggregator.itemagg.aggregate_items', [start, end], dict(date=self.date, hosts=tokenrange.endpoints)])
-        self.add_tasks(*tasks)
+            tasks[hosts[0]].append(('aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)))
+        universe_tasks = []
+        while sum(map(len, tasks.itervalues())):
+            for host in tasks:
+                if tasks[host]:
+                    task = tasks[host].pop()
+                    universe_tasks.append(task)
+        self.add_tasks(*universe_tasks)
         self.finish_generation()
 
 iap = ItemAggProcess()
@@ -289,4 +298,4 @@ iap = ItemAggProcess()
 if __name__ == '__main__':
     iap.date = '2013-12-04'
     iap.start()
-    # aggregate_items(start=-2968877088484347687, end=-2968877088484347687+1)
+    # aggregate_items(start=-2968877088484347687, end=-2968877088484347687+

@@ -57,10 +57,10 @@ class Process(object):
         conn.delete(self.started_at.format(self.name))
 
     def task_left(self):
-        return conn.scard(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name))
+        return conn.llen(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name))
 
     def task_all(self):
-        return conn.scard(self.tasks.format(self.name)) +\
+        return conn.llen(self.tasks.format(self.name)) +\
                     conn.llen(self.processing.format(self.name)) +\
                     conn.llen(self.dones.format(self.name))
 
@@ -73,11 +73,11 @@ class Process(object):
 
     def add_tasks(self, *tasktuples):
         tasks = [ pack((caller, args, kwargs)) for caller, args, kwargs in tasktuples ]
-        conn.sadd(self.tasks.format(self.name), *tasks)
+        conn.rpush(self.tasks.format(self.name), *tasks)
 
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
-        conn.sadd(self.tasks.format(self.name), pack((caller, args, kwargs)))
+        conn.rpush(self.tasks.format(self.name), pack((caller, args, kwargs)))
 
     def finish_generation(self):
         conn.set(self.generated.format(self.name), 'true')
@@ -193,14 +193,14 @@ class Process(object):
                     time.sleep(1)
                     continue
 
-                result = conn.spop(self.tasks.format(self.name))
+                result = conn.lpop(self.tasks.format(self.name))
                 if result is None:
                     time.sleep(3)
                     continue
 
                 task = result
-                conn.rpush(self.processing.format(self.name), task)
                 caller, args, kwargs = unpack(task)
+                conn.rpush(self.processing.format(self.name), task)
                 conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
 
                 print('work on {}, {}, {}'.format(caller, args[:5], kwargs))
@@ -217,6 +217,7 @@ class Process(object):
                 if task is not None:
                     conn.lrem(self.processing.format(self.name), task, 1)
                     conn.rpush(self.dones.format(self.name), task)
+                    conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
                 continue
 
             try:
