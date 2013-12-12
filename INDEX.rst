@@ -126,7 +126,7 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
 品牌索引
 --------
 
-1. brand_{date}_{brand}_{cate1}_{cate2}
+1. brandshop_{date}_{brand}_{cate1}_{cate2}
     * set: shopid
     * 指定品牌在指定分类下的店铺个数
     * brand = 品牌

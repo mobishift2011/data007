@@ -39,10 +39,10 @@ def clear_date(date):
         p = r.pipeline()
         cursor = 0
         while True:
-            cursor, keys = r.scan(cursor, match=pattern, count=10000) 
+            cursor, keys = r.scan(cursor, match=pattern, count=100000) 
             print 'curosr {}, keys {}'.format(cursor, len(keys))
             if len(keys):
-                conn.delete(*keys) 
+                p.delete(*keys) 
             if int(cursor) == 0:
                 break
         p.execute()
