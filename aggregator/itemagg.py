@@ -196,6 +196,7 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         bi.addshop(brand, l1, l2, shopid)
         bi.addcates(brand, l1, l2)
         if l2 != 'all':
+            bi.addshop(brand, l1, 'all', shopid)
             bi.addcates(brand, l1, 'all')
         bi.addhots(brand, l2, itemid, shopid, sales_mon)
         inc = {

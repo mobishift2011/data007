@@ -344,11 +344,13 @@ class BrandIndex(object):
     def addshop(self, brand, cate1, cate2, shopid):
         skey = BrandIndex.brandshop.format(self.date, brand, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
-        p.sadd(skey, shopid) 
+        c12 = self.make_skey(cate1, cate2)
+        p.sadd(skey, shopid, skey=c12)
 
     def getshops(self, brand, cate1, cate2):
         skey = BrandIndex.brandshop.format(self.date, brand, cate1, cate2)
-        return conn.scard(skey)
+        c12 = self.make_skey(cate1, cate2)
+        return conn.scard(skey, skey=c12)
 
     def getinfo(self, brand, cate1, cate2):
         hkey = BrandIndex.brandinfo.format(self.date, brand, cate1, cate2)
@@ -452,7 +454,8 @@ class CategoryIndex(object):
     def incrcredit(self, cate1, cate2, credit_score):
         hkey = CategoryIndex.categorycredits.format(self.date, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
-        p.hincrby(hkey, credit_score, 1)
+        c12 = self.make_skey(cate1, cate2)
+        p.hincrby(hkey, credit_score, 1, skey=c12)
 
     def getinfo(self, cate1, cate2, monorday):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
@@ -461,11 +464,11 @@ class CategoryIndex(object):
 
     def setinfo(self, cate1, cate2, monorday, categoryinfo):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
+        c12 = self.make_skey(cate1, cate2)
         #p = conn if self.pipeline is None else self.pipeline
-        #c12 = self.make_skey(cate1, cate2)        
         #p.hmset(hkey, categoryinfo, skey=c12)
         for r in conn.conns:
-            r.hmset(hkey, categoryinfo)
+            r.hmset(hkey, categoryinfo, skey=c12)
 
     def incrinfo(self, cate1, cate2, monorday, categoryinfo):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
@@ -476,12 +479,14 @@ class CategoryIndex(object):
 
     def getbrands(self, cate1, cate2):
         hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
-        return conn.scard(hkey)    
+        c12 = self.make_skey(cate1, cate2)
+        return conn.scard(hkey, skey=c12)
 
     def addbrand(self, cate1, cate2, brand):
         hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
         p = conn if self.pipeline is None else self.pipeline
-        p.sadd(hkey, brand)
+        c12 = self.make_skey(cate1, cate2)
+        p.sadd(hkey, brand, skey=c12)
 
 
 if __name__ == '__main__':
