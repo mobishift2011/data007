@@ -58,7 +58,7 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
         si.setbase(shopid, update)
 
         def update_with_cates(cate1, cate2):
-            ci.incrcredit(cate1, cate2, credit_score)
+            ci.incrcredit(cate1, cate2, credit_score if type =='taobao' else 21)
             for mod in ['mon', 'day']:
                 shopinfo = si.getinfo(cate1, cate2, mod, shopid)
                 for field in ['sales', 'deals', 'active_index']:

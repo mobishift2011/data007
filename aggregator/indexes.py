@@ -468,7 +468,7 @@ class CategoryIndex(object):
         #p = conn if self.pipeline is None else self.pipeline
         #p.hmset(hkey, categoryinfo, skey=c12)
         for r in conn.conns:
-            r.hmset(hkey, categoryinfo, skey=c12)
+            r.hmset(hkey, categoryinfo)
 
     def incrinfo(self, cate1, cate2, monorday, categoryinfo):
         hkey = CategoryIndex.categoryinfo.format(self.date, cate1, cate2, monorday)
