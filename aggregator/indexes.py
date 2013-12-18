@@ -477,6 +477,11 @@ class CategoryIndex(object):
         for field, value in categoryinfo.iteritems():
             p.hincrbyfloat(hkey, field, value, skey=c12)
 
+    def getbrandnames(self, cate1, cate2):
+        hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
+        c12 = self.make_skey(cate1, cate2)
+        return conn.smembers(hkey, skey=c12)
+
     def getbrands(self, cate1, cate2):
         hkey = CategoryIndex.categorybrands.format(self.date, cate1, cate2)
         c12 = self.make_skey(cate1, cate2)

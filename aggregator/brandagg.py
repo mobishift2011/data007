@@ -3,6 +3,7 @@
 from models import db
 from aggregator.indexes import BrandIndex, CategoryIndex
 from aggregator.processes import Process
+from crawler.cates import l1l2s, topcids
 
 from settings import ENV
 from datetime import datetime, timedelta
@@ -40,9 +41,10 @@ def aggregate_brand(bi, ci, date, brand):
         except:
             share = 0
 
+        num_shops = bi.getshops(brand, cate1, cate2) or 0
+        bi.setinfo(brand, cate1, cate2, {'share':share, 'shops': num_shops})
+
         if cate2 == 'all':
-            num_shops = bi.getshops(brand, cate1, cate2) or 0
-            bi.setinfo(brand, cate1, cate2, {'share':share, 'shops': num_shops})
             db.execute('''insert into ataobao2.brand_by_date (name, datestr, cate1, sales, share, num_shops)
                 values (:name, :datestr, :cate1, :sales, :share, :num_shops)''',
                 dict(name=brand.decode('utf-8'), datestr=date, cate1=cate1, sales=sales, share=share, num_shops=num_shops))
@@ -50,12 +52,8 @@ def aggregate_brand(bi, ci, date, brand):
 
     # update info & index
     cates = bi.getcates(brand)
-    c1s = list(set([c[0] for c in cates]))
-    for c1 in c1s:
-        update_with_cates(c1, 'all')
     for cate1, cate2 in cates:
         update_with_cates(cate1, cate2)
-
 
 class BrandAggProcess(Process):
     def __init__(self, date=None):
@@ -71,15 +69,22 @@ class BrandAggProcess(Process):
     def generate_tasks(self):
         self.clear_redis()
         bi = BrandIndex(self.date)
-        from aggregator.brands import brands as brands1
+        ci = CategoryIndex(self.date)
+        #from aggregator.brands import brands as brands1
         brands2 = set(b.decode('utf-8') for b in bi.getbrands())
-        brands = list(brands1 & brands2)
-        for i in range(len(brands)/self.step):
-            bs = brands[i*self.step:(i+1)*self.step]
-            self.add_task('aggregator.brandagg.aggregate_brands', self.date, *bs)
+        #brands = list(brands1 & brands2)
+        allbrands = set()
+        for cate1, cate2 in l1l2s:
+            brands1 = ci.getbrandnames(cate1, cate2)
+            brands = list(brands1 - allbrands)
+            allbrands.update(brands1)
+            for i in range(1+len(brands)/self.step):
+                bs = brands[i*self.step:(i+1)*self.step]
+                self.add_task('aggregator.brandagg.aggregate_brands', self.date, *bs)
         self.finish_generation()
 
 bap = BrandAggProcess()
 
 if __name__ == '__main__':
+    bap.date = '2013-12-18'
     bap.start()

@@ -18,8 +18,9 @@ def aggregate_categories(date=None):
     ci = CategoryIndex(date)
     si = ShopIndex(date)
     ci.multi()
-    l1l2s.extend([[c, 'all'] for c in topcids])
-    for cate1, cate2 in l1l2s:
+    cates = list(l1l2s)
+    cates.extend([[c, 'all'] for c in topcids])
+    for cate1, cate2 in cates:
         for mod in ['mon', 'day']:
             info = {
                 'shops': si.getshops(cate1, cate2),

@@ -190,7 +190,8 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
 
     # inc brand counters
     from aggregator.brands import brands as needaggbrands
-    if brand.decode('utf-8') in needaggbrands:
+    # if brand.decode('utf-8') in needaggbrands:
+    if True:
         bi.addbrand(brand)
 
         bi.addshop(brand, l1, l2, shopid)
