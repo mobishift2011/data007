@@ -32,8 +32,8 @@ def es_shop(si, date, shopid):
     num_products = int(shopinfo.get('num_products', 0))
     credit_score = int(shopinfo.get('credit_score', 0)) or 1
     good_rating = shopinfo.get('good_rating', '')
-    title = shopinfo.get('title', '')
-    logo = shopinfo.get('title', '')
+    title = shopinfo.get('name', '')
+    logo = shopinfo.get('logo', '')
     type = shopinfo.get('type', '')
     worth = float(shopinfo.get('worth', 0))
     cates = si.getcates(shopid)
@@ -99,5 +99,5 @@ class ShopESProcess(Process):
 sep = ShopESProcess()
 
 if __name__ == '__main__':
-    sep.date = '2013-11-28'
+    sep.date = '2013-12-18'
     sep.start()

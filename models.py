@@ -93,7 +93,6 @@ def update_item(item):
 def delete_item(itemid):
     db.execute('''delete from ataobao2.item where id=:itemid''', dict(itemid=itemid))
     db.execute('''delete from ataobao2.item_by_date where id=:itemid''', dict(itemid=itemid))
-    db.execute('''delete from ataobao2.item_attr where id=:itemid''', dict(itemid=itemid))
 
 def update_shop(shop):
     d = shop

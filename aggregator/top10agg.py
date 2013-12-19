@@ -33,7 +33,7 @@ def top10_brands(date=None):
         top10brand.append((brand, deals, sales))
     db.execute('''insert into ataobao2.top10 (datestr, field, value) values
                     (:datestr, :field, :value)''', dict(datestr=date, field='brand', value=json.dumps(top10brand)))
-        
+
 
 def top10_categories(date=None):
     if date is None:
@@ -104,5 +104,6 @@ class Top10AggProcess(Process):
 tap = Top10AggProcess()
 
 if __name__ == '__main__':
-    tap.date = '2013-11-25'
-    tap.start()
+    tap.date = '2013-12-18'
+    top10_brands(tap.date)
+    #tap.start()
