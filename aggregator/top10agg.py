@@ -22,6 +22,8 @@ def top10_brands(date=None):
     branddeals = Counter()
     for cate1 in topcids:
         for brand, sales in bi.getindex(cate1, 'all'):
+            if brand == '无品牌':
+                continue
             info = bi.getinfo(brand, cate1, 'all')
             branddeals[brand] += int(info.get('deals', 0))
             top10[brand] += float(sales)
@@ -104,6 +106,6 @@ class Top10AggProcess(Process):
 tap = Top10AggProcess()
 
 if __name__ == '__main__':
-    tap.date = '2013-12-18'
+    tap.date = '2013-12-19'
     top10_brands(tap.date)
     #tap.start()

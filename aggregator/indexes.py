@@ -493,6 +493,5 @@ class CategoryIndex(object):
         c12 = self.make_skey(cate1, cate2)
         p.sadd(hkey, brand, skey=c12)
 
-
 if __name__ == '__main__':
     clear_date('2013-12-06')

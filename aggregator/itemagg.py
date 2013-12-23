@@ -96,7 +96,9 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
             itemtsdict[itemid][date] = values
 
         for itemid, shopid, cid, nc, price, brand, name, image in iteminfos:
-            if brand == '' or brand is None:
+            if brand in ['', u'无品牌', u'其它品牌', u'其他品牌', u'其它/other', 
+                        u'other/其他', u'其他母婴品牌', u'其它母婴品牌', u'other',
+                        u'其他', None]:
                 brand = u'无品牌'
             if nc > 0 and itemid in itemtsdict and itemtsdict[itemid]:
                 try:
@@ -184,9 +186,10 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         ci.incrinfo(l1, l2, mod, inc)
         if l2 != 'all':
             ci.incrinfo(l1, 'all', mod, inc)
-    ci.addbrand(l1, l2, brand)
-    if l2 != 'all':
-        ci.addbrand(l1, 'all', brand)
+    if brand != '无品牌':
+        ci.addbrand(l1, l2, brand)
+        if l2 != 'all':
+            ci.addbrand(l1, 'all', brand)
 
     # inc brand counters
     from aggregator.brands import brands as needaggbrands

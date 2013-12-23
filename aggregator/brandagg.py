@@ -28,13 +28,15 @@ def aggregate_brands(date, *brands):
 
 def aggregate_brand(bi, ci, date, brand):
     if brand == '':
-        brand = '其他'
+        brand = '无品牌'
     baseinfo = {}
 
     def update_with_cates(cate1, cate2):
         brandinfo = bi.getinfo(brand, cate1, cate2)
         sales = float(brandinfo.get('sales', 0))
-        bi.setindex(brand, cate1, cate2, sales)
+        if brand != '无品牌':
+            bi.setindex(brand, cate1, cate2, sales)
+            
         categoryinfo = ci.getinfo(cate1, cate2, 'mon')
         try:
             share = sales/float(categoryinfo['sales'])
@@ -86,5 +88,5 @@ class BrandAggProcess(Process):
 bap = BrandAggProcess()
 
 if __name__ == '__main__':
-    bap.date = '2013-12-18'
+    bap.date = '2013-12-20'
     bap.start()

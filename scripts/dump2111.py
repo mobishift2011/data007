@@ -85,8 +85,9 @@ def sync_table(table, fields):
                     pool.spawn(db2.execute, 'insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
     
 def sync_cassandra():
-    for table, fields in schemas.iteritems():
-        if table == 'ataobao2.top10':
+    for table, fields in sorted(schemas.items(), key=lambda x: len(x[0])):
+        #if table == 'ataobao2.top10':
+        if True:
             sync_table(table, fields)
     pool.join()
 
@@ -134,6 +135,6 @@ def sync_elasticsearch():
         es2.refresh()
 
 if __name__ == '__main__':
-    #sync_redis()
+    sync_redis()
+    #sync_elasticsearch()
     #sync_cassandra()
-    sync_elasticsearch()
