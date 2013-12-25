@@ -136,5 +136,5 @@ def sync_elasticsearch():
 
 if __name__ == '__main__':
     sync_redis()
-    #sync_elasticsearch()
-    #sync_cassandra()
+    sync_elasticsearch()
+    sync_cassandra()

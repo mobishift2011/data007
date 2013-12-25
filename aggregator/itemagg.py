@@ -10,10 +10,20 @@ from collections import defaultdict
 
 from crawler.cates import cates
 
+import re
 import time
 import struct
 import calendar
 import traceback
+
+def clean_brand(brand):
+    if brand in ['', None]:
+        brand = u'无品牌'
+    else:
+        m = re.compile(ur'(^其它|^其他|^国内其它|^国内其他|^other|.*其他|.*其它$)', re.IGNORECASE).match(brand)
+        if m:
+            brand = u'无品牌'
+    return brand
 
 def get_l1_and_l2_cids(cids): 
     l1l2 = {}
@@ -96,10 +106,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
             itemtsdict[itemid][date] = values
 
         for itemid, shopid, cid, nc, price, brand, name, image in iteminfos:
-            if brand in ['', u'无品牌', u'其它品牌', u'其他品牌', u'其它/other', 
-                        u'other/其他', u'其他母婴品牌', u'其它母婴品牌', u'other',
-                        u'其他', None]:
-                brand = u'无品牌'
+            brand = clean_brand(brand)
             if nc > 0 and itemid in itemtsdict and itemtsdict[itemid]:
                 try:
                     aggregate_item(si, ii, bi, ci, itemid, itemtsdict[itemid], shopid, cid, price, brand, name, image, date)

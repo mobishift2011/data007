@@ -49,6 +49,7 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
     shopinfo = si.getbase(shopid)
     if shopinfo:
         # create indexes
+        credit_score = credit_score or 0
         active_index = float(shopinfo['active_index_mon'])
         sales = float(shopinfo['sales_mon'])
         worth = 2**credit_score + active_index/3000. + sales/30.
