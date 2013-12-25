@@ -305,12 +305,12 @@ class ItemAggProcess(Process):
         for _ in range(40):
             lenhosts = sorted([[len(tasks[host]), host] for host in tasks])
             delta = (lenhosts[-1][0] - lenhosts[0][0]) // 2
-            print 'in equality index', delta
-            for task in tasks[lenhosts[-1][1]][-delta:]:
-                task[2]['hosts'] = task[2]['hosts'][-1:] + task[2]['hosts'][:-1]
-                #tasks[task[2]['hosts'][0]].append(task)
-                tasks[task[2]['hosts'][0]].insert(0, task)
-            tasks[lenhosts[-1][1]] = tasks[lenhosts[-1][1]][:-delta]
+            if delta > 0 and len(tasks) > 1:
+                print 'inequality index', delta
+                for task in tasks[lenhosts[-1][1]][-delta:]:
+                    task[2]['hosts'] = task[2]['hosts'][-1:] + task[2]['hosts'][:-1]
+                    tasks[task[2]['hosts'][0]].insert(0, task)
+                tasks[lenhosts[-1][1]] = tasks[lenhosts[-1][1]][:-delta]
         while sum(map(len, tasks.itervalues())):
             for host in tasks:
                 if tasks[host]:

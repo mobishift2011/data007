@@ -57,12 +57,18 @@ class Process(object):
         conn.delete(self.started_at.format(self.name))
 
     def task_left(self):
-        return conn.llen(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name))
+        try:
+            return conn.llen(self.tasks.format(self.name)) + conn.llen(self.processing.format(self.name))
+        except:
+            return 0
 
     def task_all(self):
-        return conn.llen(self.tasks.format(self.name)) +\
+        try:
+            return conn.llen(self.tasks.format(self.name)) +\
                     conn.llen(self.processing.format(self.name)) +\
                     conn.llen(self.dones.format(self.name))
+        except:
+            return 0
 
     def progress(self):
         ta = self.task_all()
@@ -72,8 +78,9 @@ class Process(object):
             return 1.*tl/ta
 
     def add_tasks(self, *tasktuples):
-        tasks = [ pack((caller, args, kwargs)) for caller, args, kwargs in tasktuples ]
-        conn.rpush(self.tasks.format(self.name), *tasks)
+        if tasktuples:
+            tasks = [ pack((caller, args, kwargs)) for caller, args, kwargs in tasktuples ]
+            conn.rpush(self.tasks.format(self.name), *tasks)
 
     def add_task(self, caller, *args, **kwargs):
         print caller, args[:5], kwargs
@@ -92,19 +99,26 @@ class Process(object):
         child.parents.append(self)
 
     def check_zombie(self):
-        updated_at = conn.get(self.updated_at.format(self.name))
-        if updated_at:
-            updated_at = float(updated_at)
-            if (time.mktime(time.gmtime()) - updated_at) > 600:
-                while True:
-                    task = conn.lpop(self.processing.format(self.name))
-                    if task is None:
-                        break
-                    conn.rpush(self.dones.format(self.name), task)
+        try:
+            updated_at = conn.get(self.updated_at.format(self.name))
+            if updated_at:
+                updated_at = float(updated_at)
+                if (time.mktime(time.gmtime()) - updated_at) > 600:
+                    while True:
+                        task = conn.lpop(self.processing.format(self.name))
+                        if task is None:
+                            break
+                        conn.rpush(self.dones.format(self.name), task)
+        except:
+            pass
 
     def duration(self):
-        updated_at = conn.get(self.updated_at.format(self.name))
-        started_at = conn.get(self.started_at.format(self.name))
+        try:
+            updated_at = conn.get(self.updated_at.format(self.name))
+            started_at = conn.get(self.started_at.format(self.name))
+        except:
+            return '?'
+
         if updated_at and started_at:
             seconds = int(float(updated_at)-float(started_at))
             if seconds < 60:
@@ -119,8 +133,12 @@ class Process(object):
             return '?'
 
     def status(self):
-        updated_at = conn.get(self.updated_at.format(self.name))
-        started_at = conn.get(self.started_at.format(self.name))
+        try:
+            updated_at = conn.get(self.updated_at.format(self.name))
+            started_at = conn.get(self.started_at.format(self.name))
+        except:
+            return '?'
+
         if started_at is None:
             return '?'
         elif updated_at is None:
@@ -131,12 +149,15 @@ class Process(object):
             return 'P'
 
     def is_finished(self):
-        generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true' 
-        processing_complete = lambda : self.task_left() == 0
-        finished = generation_complete() and processing_complete()
-        if not finished:
-            self.check_zombie()
-        return finished
+        try:
+            generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true' 
+            processing_complete = lambda : self.task_left() == 0
+            finished = generation_complete() and processing_complete()
+            if not finished:
+                self.check_zombie()
+            return finished
+        except:
+            return False
 
     def wait_for_parents(self):
         if self.parents:
@@ -213,11 +234,10 @@ class Process(object):
                     caller = sys.modules['__builtin__'].__dict__[method]
             except:
                 print("can't obtain caller, locals: {}".format(locals()))
-                traceback.print_exc() 
+                traceback.print_exc()
                 if task is not None:
-                    conn.lrem(self.processing.format(self.name), task, 1)
-                    conn.rpush(self.dones.format(self.name), task)
-                    conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
+                    self.finish_task(task)
+
                 continue
 
             try:
@@ -225,9 +245,15 @@ class Process(object):
             except:
                 traceback.print_exc()
             finally:
-                conn.lrem(self.processing.format(self.name), task, 1)
-                conn.rpush(self.dones.format(self.name), task)
-                conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
+                self.finish_task(task)
+
+    def finish_task(self, task):
+        try:
+            conn.lrem(self.processing.format(self.name), task, 1)
+            conn.rpush(self.dones.format(self.name), task)
+            conn.set(self.updated_at.format(self.name), time.mktime(time.gmtime()))
+        except:
+            pass
 
 
 if __name__ == '__main__':
