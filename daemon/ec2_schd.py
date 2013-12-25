@@ -98,7 +98,8 @@ class EC2Monitor(threading.Thread):
                                                                    upsert=True)
                             instance_list.append(i)
                     
-                    for req in conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name, 'state':['open', 'active', 'cancelled', 'failed']}):
+                    
+                    for req in conn.get_all_spot_instance_requests(filters={'tag:Name': tag_name, 'state':['open', 'active', 'cancelled', 'failed'] }): #
                         print req.id, req.state
                         req_list.append(req)
                     
@@ -117,9 +118,8 @@ class EC2Monitor(threading.Thread):
                                 if i.id not in [x.id for x in instance_list]:
                                     instance_list.append(i)
                                     i.add_tag("Name", tag_name)
-                                    print "add_tag", i.id
-                        
-                    
+                                    print "add_tag", i.id                            
+                                                
                     log.msg('finish##,get instance_list:'.format(len(instance_list)))
                     
                     print "running-set:", int(row['instance_num']), "instance_list:", len(instance_list)
@@ -151,11 +151,14 @@ class EC2Monitor(threading.Thread):
                             print e
                             continue
                         
-                        try:
-                            for ret in rets:
-                                ret.add_tag('Name', tag_name)
-                        except Exception, e:
-                            print e
+                        while 1:
+                            try:
+                                for ret in rets:
+                                    ret.add_tag('Name', tag_name)
+                                break
+                            except Exception, e:
+                                print e
+                                time.sleep(1)
                         
                         rcnd = 0
                         while 1:

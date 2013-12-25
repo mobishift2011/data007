@@ -43,7 +43,6 @@ class SubProcessProtocol(protocol.ProcessProtocol):
         self.kw = kw
 
     def childDataReceived(self, childFD, data):
-        
         #self.sptl.monitor
         try:
             for pid, sid in self.sptl.monitor_ps.iteritems():
@@ -52,15 +51,13 @@ class SubProcessProtocol(protocol.ProcessProtocol):
                     self.sptl.publish("psmonitor", data, eligible=[sid])
         except Exception, e:
             print e
-            
         protocol.ProcessProtocol.childDataReceived(self, childFD, data)
-        
-        
+
     def connectionMade(self):
         self.pid = self.transport.pid
         self.spiders[self.pid] = self.kw
         self.sptl.status_refresh()
-        
+
     def processExited(self, reason):
         print "processExited, status %s" % (reason.value.exitCode,)
         del self.spiders[self.pid]

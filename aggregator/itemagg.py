@@ -12,6 +12,7 @@ from crawler.cates import cates
 
 import re
 import time
+import random
 import struct
 import calendar
 import traceback
@@ -44,7 +45,7 @@ def get_l1_and_l2_cids(cids):
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
 def aggregate_items(start, end, hosts=[], date=None, retry=0):
-    if hosts == []:
+    if retry >= 20:
         raise Exception('retry too many times, give up')
     try:
         if date is None:
@@ -84,11 +85,9 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
-            print('cluster error on host {}, range {}, sleeping 5 secs...'.format(hosts[0], (start, end)))
-            if retry >= 3:
-                # for each host, we try it 3 times at maximum
-                retry = -1
-                hosts = hosts[1:]
+            print('cluster error on host {}, range {}, retry {}, sleeping 5 secs...'.format(hosts[0], (start, end), retry))
+            hosts = hosts[-1:] + hosts[:-1]
+            #traceback.print_exc()
             time.sleep(5)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
             
@@ -276,14 +275,16 @@ class ItemAggProcess(Process):
         ring = tclient.describe_ring('ataobao2')
         conn.close()
         tokens = len(ring)
-        slicepertoken = self.step/tokens
         tasks = defaultdict(list)
         v264 = 2**64
         v263_1 = 2**63-1
+        step = v264 // self.step
+        #slicepertoken = self.step/tokens
         for tokenrange in ring:
             ostart = int(tokenrange.start_token)
             oend = int(tokenrange.end_token)
-            step = (oend - ostart) // slicepertoken if ostart < oend else (v264+oend - ostart) // slicepertoken
+            slicepertoken = (oend - ostart) // step if ostart < oend else (v264+oend - ostart) // step
+            #step = (oend - ostart) // slicepertoken if ostart < oend else (v264+oend - ostart) // slicepertoken
             hosts = tokenrange.endpoints
             for i in range(slicepertoken-1):
                 start = ostart + step * i
@@ -292,11 +293,24 @@ class ItemAggProcess(Process):
                     start -= v264
                 if end > v263_1:
                     end -= v264
-                tasks[hosts[0]].append(('aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)))
-            start += step
+                tasks[hosts[0]].append(['aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)])
+            if slicepertoken > 0:
+                start += step
+            else:
+                start = ostart
             end = oend
-            tasks[hosts[0]].append(('aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)))
+            tasks[hosts[0]].append(['aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)])
         universe_tasks = []
+        # averaging tasks
+        for _ in range(40):
+            lenhosts = sorted([[len(tasks[host]), host] for host in tasks])
+            delta = (lenhosts[-1][0] - lenhosts[0][0]) // 2
+            print 'in equality index', delta
+            for task in tasks[lenhosts[-1][1]][-delta:]:
+                task[2]['hosts'] = task[2]['hosts'][-1:] + task[2]['hosts'][:-1]
+                #tasks[task[2]['hosts'][0]].append(task)
+                tasks[task[2]['hosts'][0]].insert(0, task)
+            tasks[lenhosts[-1][1]] = tasks[lenhosts[-1][1]][:-delta]
         while sum(map(len, tasks.itervalues())):
             for host in tasks:
                 if tasks[host]:
