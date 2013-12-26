@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from models import db
-from aggregator.indexes import BrandIndex
+from aggregator.indexes import BrandIndex, CategoryIndex
 from aggregator.processes import Process
 from aggregator.esindex import index_brand
 from settings import ENV
+
+from crawler.cates import l1l2s
 
 from datetime import datetime, timedelta
 
@@ -77,15 +79,24 @@ class BrandESProcess(Process):
     def generate_tasks(self):
         self.clear_redis()
         bi = BrandIndex(self.date)
-        from aggregator.brands import brands as brands1
-        brands2 = set(b.decode('utf-8') for b in bi.getbrands())
-        brands = list(brands1 & brands2)
-        for i in range(len(brands)/self.step):
-            self.add_task('aggregator.brandes.es_brands', brands[self.step*i:self.step*(i+1)], date=self.date)
+        ci = CategoryIndex(self.date)
+        # from aggregator.brands import brands as brands1
+        # brands2 = set(b.decode('utf-8') for b in bi.getbrands())
+        # brands = list(brands1 & brands2)
+        # for i in range(len(brands)/self.step):
+        #     self.add_task('aggregator.brandes.es_brands', brands[self.step*i:self.step*(i+1)], date=self.date)
+        allbrands = set()
+        for cate1, cate2 in l1l2s:
+            brands1 = ci.getbrandnames(cate1, cate2)
+            brands = list(brands1 - allbrands)
+            allbrands.update(brands1)
+            for i in range(1+len(brands)/self.step):
+                bs = brands[i*self.step:(i+1)*self.step]
+                self.add_task('aggregator.brandes.es_brands', bs, date=self.date)
         self.finish_generation()
 
 bep = BrandESProcess()
 
 if __name__ == '__main__':
-    bep.date = '2013-12-04'
+    bep.date = '2013-12-25'
     bep.start()

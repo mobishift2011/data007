@@ -73,7 +73,7 @@ class BrandAggProcess(Process):
         bi = BrandIndex(self.date)
         ci = CategoryIndex(self.date)
         #from aggregator.brands import brands as brands1
-        brands2 = set(b.decode('utf-8') for b in bi.getbrands())
+        #brands2 = set(b.decode('utf-8') for b in bi.getbrands())
         #brands = list(brands1 & brands2)
         allbrands = set()
         for cate1, cate2 in l1l2s:

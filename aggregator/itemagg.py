@@ -286,7 +286,7 @@ class ItemAggProcess(Process):
             slicepertoken = (oend - ostart) // step if ostart < oend else (v264+oend - ostart) // step
             #step = (oend - ostart) // slicepertoken if ostart < oend else (v264+oend - ostart) // slicepertoken
             hosts = tokenrange.endpoints
-            for i in range(slicepertoken-1):
+            for i in range(slicepertoken):
                 start = ostart + step * i
                 end = start + step
                 if start > v263_1:
@@ -294,10 +294,7 @@ class ItemAggProcess(Process):
                 if end > v263_1:
                     end -= v264
                 tasks[hosts[0]].append(['aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)])
-            if slicepertoken > 0:
-                start += step
-            else:
-                start = ostart
+            start = ostart + slicepertoken*step
             end = oend
             tasks[hosts[0]].append(['aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)])
         universe_tasks = []

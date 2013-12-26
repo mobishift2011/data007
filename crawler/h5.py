@@ -424,11 +424,6 @@ def get_shop(shopid):
             # promise
             # main_sale
 
-            # for compability only
-            'rank_num': 0,
-            'rank': '', 
-            'rates': '',
-            'rateid': '',
         }
         return s
     except:
@@ -507,15 +502,15 @@ def get_item(itemid):
             'num_sold30': int(i.get('totalSoldQuantity', 0)),
             'delivery_type': int(i.get('delivery', {}).get('deliveryFeeType', 1)),
 
+            'cid': int(i.get('category', '0').split(',')[-1]),
             # unimplemented
-            # cid, see get_cid
             # interacts, see get_interacts
 
-            # for compability
-            'rating': 0,
-            'pagetype': '',
-            'rcid': 0,
+            # for extendability
+            'soldout': i.get('soldout', 'false') == 'true',
         })
+        if i.get('itemStatus') == u'删除' or result['shopid'] == 0:
+            return {'error': 'not found'}
         result.update(get_price())
         result.update(get_counters())
         return result
