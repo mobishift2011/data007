@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS item (
     num_views       int,
     promo           text,
     delivery_type   int,
+    soldout         boolean,
+    status          text,
+    credit_score    int,
 );
 
 CREATE TABLE IF NOT EXISTS item_by_date (

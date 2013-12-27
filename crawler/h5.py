@@ -508,6 +508,8 @@ def get_item(itemid):
 
             # for extendability
             'soldout': i.get('soldout', 'false') == 'true',
+            'status': i.get('itemStatus', u'正常'),
+            'credit_score': int(s.get('credit', {}).get('level', '0')),
         })
         if i.get('itemStatus') == u'删除' or result['shopid'] == 0:
             return {'error': 'not found'}
