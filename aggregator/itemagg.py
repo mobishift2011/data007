@@ -39,7 +39,7 @@ def get_l1_and_l2_cids(cids):
                 l1l2[ cidchain[0] ] = (cidchain[-1], cidchain[-2])
             except:
                 if len(cidchain) == 1:
-                    l1l2 = [cid, 'all']
+                    l1l2[cid] = [cid, 'all']
     return l1l2
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
