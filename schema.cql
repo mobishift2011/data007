@@ -114,7 +114,8 @@ CREATE TABLE IF NOT EXISTS top10 (
 );
 
 CREATE TABLE IF NOT EXISTS blacklist (
-    id              bigint,
     type            text,
-    PRIMARY KEY (id)
+    args            text,
+    value           text,
+    PRIMARY KEY (type, args)
 );
