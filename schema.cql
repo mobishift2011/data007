@@ -112,3 +112,9 @@ CREATE TABLE IF NOT EXISTS top10 (
     value           text,
     PRIMARY KEY (datestr, field)
 );
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    id              bigint,
+    type            text,
+    PRIMARY KEY (id)
+);

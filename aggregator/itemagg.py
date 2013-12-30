@@ -3,6 +3,7 @@
 from models import db
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from aggregator.processes import Process
+from aggregator.blacklist import in_blacklist
 
 from settings import ENV
 from datetime import datetime, timedelta
@@ -15,7 +16,7 @@ import time
 import random
 import struct
 import calendar
-import traceback
+import traceback 
 
 def clean_brand(brand):
     if brand in ['', None]:
@@ -68,7 +69,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 host = hosts[0]
                 conn = db.get_connection(host)
                 cur = conn.cursor()
-                cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image
+                cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)))
                 iteminfos = list(cur)
@@ -78,7 +79,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 itemts = list(cur)
                 conn.close()
             else:
-                iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image
+                iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)), result=True).results
                 itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
@@ -104,7 +105,10 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 itemtsdict[itemid] = {}
             itemtsdict[itemid][date] = values
 
-        for itemid, shopid, cid, nc, price, brand, name, image in iteminfos:
+        for itemid, shopid, cid, nc, price, brand, name, image, nr, credit_score in iteminfos:
+            if in_blacklist(shopid, price, cid, nc, nr, credit_score):
+                print itemid, 'skiped'
+                continue
             brand = clean_brand(brand)
             if nc > 0 and itemid in itemtsdict and itemtsdict[itemid]:
                 try:
@@ -231,8 +235,7 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         ii.incrindex(l1, 'all', 'sales', 'day', itemid, sales_day)
 
     # inc shop counters
-    if l2 != 'all':
-        si.addcates(shopid, l1, l2)
+    si.addcates(shopid, l1, l2)
     si.incrbrand(shopid, 'sales', 'mon', brand, sales_mon)
     si.incrbrand(shopid, 'deals', 'mon', brand, deals_mon)
     si.incrbrand(shopid, 'sales', 'day', brand, sales_day)

@@ -44,6 +44,7 @@ def get_table_live():
         'org.apache.cassandra.db.marshal.Int32Type': 'int',
         'org.apache.cassandra.db.marshal.FloatType': 'float',
         'org.apache.cassandra.db.marshal.TimestampType': 'timestamp',
+        'org.apache.cassandra.db.marshal.BooleanType': 'boolean',
     }
     tables = {}
     cfs = db.execute('''select columnfamily_name, column_aliases, key_aliases
