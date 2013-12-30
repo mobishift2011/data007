@@ -17,6 +17,9 @@ def clearall(date):
         date = (d - timedelta(days=delta)).strftime("%Y-%m-%d")
         clear_date(date)
 
+    from models import db
+    db.execute('delete from ataobao2.blacklist where type=\'shopblacknew\';')
+
 def build_flow(date=defaultdate):
     for p in all_processes:
         p.date = date

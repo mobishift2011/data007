@@ -69,7 +69,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 host = hosts[0]
                 conn = db.get_connection(host)
                 cur = conn.cursor()
-                cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score
+                cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)))
                 iteminfos = list(cur)
@@ -79,7 +79,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 itemts = list(cur)
                 conn.close()
             else:
-                iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score
+                iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)), result=True).results
                 itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
@@ -105,8 +105,8 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 itemtsdict[itemid] = {}
             itemtsdict[itemid][date] = values
 
-        for itemid, shopid, cid, nc, price, brand, name, image, nr, credit_score in iteminfos:
-            if in_blacklist(shopid, price, cid, nc, nr, credit_score):
+        for itemid, shopid, cid, nc, price, brand, name, image, nr, credit_score, title, type in iteminfos:
+            if in_blacklist(shopid, price, cid, nc, nr, credit_score, title, type, itemid=itemid):
                 print itemid, 'skiped'
                 continue
             brand = clean_brand(brand)
