@@ -60,9 +60,9 @@ class ItemInfoProcess(Process):
         super(ItemInfoProcess, self).__init__('iteminfo')
         self.date = date
         if ENV == 'DEV':
-            self.max_workers = 10
+            self.max_workers = 5
         else:
-            self.max_workers = 100
+            self.max_workers = 20
 
     def generate_tasks(self):
         self.clear_redis()
