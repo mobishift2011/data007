@@ -22,7 +22,7 @@ def clear_date(date):
 
     def flush_all(r):
         print 'clearing {} on {}'.format(r, date)
-        r.flushall()
+        r.flushdb()
 
     def clear_conn_lua(r):
         script = '''

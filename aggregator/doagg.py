@@ -43,6 +43,10 @@ def build_flow(date=defaultdate):
 
     return iap
 
+def mark_ready(date):
+    db.execute('insert into ataobao2.agghosts (datestr, ready) values (:date, :ready)',
+                dict(date=date, ready=True))
+
 def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
     parser.add_argument('--date', '-d', help='the date to aggregate, must be format of YYYY-MM-DD')
@@ -54,6 +58,7 @@ def main():
     clearall(date)
     flow = build_flow(date)
     flow.start()
+    mark_ready(date)
 
 if __name__ == '__main__':
     main()

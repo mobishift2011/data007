@@ -84,10 +84,12 @@ def sync_table(table, fields):
                     #print 'INSERT INTO {} ({}) VALUES ({})'.format(table, fs1, fs2), params
                     pool.spawn(db2.execute, 'insert into {} ({}) values ({})'.format(table, fs1, fs2), params)
     
-def sync_cassandra():
+def sync_cassandra(simple=False):
     for table, fields in sorted(schemas.items(), key=lambda x: len(x[0])):
-        #if table == 'ataobao2.top10':
-        if True:
+        if simple:
+            if table in ['ataobao2.top10', 'ataobao2.blacklist', 'ataobao2.agghosts']:
+                sync_table(table, fields)
+        else:
             sync_table(table, fields)
     pool.join()
 
@@ -135,6 +137,7 @@ def sync_elasticsearch():
         es2.refresh()
 
 if __name__ == '__main__':
+    sync_cassandra(simple=True)
     sync_redis()
     sync_elasticsearch()
     sync_cassandra()

@@ -123,5 +123,6 @@ CREATE TABLE IF NOT EXISTS blacklist (
 CREATE TABLE IF NOT EXISTS agghosts (
     datestr         text,
     hosts           text,
+    ready           boolean,
     PRIMARY KEY (datestr)
 );
