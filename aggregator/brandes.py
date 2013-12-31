@@ -72,8 +72,10 @@ class BrandESProcess(Process):
         super(BrandESProcess, self).__init__('brandes')
         if ENV == 'DEV':
             self.step = 100
+            self.max_workers = 5
         else:
             self.step = 1000
+            self.max_workers = 10
         self.date = date
 
     def generate_tasks(self):

@@ -101,7 +101,7 @@ class ShopHistProcess(Process):
         if ENV == 'DEV':
             self.max_workers = 10
         else:
-            self.max_workers = 100
+            self.max_workers = 50
         self.date = date
 
     def generate_tasks(self):
