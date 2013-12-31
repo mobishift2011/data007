@@ -19,7 +19,7 @@ def aggregate_brands(date, *brands):
         ci.multi()
         bi.multi()
         for brand in brands:
-            aggregate_brand(bi, ci, date, brand)     
+            aggregate_brand(bi, ci, date, brand)
 
         ci.execute()
         bi.execute()
@@ -36,7 +36,7 @@ def aggregate_brand(bi, ci, date, brand):
         sales = float(brandinfo.get('sales', 0))
         if brand != '无品牌':
             bi.setindex(brand, cate1, cate2, sales)
-            
+
         categoryinfo = ci.getinfo(cate1, cate2, 'mon')
         try:
             share = sales/float(categoryinfo['sales'])

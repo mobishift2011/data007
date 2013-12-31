@@ -10,8 +10,8 @@ from bisect import bisect
 
 import traceback
 
-credits = [ 4, 11, 41, 91, 151, 
-            251, 501, 1001, 2001, 5001, 
+credits = [ 4, 11, 41, 91, 151,
+            251, 501, 1001, 2001, 5001,
             10001, 20001, 50001, 100001, 200001,
             500001, 1000001, 2000001, 5000001, 10000001, ]
 
@@ -53,8 +53,8 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
         active_index = float(shopinfo['active_index_mon'])
         sales = float(shopinfo['sales_mon'])
         worth = 2**credit_score + active_index/3000. + sales/30.
-        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth, 
-                    'type':type, 'num_products':num_products, 'good_rating':good_rating, 
+        update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth,
+                    'type':type, 'num_products':num_products, 'good_rating':good_rating,
                     'num_collects':num_collects}
         si.setbase(shopid, update)
 
@@ -66,11 +66,11 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
                     shopinfo[field] = float(shopinfo[field])
                 score = shopinfo['active_index']/1000. + shopinfo['sales']/30.
                 update = {'credit_score':credit_score, 'worth':worth, 'score':score}
-                si.setinfo(cate1, cate2, mod, shopid, update) 
+                si.setinfo(cate1, cate2, mod, shopid, update)
                 shopinfo.update(update)
                 for field in ['sales', 'deals', 'active_index', 'credit_score', 'worth', 'score']:
                     si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
-    
+
         cates = si.getcates(shopid)
         cates.extend(list(set([(c[0], 'all') for c in cates])))
         for cate1, cate2 in cates:

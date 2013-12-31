@@ -24,14 +24,14 @@ def save_iteminfo(date, ii, itemid):
     date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
     r1 = db.execute('''select title, image, shopid, brand, price, num_sold30, cid
-                from ataobao2.item where id=:itemid''', 
+                from ataobao2.item where id=:itemid''',
                 dict(itemid=itemid), result=True)
     r2 = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views
                     from ataobao2.item_by_date
                     where id=:itemid and date>=:date1 and date<:date2''',
                     dict(itemid=itemid, date1=date1, date2=date2), result=True)
 
-    items = {(r[0]+timedelta(hours=8)).strftime("%Y-%m-%d"): r[1:] 
+    items = {(r[0]+timedelta(hours=8)).strftime("%Y-%m-%d"): r[1:]
                 for r in r2.results}
 
     if r1.results:
@@ -53,7 +53,7 @@ def save_iteminfo(date, ii, itemid):
                 'delta_sales_day': info['delta_sales_day'],
             }, skey='{}_{}'.format(cate1, cate2))
 
-    
+
 
 class ItemInfoProcess(Process):
     def __init__(self, date=None):

@@ -178,14 +178,14 @@ def get_misc(shopid, sid=None, type='taobao'):
             traceback.print_exc()
             r['main_sale'] = ''
 
-        # this can be achieved by 
+        # this can be achieved by
         # ==== client side ajax ====
         # $.ajax({
-        #          url:'http://rate.taobao.com/ShopService4C.htm?userNumId=1688836098', 
-        #          dataType:'jsonp', 
+        #          url:'http://rate.taobao.com/ShopService4C.htm?userNumId=1688836098',
+        #          dataType:'jsonp',
         #          success: function(data) { console.log(data); }
         # })
-        # 
+        #
         # ==== python code ====
         # url = 'http://rate.taobao.com/ShopService4C.htm?userNumId={}'.format(sid)
         # try:
@@ -201,14 +201,14 @@ def get_misc(shopid, sid=None, type='taobao'):
             for cname in ["xiaofei", "seven", "fake", "thirty", "lightning", "safe", "xb-three"]:
                 token = 'class="{}"'.format(cname)
                 if token in rates:
-                    promise.append(cname) 
+                    promise.append(cname)
         r['promise'] = promise
 
         return r
     except:
         traceback.print_exc()
         return {}
-    
+
 
 def get_interacts(itemid, sid=None, type=None):
     """ these information can be fetched in client side
@@ -230,7 +230,7 @@ def get_interacts(itemid, sid=None, type=None):
                 url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}&userNumId={}'.format(itemid, sid)
             else:
                 url = 'http://orate.alicdn.com/detailCommon.htm?auctionNumId={}'.format(itemid)
-                
+
             text = retry(3, requests.get, url, timeout=30, headers={'User-Agent':'Mozilla/4.0'}).text
 
             summary = json.loads(text.strip()[1:-1])['data']
@@ -267,13 +267,13 @@ def get_interacts(itemid, sid=None, type=None):
             i['good'] = sum(x['value'] for x in impress if x['value']>0)
             i['normal'] = 0
             i['bad'] = -sum(x['value'] for x in impress if x['value']<=0)
-        return i 
+        return i
     except NotFoundError:
         return {'good':0,'normal':0,'bad':0,'impress':[]}
     except:
         traceback.print_exc()
         return {} if 'i' not in locals() else i
-    
+
 
 def get_cid(itemid):
     """ use m.taobao.com, fetch cid info """
@@ -306,8 +306,8 @@ def get_request_url(api, data):
     t = int(time.time())*1000
     h5tk = session.cookies.get('_m_h5_tk', '')
     tk = h5tk.split('_')[0]
-    appkey = "12574478" 
-    data = json.dumps(data, separators=(',', ':')) 
+    appkey = "12574478"
+    data = json.dumps(data, separators=(',', ':'))
     tohash = tk+'&'+str(t)+'&'+appkey+'&'+data
     sign = hashlib.md5(tohash).hexdigest()
     options = {
@@ -320,7 +320,7 @@ def get_request_url(api, data):
         "appkey": appkey,
         "t": int(t),
         "sign": sign,
-    } 
+    }
     url = apiurl + '?callback={callback}&type={type}&api={api}&v={v}&data={data}&ttid={ttid}&appKey={appkey}&t={t}&sign={sign}'.format(**options)
     return url
 
@@ -332,7 +332,7 @@ def get_json(api, data):
     text = retry(3, session.get, url, timeout=30).text
 
     if u'令牌过期' in text or u'令牌为空' in text:
-        setup_token() 
+        setup_token()
         return get_json(api, data)
     elif u'宝贝不存在' in text or u'ID错误' in text or u'没有查询到记录' in text or u'类目不存在' in text:
         raise NotFoundError("Shop/Item Not Found")
@@ -353,9 +353,9 @@ def get_shopitems(shopid):
                 return False
             ids.append(int(item['auctionId']))
         return True
-                
-    itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
-                        data={"shopId":shopid, "sort":"hotsell", "pageSize":30}) 
+
+    itemlist = get_json(api="com.taobao.search.api.getShopItemList",
+                        data={"shopId":shopid, "sort":"hotsell", "pageSize":30})
     if itemlist:
         total = int(itemlist['data']['totalResults'])
         if total>0:
@@ -368,8 +368,8 @@ def get_shopitems(shopid):
     return ids
 
 def get_mobile(shopid):
-    itemlist = get_json(api="com.taobao.search.api.getShopItemList", 
-                        data={"shopId":shopid, "sort":"hotsell", "pageSize":10}) 
+    itemlist = get_json(api="com.taobao.search.api.getShopItemList",
+                        data={"shopId":shopid, "sort":"hotsell", "pageSize":10})
     if itemlist is None or \
         itemlist['data']['totalResults'] == 0 or \
         'itemsArray' not in itemlist['data']:
@@ -390,7 +390,7 @@ def get_mobile(shopid):
 def get_shop(shopid):
     try:
         j = get_json("mtop.shop.getWapShopInfo", {"shopId":shopid})
-        d = j['data'] 
+        d = j['data']
 
         def fix_logo(url):
             if url == '':
@@ -406,7 +406,7 @@ def get_shop(shopid):
             'logo': fix_logo(d.get('picUrl', '')),
             'type': 'tmall' if d.get('isMall', 'false') =='true' else 'taobao',
             'nick': d.get('nick', ''),
-            'title': d.get('title', ''), 
+            'title': d.get('title', ''),
             'prov': d.get('prov', ''),
             'city': d.get('city', ''),
             'credit_score': int(d.get('rateSum', 0)),
@@ -416,7 +416,7 @@ def get_shop(shopid):
             'rating': d.get('shopDSRScore', {}),
             'created_at': d.get('starts', ''),
 
-            'mobile': get_mobile(shopid), 
+            'mobile': get_mobile(shopid),
 
             # unimplemented
             # see get_misc
@@ -435,7 +435,7 @@ def get_item(itemid):
     try:
         j = get_json("mtop.wdetail.getItemDetailStatic", {"itemNumId":itemid})
         p = get_json("mtop.wdetail.getItemDetailDynForH5", {"itemNumId":itemid})
-        i = j['data']['item'] 
+        i = j['data']['item']
         s = j['data']['seller']
 
         def get_brand():
@@ -453,7 +453,7 @@ def get_item(itemid):
             else:
                 o = get_json('mtop.wdetail.getItemDetailOther', {"itemNumId": itemid})
                 if 'jhsItemInfo' in o['data']:
-                    price = int(o['data']['jhsItemInfo']['activityPrice'])/100. 
+                    price = int(o['data']['jhsItemInfo']['activityPrice'])/100.
                     promo = u'聚划算'
                     return {'price': price, 'promo': promo}
                 else:
@@ -474,7 +474,7 @@ def get_item(itemid):
                 result = {}
                 for key, value in counters.items():
                     if key in d:
-                        result[value] = d[key] 
+                        result[value] = d[key]
                 return result
             else:
                 # tmall shop counters

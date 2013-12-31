@@ -45,8 +45,8 @@ def top10_categories(date=None):
     catedeals = Counter()
     for cate1 in topcids:
         info = ci.getinfo(cate1, 'all', 'mon')
-        top10[cate1] = float(info.get('sales', 0))    
-        catedeals[cate1] = int(info.get('deals', 0))    
+        top10[cate1] = float(info.get('sales', 0))
+        catedeals[cate1] = int(info.get('deals', 0))
     top10cate = []
     for cate, sales in top10.most_common(10):
         deals = catedeals[cate]
@@ -62,7 +62,7 @@ def top10_shops(date=None):
     shopdeals = Counter()
     for cate1 in topcids:
         for shopid, sales in si.getindex(cate1, 'all', 'sales', 'mon'):
-            top10[shopid] += sales 
+            top10[shopid] += sales
             shopdeals[shopid] = int(si.getbase(shopid).get('deals_mon', 0))
     top10shop = []
     for shopid, sales in top10.most_common(10):
@@ -97,7 +97,7 @@ class Top10AggProcess(Process):
         self.clear_redis()
         for method in ['top10_brands', 'top10_categories', 'top10_shops', 'top10_items']:
             method = 'aggregator.top10agg.' + method
-            self.add_task(method, self.date) 
+            self.add_task(method, self.date)
         self.finish_generation()
 
     def add_child(self, child):

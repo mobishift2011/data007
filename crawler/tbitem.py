@@ -74,7 +74,7 @@ def get_offset(itemid):
         traceback.print_exc()
         return None
     return (now - lb).days
-    
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Get item by id')

@@ -39,7 +39,7 @@ def get_subcats(data):
             return cids
     else:
         return []
-    
+
 def get_json(cid, paths=[], page=1, sort=None):
     """ given cid and (optional) paths/page/sort, return json """
     s = get_blank_session()
@@ -83,7 +83,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False, max_page=10, num_
     def list_paths(paths, page=1, data=None, cid=cid):
         if data is None:
             data = get_json(cid, paths, page, sort=sort)
-       
+
         iids = get_ids(data)
         ids.extend(iids)
         if on_ids:
@@ -102,7 +102,7 @@ def list_cat(cid=None, sort=None, on_ids=None, use_pool=False, max_page=10, num_
                     pathpool.spawn(list_paths, paths, p, cid=cid)
                 else:
                     list_paths(paths, p, cid=cid)
-        
+
     list_cat_paths(cid, pool=catpool, on_paths=list_paths, num_paths=num_paths)
 
     if use_pool:
@@ -140,7 +140,7 @@ def list_cat_paths(cid, depth=0, paths=[], allpath=None, pool=None, num_paths=2,
         allpath = sorted(allpath, key=len, reverse=True)[:num_paths]
         paths = [''] * len(allpath)
 
-    if depth<len(paths) and should_digg(data): 
+    if depth<len(paths) and should_digg(data):
         for ppath in chain(allpath[depth], ['']):
             paths[depth] = ppath
             if pool is not None:
@@ -171,7 +171,7 @@ def test_list(cid, use_pool=False, num_paths=2, max_page=1):
     def on_ids(ids):
         allids.update(ids)
         print('total ids: {}'.format(len(allids)))
-    
+
     return list_cat(cid, on_ids, use_pool=use_pool, num_paths=num_paths, max_page=max_page)
 
 if __name__ == '__main__':

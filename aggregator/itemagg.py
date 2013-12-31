@@ -16,7 +16,7 @@ import time
 import random
 import struct
 import calendar
-import traceback 
+import traceback
 
 def clean_brand(brand):
     if brand in ['', None]:
@@ -27,7 +27,7 @@ def clean_brand(brand):
             brand = u'无品牌'
     return brand
 
-def get_l1_and_l2_cids(cids): 
+def get_l1_and_l2_cids(cids):
     l1l2 = {}
     for cid in cids:
         if cid in cates:
@@ -91,16 +91,16 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
             #traceback.print_exc()
             time.sleep(5)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
-            
+
 
         itemtsdict = {}
         for row in itemts:
             itemid, date, values = row[0], row[1], row[2:]
             if isinstance(date, datetime):
-                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d") 
+                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d")
             else:
                 date = datetime.utcfromtimestamp(struct.unpack('!q', date)[0]/1000)
-                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d") 
+                date = (date+timedelta(hours=8)).strftime("%Y-%m-%d")
             if itemid not in itemtsdict:
                 itemtsdict[itemid] = {}
             itemtsdict[itemid][date] = values
@@ -139,7 +139,7 @@ def parse_iteminfo(date, itemid, items, price, cid):
     d62 = (date2 - timedelta(days=62)).strftime("%Y-%m-%d")
     if d1 not in items:
         items[d1] = items[sorted(items.keys())[-1]]
-        
+
     try:
         l1, l2 = get_l1_and_l2_cids([cid])[cid]
     except:
@@ -168,7 +168,7 @@ def parse_iteminfo(date, itemid, items, price, cid):
     price = price
     sales_mon = deals_mon * price
     sales_day = deals_day * price
-    delta_sales_mon = deals_mon * price - i2[2] * price 
+    delta_sales_mon = deals_mon * price - i2[2] * price
     delta_sales_day = deals_day * price - deals_day1 * price
 
     return locals()
@@ -177,7 +177,7 @@ def parse_iteminfo(date, itemid, items, price, cid):
 def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, name, image, date):
     info = parse_iteminfo(date, itemid, items, price, cid)
     if not info:
-        return 
+        return
 
     for key, value in info.items():
         locals()[key] = value

@@ -3,8 +3,8 @@
 """ Blacklist Item from our Aggregation Process """
 from models import db
 
-bl_shopblackids = set() 
-bl_shopwhiteids = set() 
+bl_shopblackids = set()
+bl_shopwhiteids = set()
 bl_thresholds = {}
 
 def load_bls():
@@ -18,7 +18,7 @@ def load_bls():
 
 load_bls()
 
-def get_l1_and_l2(cid): 
+def get_l1_and_l2(cid):
     from crawler.cates import cates
     if cid in cates:
         cidchain = []
@@ -52,15 +52,12 @@ def in_blacklist(shopid, price, cid, num_sold30, num_reviews, credit_score, titl
         l1l2 = get_l1_and_l2(cid) or 'all_all'
         tprice = bl_thresholds.get('{}_{}'.format(l1l2[0], l1l2[1]), 500000)
         if price >= min(max(tprice, 1000), 500000):
-            print 'outprice', l1l2, price, tprice
             ib = True
 
         elif num_sold30*price >= 5000000 and num_sold30 > 1000 and credit_score <= 8:
-            print '??'
             ib = True
 
         elif num_sold30*price >= 500000:
-            print 'haha'
             if num_reviews == 0 and num_sold30 >= 5000:
                 ib = True
             elif num_reviews == 0 and num_sold30*price >= 2000000:
@@ -69,7 +66,7 @@ def in_blacklist(shopid, price, cid, num_sold30, num_reviews, credit_score, titl
                 for kw in [u'预定', u'预订', u'定金', u'订金']:
                     if kw in title:
                         ib = False
-                        break 
+                        break
                 else:
                     ib = True
 

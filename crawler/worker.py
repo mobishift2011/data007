@@ -66,8 +66,8 @@ def call_with_throttling(func, args=(), kwargs={}, threshold_per_minute=600):
         expected_processing_time = 60. / threshold_per_minute
         if expected_processing_time > average_processing_time:
             time.sleep((len(logs)+0.8)*expected_processing_time - len(logs)*average_processing_time)
-    
-        
+
+
     average_processing_time = (time.time() - started_at) / count
     expected_processing_time = 60. / threshold_per_minute
     #print expected_processing_time, average_processing_time, count, time.time()-started_at
@@ -94,7 +94,7 @@ class ReQueueWorker(Worker):
     def work(self):
         gevent.joinall([gevent.spawn(queue.background_cleaning) for queue in [ai1, ai2, as1, af1, asi1]])
 
-class ItemWorker(Worker): 
+class ItemWorker(Worker):
     """ Work on Item Queues
 
     1. poll item ids from [ai1, ai2]
@@ -162,9 +162,9 @@ class ItemWorker(Worker):
                 if LC.need_update('shop', d['shopid']):
                     # queue shop jobs
                     as1.put(d['shopid'])
-                    
+
             return d
-            
+
         while True:
             try:
                 while self.banned:
@@ -198,7 +198,7 @@ class ShopWorker(Worker):
             print('updating shop-item of shop {}'.format(shopid))
             asi1.put(shopid)
             self.pool.spawn(list_shop, shopid, on_update)
-            
+
         while True:
             try:
                 result = poll([as1], timeout=10)
@@ -246,12 +246,12 @@ def main():
 
 def test_throttling():
     def printget():
-        print time.time(), 'id' in get_item(22183623058) 
-        
+        print time.time(), 'id' in get_item(22183623058)
+
     import gevent.pool
     pool = gevent.pool.Pool(20)
     while True:
-        pool.spawn(call_with_throttling, printget, threshold_per_minute=600) 
+        pool.spawn(call_with_throttling, printget, threshold_per_minute=600)
     pool.join()
 
 if __name__ == '__main__':

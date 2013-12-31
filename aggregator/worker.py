@@ -33,14 +33,14 @@ class AggregateWorker(Worker):
     def work(self):
         def workon(iap):
             pool = gevent.pool.Pool(self.poolsize)
-            
+
             for i in range(self.poolsize):
                 pool.spawn(iap.work)
 
             pool.join()
 
         gevent.joinall([gevent.spawn(workon, p) for p in self.processes])
-            
+
 
 def main():
     import argparse
@@ -50,7 +50,7 @@ def main():
     option = parser.parse_args()
     if option.worker == "aggregate":
         AggregateWorker(option.poolsize).work()
-    
+
 
 if __name__ == '__main__':
     main()

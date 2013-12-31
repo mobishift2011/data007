@@ -11,7 +11,7 @@ from msgpack import packb as pack, unpackb as unpack
 
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
-from aggregator.indexes import conn
+from caches import conn
 
 random = random.SystemRandom()
 
@@ -150,7 +150,7 @@ class Process(object):
 
     def is_finished(self):
         try:
-            generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true' 
+            generation_complete = lambda : conn.get(self.generated.format(self.name)) == 'true'
             processing_complete = lambda : self.task_left() == 0
             finished = generation_complete() and processing_complete()
             if not finished:
@@ -190,7 +190,7 @@ class Process(object):
 
                     for t in tasks:
                         t.join()
-                 
+
                 break
         print('ended process {}'.format(self.name))
 
@@ -273,4 +273,4 @@ if __name__ == '__main__':
     t1.start()
     t2.start()
     t1.join()
-    #t2.join() 
+    #t2.join()

@@ -27,7 +27,7 @@ last_counts = {}
 def get_throughput():
     global last_counts
     if last_counts == {}:
-        last_counts = get_counts() 
+        last_counts = get_counts()
         return {}
     else:
         throughput = {}
@@ -35,10 +35,10 @@ def get_throughput():
         time_passed = current_counts['time'] - last_counts['time']
         for key in ['item:crawl-success', 'item:crawl-err-except', 'item:crawl-data-err']:
             throughput[key] = (int(current_counts.get(key, '0')) -
-                                int(last_counts.get(key, '0'))) / time_passed 
+                                int(last_counts.get(key, '0'))) / time_passed
         last_counts = current_counts
         return throughput
-             
+
 def gettermsize():
     def ioctl_GWINSZ(fd):
         try:
@@ -276,7 +276,7 @@ def show_counts(args):
         print(line)
 
         num_items += count
-        
+
     chart = green('|' + '█' * int(ratio * IF.count()))
     line = '    %-12s %s %d' % ('items(num_sold30=0)', chart, IF.count())
     print(line)
@@ -288,7 +288,7 @@ def show_counts(args):
 def show_both(args):
     show_queues(args)
     show_counts(args)
-    
+
 def parse_args():
     parser = argparse.ArgumentParser(description='ataobao command-line monitor.')
     parser.add_argument('--interval', '-i', metavar='N', type=float, default=2.5, help='Updates stats every N seconds (default: don\'t poll)')
@@ -317,4 +317,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

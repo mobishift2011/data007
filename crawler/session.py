@@ -43,18 +43,18 @@ def get_session():
                 session.cookies[key] = cookies[key]
 
         session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=30, max_retries=3))
-        
+
         get_session.session = session
 
     return get_session.session
-    
+
 
 def get_blank_session():
     if not hasattr(get_blank_session, 'session'):
         session = requests.Session()
 
         session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=30, max_retries=3))
-        
+
         get_blank_session.session = session
 
     return get_blank_session.session

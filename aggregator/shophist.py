@@ -50,7 +50,7 @@ def save_history_shop(si, date, shopid):
             brandshare[mod] = {}
             info = si.getbrandinfo(shopid, 'sales', mod)
             dealsinfo = si.getbrandinfo(shopid, 'deals', mod)
-            binfo = [(brand, float(value), int(dealsinfo.get(brand, 0)) ) 
+            binfo = [(brand, float(value), int(dealsinfo.get(brand, 0)) )
                         for brand, value in info.iteritems() if float(value)>0]
             total_sales = sum(sales for brand, sales, deals in binfo)
             if total_sales == 0:
@@ -91,7 +91,7 @@ def save_history_shop(si, date, shopid):
 
         db.execute('''insert into ataobao2.shop_by_date 
                     (id, datestr, worth, sales, num_collects, catetrend, brandshare, cateshare) values
-                    (:shopid, :datestr, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''', 
+                    (:shopid, :datestr, :worth, :sales, :num_collects, :catetrend, :brandshare, :cateshare)''',
                     dict(worth=worth, num_collects=num_collects, shopid=shopid, datestr=date, sales=total_sales,
                         catetrend=json.dumps(catetrend), brandshare=json.dumps(brandshare), cateshare=json.dumps(cateshare)))
 

@@ -55,7 +55,7 @@ class AllScheduler(Scheduler):
         def on_ids(ids):
             ai2.put(*ids)
             ItemCT.add_items(*ids)
-        
+
         for cid in fecids:
             self.pool.spawn(list_cat, cid, on_ids=on_ids, use_pool=False, num_paths=1, max_page=1)
         self.pool.join()
@@ -121,9 +121,9 @@ class ItemScheduler(Scheduler):
             self.ct = ct
             return True
         else:
-            return False 
-        
-    def run(self):  
+            return False
+
+    def run(self):
         ids = ItemCT.get_items(self.ct)
         if ids:
             print('ct = {}'.format(self.ct))

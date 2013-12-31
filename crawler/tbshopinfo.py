@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description='Get shopinfo by shopid')
     parser.add_argument('--shopid', '-s', type=int, help='taobao shopid, e.g. 33003356', required=True)
     option = parser.parse_args()
-    pprint(get_shop(option.shopid)) 
+    pprint(get_shop(option.shopid))
 
 if __name__ == '__main__':
     main()

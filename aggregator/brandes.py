@@ -31,7 +31,7 @@ def es_brands(brands, date=None):
 def es_brand(bi, date, brand):
     if brand == '':
         brand = '无品牌'
-    
+
     d0 = (datetime.strptime(date, '%Y-%m-%d')-timedelta(days=1)).strftime('%Y-%m-%d')
     cates = bi.getcates(brand)
     c1s = list(set([c[0] for c in cates]))

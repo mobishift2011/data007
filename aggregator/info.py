@@ -9,12 +9,15 @@ import argparse
 
 from doagg import build_flow
 
+
 def gettermsize():
     def ioctl_GWINSZ(fd):
         try:
-            import fcntl, termios, struct  # noqa
+            import fcntl
+            import termios
+            import struct  # noqa
             cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
+                                                 '1234'))
         except:
             return None
         return cr
@@ -35,6 +38,7 @@ def gettermsize():
 
 
 class _Colorizer(object):
+
     def __init__(self):
         esc = "\x1b["
 
@@ -50,7 +54,7 @@ class _Colorizer(object):
         self.codes["overline"] = esc + "06m"
 
         dark_colors = ["black", "darkred", "darkgreen", "brown", "darkblue",
-                        "purple", "teal", "lightgray"]
+                       "purple", "teal", "lightgray"]
         light_colors = ["darkgray", "red", "green", "yellow", "blue",
                         "fuchsia", "turquoise", "white"]
 
@@ -136,7 +140,7 @@ class ColorizingStreamHandler(logging.StreamHandler):
 
     def __init__(self, exclude=None, *args, **kwargs):
         self.exclude = exclude
-        if is_python_version((2,6)):
+        if is_python_version((2, 6)):
             logging.StreamHandler.__init__(self, *args, **kwargs)
         else:
             super(ColorizingStreamHandler, self).__init__(*args, **kwargs)
@@ -153,7 +157,8 @@ class ColorizingStreamHandler(logging.StreamHandler):
 
             # Don't colorize any traceback
             parts = message.split('\n', 1)
-            parts[0] = " ".join([parts[0].split(" ", 1)[0], colorize(parts[0].split(" ", 1)[1])])
+            parts[0] = " ".join(
+                [parts[0].split(" ", 1)[0], colorize(parts[0].split(" ", 1)[1])])
 
             message = '\n'.join(parts)
 
@@ -162,6 +167,7 @@ class ColorizingStreamHandler(logging.StreamHandler):
 red = make_colorizer('darkred')
 green = make_colorizer('darkgreen')
 yellow = make_colorizer('darkyellow')
+
 
 def pad(s, pad_to_length):
     """Pads the given string to the given length."""
@@ -189,13 +195,16 @@ def state_symbol(state):
 
 flow = build_flow()
 processes = []
+
+
 def tree_processes(cp, indent=0):
     processes.append([cp, indent])
     if cp.children:
         for child in cp.children:
-            tree_processes(child, indent+1)
+            tree_processes(child, indent + 1)
 
 tree_processes(flow)
+
 
 def show_processes(args):
     termwidth, _ = gettermsize()
@@ -214,21 +223,28 @@ def show_processes(args):
         td = ta - p.task_left()
         colorsize = 0
         if ta:
-            colorsize = chartwidth*td/ta
-            
-        chart = green('|'+'█'*colorsize+' '*(chartwidth-colorsize)+'|')
+            colorsize = chartwidth * td / ta
+
+        chart = green('|' + '█' * colorsize + ' ' *
+                      (chartwidth - colorsize) + '|')
         done = p.status()
-        line = '    '*indent + '    %-8s %s %d/%d %s:%s' % (p.name, chart, td, ta, done, p.duration())
+        line = '    ' * indent + \
+            '    %-8s %s %d/%d %s:%s' % (p.name,
+                                         chart, td, ta, done, p.duration())
         print(line)
 
     print('\n  *?: Unknown, W: Waiting, P: Processing, F: Finished')
 
+
 def show_both(args):
     show_processes(args)
-    
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(description='ataobao command-line monitor.')
-    parser.add_argument('--interval', '-i', metavar='N', type=float, default=2.5, help='Updates stats every N seconds (default: don\'t poll)')
+    parser = argparse.ArgumentParser(
+        description='ataobao command-line monitor.')
+    parser.add_argument('--interval', '-i', metavar='N', type=float,
+                        default=2.5, help='Updates stats every N seconds (default: don\'t poll)')
     return parser.parse_args()
 
 
@@ -242,6 +258,7 @@ def interval(val, func, args):
         else:
             break
 
+
 def main():
     args = parse_args()
 
@@ -254,4 +271,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
