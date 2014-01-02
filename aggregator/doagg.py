@@ -16,10 +16,15 @@ def clearall(date):
     db.execute('delete from ataobao2.agghosts where datestr=:date', dict(date=date))
     clear_date(date)
 
-    d = datetime.strptime(date, '%Y-%m-%d')
-    for delta in [2, 3, 4]:
-        date = (d - timedelta(days=delta)).strftime("%Y-%m-%d")
-        db.execute('delete from ataobao2.agghosts where datestr=:date', dict(date=date))
+    r = db.execute('select datestr, ready from ataobao2.agghosts', result=True)
+    ahs = sorted(r.results) 
+    try:
+        last = [ x[0] for x in ahs if x[1] ][-1]
+    except:
+        last = date
+    for d, ready in ahs:
+        if d < last:
+            db.execute('delete from ataobao2.agghosts where datestr=:date', dict(date=d))
 
     db.execute('delete from ataobao2.blacklist where type=\'shopblacknew\';')
 

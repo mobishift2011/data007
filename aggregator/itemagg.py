@@ -63,6 +63,12 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
         ci.multi()
 
         try:
+            if start > end:
+                start, end = end, start
+                op = 'or'
+            else:
+                op = 'and'
+
             if hosts:
                 d2 = calendar.timegm(date2.utctimetuple())*1000
                 d1 = calendar.timegm(date1.utctimetuple())*1000
@@ -70,20 +76,20 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 conn = db.get_connection(host)
                 cur = conn.cursor()
                 cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
-                    from ataobao2.item where token(id)>=:start and token(id)<:end''',
+                    from ataobao2.item where token(id)>=:start {} token(id)<:end'''.format(op),
                     dict(start=int(start), end=int(end)))
                 iteminfos = list(cur)
                 cur.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
-                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
+                    where token(id)>:start and token(id)<=:end and date>=:date1 {} date<:date2 allow filtering'''.format(op),
                     dict(start=int(start), end=int(end), date1=d1, date2=d2))
                 itemts = list(cur)
                 conn.close()
             else:
                 iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
-                    from ataobao2.item where token(id)>=:start and token(id)<:end''',
+                    from ataobao2.item where token(id)>=:start {} token(id)<:end'''.format(op),
                     dict(start=int(start), end=int(end)), result=True).results
                 itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
-                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
+                    where token(id)>:start and token(id)<=:end and date>=:date1 {} date<:date2 allow filtering'''.format(op),
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
             print('cluster error on host {}, range {}, retry {}, sleeping 5 secs...'.format(hosts[0], (start, end), retry))
