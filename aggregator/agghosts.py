@@ -9,14 +9,15 @@ from shardredis import ShardRedis
 
 def _getconn(date):
     conns = []
-    r = db.execute('''select datestr, hosts from ataobao2.agghosts
+    r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts
                       where datestr=:date''', dict(date=date), result=True)
     if not r.results:
-        r = db.execute('''select datestr, hosts from ataobao2.agghosts''', result=True)
-        if not r.results:
+        r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts''', result=True)
+        alluris = [ [ds, hosts, ready] for ds, hosts, ready in sorted(r.results) if ready ]
+        if not alluris:
             uris = AGGRE_URIS[0]
         else:
-            used_uris = json.loads(sorted(r.results)[-1][1])
+            used_uris = json.loads(alluris[-1][1])
             for au in AGGRE_URIS:
                 if set(au) != set(used_uris):
                     uris = au
