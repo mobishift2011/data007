@@ -94,6 +94,10 @@ def delete_item(itemid):
     db.execute('''delete from ataobao2.item where id=:itemid''', dict(itemid=itemid))
     db.execute('''delete from ataobao2.item_by_date where id=:itemid''', dict(itemid=itemid))
 
+def delete_shop(shopid):
+    db.execute('''delete from ataobao2.shop where id=:shopid''', dict(shopid=shopid))
+    db.execute('''delete from ataobao2.shop_by_date where id=:shopid''', dict(shopid=shopid))
+
 def update_shop(shop):
     d = shop
     d['rating'] = json.dumps(d['rating'])

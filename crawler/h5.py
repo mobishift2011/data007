@@ -335,7 +335,7 @@ def get_json(api, data):
         setup_token()
         return get_json(api, data)
     elif u'宝贝不存在' in text or u'ID错误' in text or u'没有查询到记录' in text or u'类目不存在' in text:
-        raise NotFoundError("Shop/Item Not Found")
+        return {'error': 'not found'}
     elif u'网络系统异常' in text:
         raise NotFoundError("Taobao Api Error")
     else:
@@ -390,6 +390,8 @@ def get_mobile(shopid):
 def get_shop(shopid):
     try:
         j = get_json("mtop.shop.getWapShopInfo", {"shopId":shopid})
+        if 'error' in j:
+            return j
         d = j['data']
 
         def fix_logo(url):

@@ -18,7 +18,7 @@ from collections import deque
 
 from settings import ENV
 
-from models import db, update_item, delete_item, update_shop
+from models import db, update_item, delete_item, update_shop, delete_shop
 from caches import LC, ItemCT, WC
 from queues import poll, ai1, ai2, as1, af1, asi1
 from crawler.cates import need_crawl
@@ -214,6 +214,16 @@ class ShopInfoWorker(Worker):
         def on_update(id):
             print('updating shopinfo of shopid {}'.format(id))
             si = get_shop(id)
+            if 'error' in si:
+                if si['error'] == 'not found':
+                    try:
+                        print('deleting shop id: {}'.format(id))
+                        LC.delete('shop', id)
+                        delete_shop(id)
+                        as1.task_done(id)
+                    except:
+                        traceback.print_exc()
+                    return d
             if si and 'error' not in si:
                 update_shop(si)
 
