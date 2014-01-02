@@ -156,9 +156,9 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
         - sales: 按销售额排序
         - 其他排行表计算量太大, 未计算
 
-6. brandhotitems_{date}_{brand}_{cate2}
+6. brandhotitems_{date}_{brand}_{cate[12]}
     * sorted set: (itemid, sales)
-    * 指定品牌在指定品类(二级分类)下的热销商品
+    * 指定品牌在指定品类(一/二级分类)下的热销商品
     
 7. brandhotshops_{date}_{brand}_{cate2}
     * sorted set: (shopid, sales)

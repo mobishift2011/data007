@@ -48,6 +48,11 @@ defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 def aggregate_items(start, end, hosts=[], date=None, retry=0):
     if retry >= 20:
         raise Exception('retry too many times, give up')
+
+    if start > end:
+        aggregate_items(start, 2**63-1, hosts, date, retry)
+        aggregate_items(-2**63, end, hosts, date, retry)
+
     try:
         if date is None:
             date = defaultdate
@@ -63,12 +68,6 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
         ci.multi()
 
         try:
-            if start > end:
-                start, end = end, start
-                op = 'or'
-            else:
-                op = 'and'
-
             if hosts:
                 d2 = calendar.timegm(date2.utctimetuple())*1000
                 d1 = calendar.timegm(date1.utctimetuple())*1000
@@ -76,20 +75,20 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 conn = db.get_connection(host)
                 cur = conn.cursor()
                 cur.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
-                    from ataobao2.item where token(id)>=:start {} token(id)<:end'''.format(op),
+                    from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)))
                 iteminfos = list(cur)
                 cur.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
-                    where token(id)>:start and token(id)<=:end and date>=:date1 {} date<:date2 allow filtering'''.format(op),
+                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2))
                 itemts = list(cur)
                 conn.close()
             else:
                 iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
-                    from ataobao2.item where token(id)>=:start {} token(id)<:end'''.format(op),
+                    from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)), result=True).results
                 itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
-                    where token(id)>:start and token(id)<=:end and date>=:date1 {} date<:date2 allow filtering'''.format(op),
+                    where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
             print('cluster error on host {}, range {}, retry {}, sleeping 5 secs...'.format(hosts[0], (start, end), retry))
@@ -225,7 +224,9 @@ def aggregate_item(si, ii, bi, ci, itemid, items, shopid, cid, price, brand, nam
         if l2 != 'all':
             bi.addshop(brand, l1, 'all', shopid)
             bi.addcates(brand, l1, 'all')
-        bi.addhots(brand, l2, itemid, shopid, sales_mon)
+        bi.addhots(brand, l1, itemid, shopid, sales_mon)
+        if l2 != 'all':
+            bi.addhots(brand, l2, itemid, shopid, sales_mon)
         inc = {
             'items': 1,
             'deals': deals_mon,
@@ -277,10 +278,10 @@ class ItemAggProcess(Process):
     def __init__(self, date=None):
         super(ItemAggProcess, self).__init__('itemagg')
         if ENV == 'DEV':
-            self.step = 256*4
+            self.step = 256*10
             self.max_workers = 10
         else:
-            self.step = 256*10*100
+            self.step = 256*10*200
             self.max_workers = 500
         self.date = date
 
