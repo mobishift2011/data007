@@ -113,10 +113,16 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
 
         for itemid, shopid, cid, nc, price, brand, name, image, nr, credit_score, title, type in iteminfos:
             if in_blacklist(shopid, price, cid, nc, nr, credit_score, title, type, itemid=itemid):
-                print itemid, 'skiped'
+                #print itemid, 'skiped'
                 continue
             brand = clean_brand(brand)
             if nc > 0 and itemid in itemtsdict and itemtsdict[itemid]:
+                try:
+                    if shopid == 0:
+                        db.execute('delete from ataobao2.item where id=:id', dict(id=itemid))
+                        db.execute('delete from ataobao2.item_by_date where id=:id', dict(id=itemid))
+                except:
+                    traceback.print_exc()
                 try:
                     aggregate_item(si, ii, bi, ci, itemid, itemtsdict[itemid], shopid, cid, price, brand, name, image, date)
                 except:
