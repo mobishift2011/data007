@@ -39,7 +39,10 @@ def in_blacklist(shopid, price, cid, num_sold30, num_reviews, credit_score, titl
     ib = False
     new = True
     if type == 'tmall':
-        ib = False
+        if price >= 500000:
+            ib = True
+        else:
+            ib = False
 
     elif int(shopid) in bl_shopwhiteids:
         ib = False
