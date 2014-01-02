@@ -121,6 +121,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     if shopid == 0:
                         db.execute('delete from ataobao2.item where id=:id', dict(id=itemid))
                         db.execute('delete from ataobao2.item_by_date where id=:id', dict(id=itemid))
+                        continue
                 except:
                     traceback.print_exc()
                 try:
