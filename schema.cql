@@ -15,6 +15,7 @@
  */
 CREATE KEYSPACE IF NOT EXISTS ataobao2
     WITH replication = {'class':'SimpleStrategy', 'replication_factor':3};
+    /* WITH replication = {'class':'NetworkTopologyStrategy', 'DC1':3, 'DC2':3}; */
 
 USE ataobao2;
 
