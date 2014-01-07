@@ -25,7 +25,7 @@ nose
 requests
 psutil
 msgpack-python
-autobahn
+autobahn==0.6.3
 txmongo
 txredisapi
 pyquery

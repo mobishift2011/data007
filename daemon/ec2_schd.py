@@ -144,6 +144,7 @@ class EC2Monitor(threading.Thread):
                                 security_group_ids = map(str, row['security_group_ids']), 
                                 instance_type = row['instance_type'], 
                                 user_data = row['script_code'],
+                                placement='ap-northeast-1c',
                                 #dry_run = True
                             )
                             log.msg("run_instances:{}".format(rets))
