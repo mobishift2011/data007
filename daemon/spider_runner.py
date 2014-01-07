@@ -36,6 +36,8 @@ import json
 import subprocess
 import urllib2
 
+from settings import ADMIN_HOST
+
 class SubProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, sptl, spiders, kw):
         self.sptl = sptl
@@ -260,7 +262,7 @@ def start():
     
     
     log.startLogging(sys.stdout)
-    factory = SpiderClientFactory("ws://23.20.92.211:9000")
+    factory = SpiderClientFactory("ws://{}:9000".format(ADMIN_HOST))
     factory.protocol = TaskClientProtocol
     connectWS(factory)
     

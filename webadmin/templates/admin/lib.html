@@ -75,8 +75,9 @@
 {%- endmacro %}
 
 {# ---------------------- Forms -------------------------- #}
-{% macro render_field(form, field, set_focus=False, kwargs={}) %}
-  <div class="control-group{{ ' error' if field.errors else '' }}">
+{% macro render_field(form, field, kwargs={}) %}
+  {% set direct_error = h.is_field_error(field.errors) %}
+  <div class="control-group{{ ' error' if direct_error else '' }}">
     <div class="control-label">
       {{ field.label.text }}
       {% if h.is_required_form_field(field) %}
@@ -87,17 +88,13 @@
     </div>
     <div class="controls">
     <div>
-      {% if set_focus %}
-      {{ field(autofocus='autofocus', **kwargs)|safe }}
-      {% else %}
       {{ field(**kwargs)|safe }}
-      {% endif %}
     </div>
     {% if field.description %}
     <p class="help-block">{{ field.description }}</p>
     {% endif %}
-    {% if field.errors %}
-      <ul class="input-errors">
+    {% if direct_error %}
+      <ul{% if direct_error %} class="input-errors"{% endif %}>
       {% for e in field.errors if e is string %}
         <li>{{ e }}</li>
       {% endfor %}
@@ -107,14 +104,33 @@
   </div>
 {% endmacro %}
 
-{% macro render_form_fields(form, set_focus=True, widget_args={}) %}
-    {{ form.hidden_tag() if form.hidden_tag is defined }}
+{% macro render_header(form, text) %}
+    <h3>{{ text }}</h3>
+{% endmacro %}
 
+{% macro render_form_fields(form, form_opts={}, form_rules=None) %}
+    {% if form.hidden_tag is defined %}
+        {{ form.hidden_tag() }}
+    {% else %}
+        {% for f in form if f.type == 'HiddenField' %}
+            {{ f }}
+        {% endfor %}
+    {% endif %}
 
-    {% for f in form if f.type != 'HiddenField' and f.type != 'CSRFTokenField' %}
-      {% set kwargs = widget_args.get(f.name, {}) %}
-      {{ render_field(form, f, not loop.index0 and set_focus, kwargs) }}
-    {% endfor %}
+    {% if form_rules %}
+        {% for r in form_rules %}
+            {{ r(form, form_opts=form_opts) }}
+        {% endfor %}
+    {% else %}
+        {% for f in form if f.type != 'HiddenField' and f.type != 'CSRFTokenField' %}
+          {% if form_opts %}
+            {% set kwargs = form_opts.widget_args.get(f.name, {}) %}
+          {% else %}
+            {% set kwargs = {} %}
+          {% endif %}
+          {{ render_field(form, f, kwargs) }}
+        {% endfor %}
+    {% endif %}
 {% endmacro %}
 
 {% macro form_tag(form=None) %}
@@ -139,9 +155,9 @@
     </div>
 {% endmacro %}
 
-{% macro render_form(form, cancel_url, extra=None, widget_args={}) -%}
+{% macro render_form(form, cancel_url, extra=None, form_opts={}, form_rules=None) -%}
     {% call form_tag() %}
-        {{ render_form_fields(form, widget_args) }}
+        {{ render_form_fields(form, form_opts=form_opts, form_rules=form_rules) }}
         {{ render_form_buttons(cancel_url, extra) }}
     {% endcall %}
 {% endmacro %}

@@ -19,8 +19,8 @@ import datetime
 
 mongo_conn = pymongo.Connection('localhost', 27017)
 
-AWS_ACCESS_KEY = 'AKIAIQC5UD4UWIJTBB2A'
-AWS_SECRET_KEY = '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'
+AWS_ACCESS_KEY = 'AKIAJ522VBHBME3ODSIQ'
+AWS_SECRET_KEY = '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'
 
 #conn = boto.ec2.connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
 

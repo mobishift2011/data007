@@ -7,7 +7,7 @@ from twisted.internet import reactor, defer
 from twisted.web.server import Site
 from twisted.web.static import File
 
-from autobahn.websocket import listenWS
+from autobahn.twisted.websocket import listenWS
 from autobahn.wamp import exportSub, \
                           exportPub, \
                           exportRpc, \

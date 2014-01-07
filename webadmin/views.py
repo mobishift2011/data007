@@ -13,6 +13,7 @@ from webadmin.modes import *
 from flask.ext.admin import Admin, BaseView, expose
 from webadmin import app
 from bson.objectid import ObjectId
+from settings import ADMIN_HOST
 
 
 class CategoryView(ModelView):
@@ -112,7 +113,7 @@ class SpiderAdminView(BaseView):
     def index(self):
         rows = app.conn.taobao.spider.find({})
         rows = list(rows)
-        return self.render('cfz/spider_monitor.html', **{"rows":rows})
+        return self.render('cfz/spider_monitor.html', **{"rows":rows, "host":ADMIN_HOST})
 
 @app.route('/admin/testmonitorview/')
 def testmonitorview():
@@ -120,6 +121,7 @@ def testmonitorview():
     data = {}
     data['pid'] = request.args.get('pid')
     data['sid'] = request.args.get('sid')
+    data['host'] = ADMIN_HOST
     
     return render_template('cfz/spider_monitor_pid.html', **data)
 
