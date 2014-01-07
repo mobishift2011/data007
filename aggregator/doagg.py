@@ -49,8 +49,8 @@ def build_flow(date=defaultdate):
     return iap
 
 def mark_ready(date):
-    db.execute('insert into ataobao2.agghosts (datestr, ready) values (:date, :ready)',
-                dict(date=date, ready=True))
+    db.execute('insert into ataobao2.agghosts (datestr, ready) values (:date, true)',
+                dict(date=date))
 
 def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
