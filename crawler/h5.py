@@ -436,6 +436,10 @@ def get_item(itemid):
     result = {}
     try:
         j = get_json("mtop.wdetail.getItemDetailStatic", {"itemNumId":itemid})
+
+        if 'data' not in j:
+            return {'error': 'not found'}
+
         p = get_json("mtop.wdetail.getItemDetailDynForH5", {"itemNumId":itemid})
         i = j['data']['item']
         s = j['data']['seller']
