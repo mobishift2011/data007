@@ -56,6 +56,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
     try:
         if date is None:
             date = defaultdate
+        datestr = date
         date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
         date1 = date2 - timedelta(days=60)
         si = ShopIndex(date)
@@ -128,7 +129,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 except:
                     traceback.print_exc()
                 try:
-                    aggregate_item(si, ii, bi, ci, itemid, itemtsdict[itemid], shopid, cid, price, brand, name, image, date)
+                    aggregate_item(si, ii, bi, ci, itemid, itemtsdict[itemid], shopid, cid, price, brand, name, image, datestr)
                 except:
                     traceback.print_exc()
 
