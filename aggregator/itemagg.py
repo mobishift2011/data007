@@ -100,7 +100,11 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
 
         itemtsdict = {}
         for row in itemts:
-            itemid, date, values = row[0], row[1], row[2:]
+            itemid, date, values = row[0], row[1], list(row[2:])
+            # fix data malform
+            # 1. num_colllects, index at 0, should not larger than 2**24 ~ 16 million
+            if values[0] > 2**24:
+                values[0] = 0
             if isinstance(date, datetime):
                 date = (date+timedelta(hours=8)).strftime("%Y-%m-%d")
             else:
