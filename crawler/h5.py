@@ -436,6 +436,7 @@ def get_item(itemid):
     result = {}
     try:
         j = get_json("mtop.wdetail.getItemDetailStatic", {"itemNumId":itemid})
+
         if 'data' not in j:
             return {'error': 'not found'}
 

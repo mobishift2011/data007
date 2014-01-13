@@ -14501,6 +14501,9 @@ from topcates import topcids
 l1l2s = []
 
 for cid in cates:
+    if cid in topcids:
+        l1l2s.append([cid, 'all'])
+        continue
     pcid = cates[cid]
     if pcid in topcids:
         l1l2s.append([pcid, cid])
