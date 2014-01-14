@@ -3,13 +3,15 @@
 import argparse
 from datetime import datetime, timedelta
 
-from models import db
+from aggregator.models import getdb
 from aggregator import iap, sap, bap, cap, shp, iip, tap, sep, bep, all_processes
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex, clear_date
+from aggregator.agghosts import getconn
 
 defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
 
 def clearall(date):
+    db = getdb('db1')
     for p in all_processes:
         p.clear_redis()
 
@@ -49,8 +51,14 @@ def build_flow(date=defaultdate):
     return iap
 
 def mark_ready(date):
+    db = getdb('db1')
     db.execute('insert into ataobao2.agghosts (datestr, ready) values (:date, true)',
                 dict(date=date))
+
+def save_redis(date):
+    for conn in getconn(date).conns:
+        print 'bgsave on {}'.format(conn)
+        conn.bgsave()
 
 def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
@@ -64,6 +72,7 @@ def main():
     flow = build_flow(date)
     flow.start()
     mark_ready(date)
+    save_redis(date)
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ Blacklist Item from our Aggregation Process """
-from models import db
+from aggregator.models import getdb
+
+db = getdb()
 
 bl_shopblackids = set()
 bl_shopwhiteids = set()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from aggregator.processes import Process
 from aggregator.blacklist import in_blacklist
@@ -54,6 +54,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
         aggregate_items(-2**63, end, hosts, date, retry)
 
     try:
+        db = getdb()
         if date is None:
             date = defaultdate
         datestr = date
@@ -292,7 +293,7 @@ class ItemAggProcess(Process):
 
     def generate_tasks(self):
         self.clear_redis()
-        conn = db.get()
+        conn = getdb().get()
         tclient = conn.client
         ring = tclient.describe_ring('ataobao2')
         conn.close()
@@ -321,15 +322,15 @@ class ItemAggProcess(Process):
             tasks[hosts[0]].append(['aggregator.itemagg.aggregate_items', (start, end), dict(date=self.date, hosts=hosts)])
         universe_tasks = []
         # averaging tasks
-        for _ in range(40):
-            lenhosts = sorted([[len(tasks[host]), host] for host in tasks])
-            delta = (lenhosts[-1][0] - lenhosts[0][0]) // 2
-            if delta > 0 and len(tasks) > 1:
-                print 'inequality index', delta
-                for task in tasks[lenhosts[-1][1]][-delta:]:
-                    task[2]['hosts'] = task[2]['hosts'][-1:] + task[2]['hosts'][:-1]
-                    tasks[task[2]['hosts'][0]].insert(0, task)
-                tasks[lenhosts[-1][1]] = tasks[lenhosts[-1][1]][:-delta]
+        #for _ in range(40):
+        #    lenhosts = sorted([[len(tasks[host]), host] for host in tasks])
+        #    delta = (lenhosts[-1][0] - lenhosts[0][0]) // 2
+        #    if delta > 0 and len(tasks) > 1:
+        #        print 'inequality index', delta
+        #        for task in tasks[lenhosts[-1][1]][-delta:]:
+        #            task[2]['hosts'] = task[2]['hosts'][-1:] + task[2]['hosts'][:-1]
+        #            tasks[task[2]['hosts'][0]].insert(0, task)
+        #        tasks[lenhosts[-1][1]] = tasks[lenhosts[-1][1]][:-delta]
         while sum(map(len, tasks.itervalues())):
             for host in tasks:
                 if tasks[host]:

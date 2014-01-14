@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import BrandIndex, CategoryIndex
 from aggregator.processes import Process
 from crawler.cates import l1l2s, topcids
@@ -27,6 +27,7 @@ def aggregate_brands(date, *brands):
         traceback.print_exc()
 
 def aggregate_brand(bi, ci, date, brand):
+    db = getdb()
     if brand == '':
         brand = '无品牌'
     baseinfo = {}

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
 from aggregator.indexes import ShopIndex, CategoryIndex
 from aggregator.processes import Process
 

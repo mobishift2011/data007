@@ -3,12 +3,14 @@
 import re
 import json
 import redis
-from models import db
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
 
+from aggregator.models import getdb
+
 def _getconn(date):
     conns = []
+    db = getdb()
     r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts
                       where datestr=:date''', dict(date=date), result=True)
     if not r.results:

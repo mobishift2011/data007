@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
 from aggregator.esindex import index_shop, flush
@@ -28,6 +28,7 @@ def es_shops(shopids, date=None):
         traceback.print_exc()
 
 def es_shop(si, date, shopid):
+    db = getdb()
     shopinfo = si.getbase(shopid)
     num_products = int(shopinfo.get('num_products', 0))
     credit_score = int(shopinfo.get('credit_score', 0)) or 1

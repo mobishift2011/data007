@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ItemIndex
 from aggregator.processes import Process
 from aggregator.itemagg import parse_iteminfo
@@ -21,6 +21,7 @@ def save_iteminfos(date, *itemids):
             traceback.print_exc()
 
 def save_iteminfo(date, ii, itemid):
+    db = getdb()
     date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
     r1 = db.execute('''select title, image, shopid, brand, price, num_sold30, cid
