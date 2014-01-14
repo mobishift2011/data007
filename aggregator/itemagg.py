@@ -19,12 +19,20 @@ import calendar
 import traceback
 
 def clean_brand(brand):
+    aliases = {
+        'Samsung/三星': 'SAMSUNG/三星',
+    }
+
     if brand in ['', None]:
         brand = u'无品牌'
     else:
         m = re.compile(ur'(^其它|^其他|^国内其它|^国内其他|^other|.*其他|.*其它$)', re.IGNORECASE).match(brand)
         if m:
             brand = u'无品牌'
+
+    if brand in aliases:
+        brand = aliases[brand]
+
     return brand
 
 def get_l1_and_l2_cids(cids):
