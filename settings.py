@@ -30,6 +30,7 @@ envs = {
             ],        
         ],
         'DB_HOSTS': ['localhost:9160'],
+        'DB_HOSTS_BACKUP': ['localhost:9160'],
         'ES_HOSTS': ['localhost:9500'],
     },
     'TEST': {
