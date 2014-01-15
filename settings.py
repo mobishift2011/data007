@@ -32,6 +32,7 @@ envs = {
         'DB_HOSTS': ['localhost:9160'],
         'DB_HOSTS_BACKUP': ['localhost:9160'],
         'ES_HOSTS': ['localhost:9500'],
+        'ADMIN_HOST': 'localhost',
     },
     'TEST': {
         'RECORD_URI': 'redis://ec2-54-199-147-18.ap-northeast-1.compute.amazonaws.com:6379/0',
