@@ -45,6 +45,11 @@ def es_brand(bi, date, brand):
         deals += int(brandinfo.get('deals', 0))
         sales += float(brandinfo.get('sales', 0))
         delta += float(brandinfo.get('delta_sales', 0))
+
+    # we don't care about brands that do not have more than 1000 items
+    if items < 1000:
+        return 
+
     cate1 = [str(c) for c in c1s]
     cate2 = [str(c) for c in c2s]
     r = db.execute('select logo from ataobao2.brand where name=:name', dict(name=brand), result=True)
