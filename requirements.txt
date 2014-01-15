@@ -1,6 +1,7 @@
 # flask related
 flask
 flask-wtf
+flask-gzip
 flask-admin
 flask-mongoengine
 

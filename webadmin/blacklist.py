@@ -20,12 +20,14 @@ last_update = None
 
 def get_lists():
     global last_update, blacklist, whitelist
-    if last_update is None or last_update < time.time() - 60:
+    if last_update is None or last_update < time.time() - 86400:
         r = db.execute('select type, args, value from ataobao2.blacklist', result=True)
         last_update = time.time()
         blacklist = list(reversed([ row[1:] for row in r.results if row[0] == 'shopblack' ]))
         whitelist = list(reversed([ row[1:] for row in r.results if row[0] == 'shopwhite' ]))
     return blacklist, whitelist
+
+get_lists()
 
 @app.route('/blacklist/')
 def blacklist_index():
