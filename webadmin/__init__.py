@@ -33,6 +33,4 @@ __all__ = ["app", "modes", "api", "views", "cqlui", "blacklist"]
 from webadmin import *
 
 
-from flask.ext.gzip import Gzip
-app = Gzip(app)
 

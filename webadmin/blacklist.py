@@ -7,7 +7,7 @@ except Exception, e:
     print "#########", e
 
 from webadmin import app
-from flask import request, render_template, redirect
+from flask import request, render_template, redirect, make_response
 from crawler.tbitem import get_item
 
 import time
@@ -27,12 +27,28 @@ def get_lists():
         whitelist = list(reversed([ row[1:] for row in r.results if row[0] == 'shopwhite' ]))
     return blacklist, whitelist
 
-get_lists()
+def init_lazy():
+    import threading
+    threading.Thread(target=get_lists).start()
+
+init_lazy()
 
 @app.route('/blacklist/')
 def blacklist_index():
     blacklist, whitelist = get_lists()
-    return render_template('blacklist/index.html', blacklist=blacklist, whitelist=whitelist)
+    resp = make_response(render_template('blacklist/index.html', blacklist=blacklist, whitelist=whitelist))
+    # gzipping
+    import gzip
+    import StringIO
+    buff = StringIO.StringIO()
+    gzipfile = gzip.GzipFile(mode='wb', compresslevel=6, fileobj=buff)
+    gzipfile.write(resp.data)
+    gzipfile.close()
+    resp.data = buff.getvalue()
+    resp.headers['Content-Encoding'] = 'gzip'
+    resp.headers['Content-Length'] = len(resp.data)
+    return resp
+    
 
 @app.route('/blacklist/add')
 def blacklist_add():
