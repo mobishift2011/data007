@@ -142,6 +142,7 @@ class EC2_Schd(db.Document):
                                                          ('ap-southeast-2', 'ap-southeast-2'),
                                                          ('sa-east-1', 'sa-east-1'),
                                                          ])
+    placement = db.StringField(max_length=500, default=None)
     instance_num = db.IntField(default=1)
     price = db.FloatField(default=0.02)
     instance_type = db.StringField(max_length=500, default='t1.micro', 

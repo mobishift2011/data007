@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse
+import pymongo
+
 from datetime import datetime, timedelta
 
-from aggregator.models import getdb
 from aggregator import iap, sap, bap, cap, shp, iip, tap, sep, bep, all_processes
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex, clear_date
 from aggregator.agghosts import getconn
+from aggregator.models import getdb
 
 defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
+
+def allocate_instances(num=0):
+    db = pymongo.MongoClient().taobao
+    db.e_c2__schd.update({'name':'taobao_aggregate'}, {'$set':{'instance_num':num}})
 
 def clearall(date):
     db = getdb('db1')
@@ -63,16 +69,22 @@ def save_redis(date):
 def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
     parser.add_argument('--date', '-d', help='the date to aggregate, must be format of YYYY-MM-DD')
+    parser.add_argument('--instance-num', '-n', default=0, help='the number of instances should be used')
     option = parser.parse_args()
     if option.date:
         date = option.date
     else:
         date=(datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
     clearall(date)
+    allocate_instances(option.instance_num)
     flow = build_flow(date)
     flow.start()
+    allocate_instances(0)
     mark_ready(date)
-    save_redis(date)
+    try:
+        save_redis(date)
+    except:
+        pass
 
 if __name__ == '__main__':
     main()
