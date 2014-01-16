@@ -504,7 +504,7 @@ def get_item(itemid):
             'shopid': int(s.get('shopId', 0)),
             'title': i.get('title', ''),
             'oprice': int(i.get('price', 0))/100.,
-            'num_instock': int(p['data'].get('quantity', 0)),
+            'num_instock': max(int(i.get('quantity', 0)), int(p['data'].get('quantity', 0))),
             'num_collects': int(i.get('favcount', 0)),
             'num_sold30': int(i.get('totalSoldQuantity', 0)),
             'delivery_type': int(i.get('delivery', {}).get('deliveryFeeType', 1)),

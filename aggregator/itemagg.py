@@ -392,7 +392,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
             print('cluster error on host {}, range {}, retry {}, sleeping 5 secs...'.format(hosts[0], (start, end), retry))
             hosts = hosts[-1:] + hosts[:-1]
             #traceback.print_exc()
-            time.sleep(5)
+            time.sleep(30)
             return aggregate_items(start, end, date=date, hosts=hosts, retry=retry+1)
 
 
