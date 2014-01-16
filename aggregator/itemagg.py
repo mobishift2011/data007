@@ -376,7 +376,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)))
                 iteminfos = list(cur)
-                cur.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+                cur.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views, price from ataobao2.item_by_date 
                     where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2))
                 itemts = list(cur)
@@ -385,7 +385,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 iteminfos = db.execute('''select id, shopid, cid, num_sold30, price, brand, title, image, num_reviews, credit_score, title, type
                     from ataobao2.item where token(id)>=:start and token(id)<:end''',
                     dict(start=int(start), end=int(end)), result=True).results
-                itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views from ataobao2.item_by_date 
+                itemts = db.execute('''select id, date, num_collects, num_reviews, num_sold30, num_views, price from ataobao2.item_by_date 
                     where token(id)>:start and token(id)<=:end and date>=:date1 and date<:date2 allow filtering''',
                     dict(start=int(start), end=int(end), date1=d1, date2=d2), result=True).results
         except:
@@ -479,7 +479,8 @@ def parse_iteminfo(date, itemid, items, price, cid):
         deals_day1 = i2[2] - (i3[2] - i32[2])
     else:
         deals_day1 = i2[2]//30
-    price = price
+
+    price = i1[-1]
     sales_mon = deals_mon * price
     sales_day = deals_day * price
     delta_sales_mon = deals_mon * price - i2[2] * price
