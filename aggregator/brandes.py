@@ -46,8 +46,8 @@ def es_brand(bi, date, brand):
         sales += float(brandinfo.get('sales', 0))
         delta += float(brandinfo.get('delta_sales', 0))
 
-    # we don't care about brands that do not have more than 1000 items
-    if items < 1000:
+    # we don't care about brands that do not have more than 100 items
+    if items < 100:
         return 
 
     cate1 = [str(c) for c in c1s]
@@ -81,7 +81,7 @@ class BrandESProcess(Process):
             self.max_workers = 5
         else:
             self.step = 1000
-            self.max_workers = 10
+            self.max_workers = 20
         self.date = date
 
     def generate_tasks(self):

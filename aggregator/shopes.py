@@ -85,7 +85,7 @@ class ShopESProcess(Process):
             self.max_workers = 5
         else:
             self.step = 2**64/10000
-            self.max_workers = 10
+            self.max_workers = 20
         self.date = date
 
     def generate_tasks(self):

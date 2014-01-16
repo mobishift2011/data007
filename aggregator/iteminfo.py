@@ -63,7 +63,7 @@ class ItemInfoProcess(Process):
         if ENV == 'DEV':
             self.max_workers = 5
         else:
-            self.max_workers = 20
+            self.max_workers = 50
 
     def generate_tasks(self):
         self.clear_redis()
