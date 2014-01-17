@@ -73,7 +73,6 @@ def es_brand(bi, date, brand):
         'sales': sales,
         'delta': delta,
     }
-    print info
 
     index_brand(brand, info)
 
