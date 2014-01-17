@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import time
+import traceback
 import argparse
 import pymongo
 
@@ -66,25 +68,54 @@ def save_redis(date):
         print 'bgsave on {}'.format(conn)
         conn.bgsave()
 
+def doagg(option):
+    try:
+        date = option.date
+        instance_num = option.instance_num
+        clearall(date)
+        allocate_instances(instance_num)
+        flow = build_flow(date)
+        flow.start()
+        allocate_instances(0)
+        mark_ready(date)
+        try:
+            save_redis(date)
+        except:
+            pass
+    except:
+        traceback.print_exc()
+
+def doagg_daily(option):
+    while True:
+        d = datetime.utcnow() + timedelta(hours=8)
+        try:
+            if d.hour == 0 and d.minute == 0:
+                print 'runing doagg for {}'.format(d)
+                option.date = (d - timedelta(days=1)).strftime("%Y-%m-%d")
+                doagg(option)
+        except:
+            traceback.print_exc()
+        finally:
+            to_sleep = 90 - d.second
+            print 'sleeping', to_sleep, 'secs...'
+            time.sleep(to_sleep)
+
 def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
     parser.add_argument('--date', '-d', help='the date to aggregate, must be format of YYYY-MM-DD')
-    parser.add_argument('--instance-num', '-n', default=0, help='the number of instances should be used')
+    parser.add_argument('--instance-num', '-n', default=7, help='the number of instances should be used')
+    parser.add_argument('--mode', '-m', default='daily', choices=['onepass', 'daily'], help='one pass aggregation')
     option = parser.parse_args()
     if option.date:
         date = option.date
     else:
         date=(datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
-    clearall(date)
-    allocate_instances(option.instance_num)
-    flow = build_flow(date)
-    flow.start()
-    allocate_instances(0)
-    mark_ready(date)
-    try:
-        save_redis(date)
-    except:
-        pass
+    option.date = date
+
+    if option.mode == 'onepass':
+        doagg(option)
+    elif option.mode == 'daily':
+        doagg_daily(option)
 
 if __name__ == '__main__':
     main()
