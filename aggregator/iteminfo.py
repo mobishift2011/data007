@@ -20,7 +20,7 @@ def save_iteminfos(date, *itemids):
         except:
             traceback.print_exc()
 
-def save_iteminfo(date, ii, itemid):
+def save_iteminfo(date, ii, itemid, retry=0):
     db = getdb()
     date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
@@ -34,6 +34,9 @@ def save_iteminfo(date, ii, itemid):
 
     items = {(r[0]+timedelta(hours=8)).strftime("%Y-%m-%d"): r[1:]
                 for r in r2.results}
+
+    if retry < 100 and items == {}:
+        return save_iteminfo(date, ii, itemid, retry+1)
 
     if r1.results:
         name, image, shopid, brand, price, deals_mon, cid = r1.results[0]
@@ -90,4 +93,4 @@ if __name__ == '__main__':
     #iip.date = '2013-11-14'
     #iip.start()
     ii = ItemIndex('2014-01-14')
-    save_iteminfo('2014-01-14', ii, 16406397840)
+    save_iteminfo('2014-01-14', ii, 16643231993)
