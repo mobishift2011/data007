@@ -202,3 +202,39 @@ def store_remote_ip():
     
     return ip
 
+#------------------------------------------------------------------------------ 
+try:
+    from models import db
+except Exception, e:
+    print "#########", e
+    
+#http://192.168.2.201:9992/api/zhi_shu/?ktype=brand&key=%E6%90%9C%E7%B4%A2&stype=query&val=11111
+    
+@app.route('/api/zhishu/', methods=['GET', 'POST'])
+def update_zhishu():
+    from flask import request
+    ktype = request.args.get('ktype')
+    key = request.args.get('key')
+    stype = request.args.get('stype')
+    val = request.args.get('val')
+
+    print ktype, key, stype, val, "##############"
+
+    ret = None
+    if ktype == "brand":
+        if stype == "query":
+            ret = db.execute('UPDATE ataobao2.brand SET search_index=:search_index WHERE name =:name',
+                        dict(search_index=int(val), name=key)
+                        )
+        elif stype == "trade":
+            ret = db.execute('UPDATE ataobao2.brand SET sales_index=:sales_index WHERE name =:name',
+                        dict(sales_index=int(val), name=key)
+                        )
+    elif ktype == "cate":
+        if stype == "query":
+            ret = db.execute('UPDATE ataobao2.cate SET search_index=:search_index WHERE id =:id',
+                        dict(search_index=int(val), id=int(key))
+                        )
+        elif stype == "trade":
+            pass
+    return str(ret)
