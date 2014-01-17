@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import logging
+logging.basicConfig()
+
 from aggregator.models import getdb
 from aggregator.indexes import BrandIndex, CategoryIndex
 from aggregator.processes import Process
-from aggregator.esindex import index_brand
+from aggregator.esindex import index_brand, flush, refresh
 from settings import ENV
 
 from crawler.cates import l1l2s
@@ -25,6 +28,7 @@ def es_brands(brands, date=None):
                 es_brand(bi, date, brand)
             except:
                 traceback.print_exc()
+        flush()
     except:
         traceback.print_exc()
 
@@ -69,6 +73,7 @@ def es_brand(bi, date, brand):
         'sales': sales,
         'delta': delta,
     }
+    print info
 
     index_brand(brand, info)
 
@@ -106,5 +111,8 @@ class BrandESProcess(Process):
 bep = BrandESProcess()
 
 if __name__ == '__main__':
-    bep.date = '2013-12-25'
-    bep.start()
+    #bep.date = '2013-12-25'
+    #bep.start()
+    es_brands(['SAMSUNG/三星'], date='2014-01-16')
+    flush()
+    refresh()

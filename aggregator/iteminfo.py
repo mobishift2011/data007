@@ -38,6 +38,9 @@ def save_iteminfo(date, ii, itemid):
     if r1.results:
         name, image, shopid, brand, price, deals_mon, cid = r1.results[0]
         info = parse_iteminfo(date, itemid, items, price, cid)
+        if info is None:
+            return
+
         cate1 = info['l1']
         for cate2 in set([info['l2'], 'all']):
             ii.setinfo(itemid, {
