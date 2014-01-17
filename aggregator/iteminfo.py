@@ -34,8 +34,14 @@ def save_iteminfo(date, ii, itemid, retry=0):
 
     items = {(r[0]+timedelta(hours=8)).strftime("%Y-%m-%d"): r[1:]
                 for r in r2.results}
+        
+    if not r1.results:
+        from queues import ai1
+        ai1.put(itemid)
+        return
 
-    if retry < 100 and items == {}:
+    if retry < 10 and items == {}:
+        print '....retry', retry+1
         return save_iteminfo(date, ii, itemid, retry+1)
 
     if r1.results:
