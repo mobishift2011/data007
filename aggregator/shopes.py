@@ -100,5 +100,7 @@ class ShopESProcess(Process):
 sep = ShopESProcess()
 
 if __name__ == '__main__':
-    sep.date = '2013-12-18'
-    sep.start()
+    #sep.date = '2013-12-18'
+    #sep.start()
+    es_shops([60463921], date='2014-01-14')
+    flush()

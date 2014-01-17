@@ -39,6 +39,7 @@ def save_iteminfo(date, ii, itemid):
         name, image, shopid, brand, price, deals_mon, cid = r1.results[0]
         info = parse_iteminfo(date, itemid, items, price, cid)
         if info is None:
+            print 'no result from parse_iteminfo', date, itemid, items, price, cid
             return
 
         cate1 = info['l1']
@@ -86,5 +87,7 @@ class ItemInfoProcess(Process):
 iip = ItemInfoProcess()
 
 if __name__ == '__main__':
-    iip.date = '2013-11-14'
-    iip.start()
+    #iip.date = '2013-11-14'
+    #iip.start()
+    ii = ItemIndex('2014-01-14')
+    save_iteminfo('2014-01-14', ii, 16406397840)

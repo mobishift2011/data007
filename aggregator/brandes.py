@@ -112,6 +112,6 @@ bep = BrandESProcess()
 if __name__ == '__main__':
     #bep.date = '2013-12-25'
     #bep.start()
-    es_brands(['SAMSUNG/三星'], date='2014-01-16')
+    es_brands(['SAMSUNG/三星'], date='2014-01-14')
     flush()
     refresh()
