@@ -412,6 +412,7 @@ def aggregate_items(start, end, hosts=[], date=None, retry=0):
                 itemtsdict[itemid] = {}
             itemtsdict[itemid][date] = values
 
+
         for itemid, shopid, cid, nc, price, brand, name, image, nr, credit_score, title, type in iteminfos:
             if in_blacklist(shopid, price, cid, nc, nr, credit_score, title, type, itemid=itemid):
                 #print itemid, 'skiped'
@@ -639,6 +640,6 @@ class ItemAggProcess(Process):
 iap = ItemAggProcess()
 
 if __name__ == '__main__':
-    iap.date = '2013-12-04'
-    iap.start()
-    # aggregate_items(start=-2968877088484347687, end=-2968877088484347687+
+    #iap.date = '2013-12-04'
+    #iap.start()
+    aggregate_items(start=-5897829018164995167-1, end=-5897829018164995167+1, hosts=['54.199.146.135'], date='2014-01-19')
