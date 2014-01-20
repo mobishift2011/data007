@@ -55,4 +55,4 @@ def getconn(date):
     return cdict[date]
 
 if __name__ == '__main__':
-    print getconn('2014-01-19')
+    print getconn('2014-01-20')

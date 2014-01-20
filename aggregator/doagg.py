@@ -104,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description='Aggregation Controller')
     parser.add_argument('--date', '-d', help='the date to aggregate, must be format of YYYY-MM-DD')
     parser.add_argument('--instance-num', '-n', default=7, help='the number of instances should be used')
-    parser.add_argument('--mode', '-m', default='daily', choices=['onepass', 'daily'], help='one pass aggregation')
+    parser.add_argument('--mode', '-m', default='daily', choices=['onepass', 'daily', 'clear'], help='one pass aggregation')
     option = parser.parse_args()
     if option.date:
         date = option.date
@@ -114,6 +114,8 @@ def main():
 
     if option.mode == 'onepass':
         doagg(option)
+    elif option.mode == 'clear':
+        clearall(option.date)
     elif option.mode == 'daily':
         doagg_daily(option)
 
