@@ -19,6 +19,8 @@ import calendar
 import traceback
 
 def clean_brand(brand):
+    brand = brand.strip()
+
     aliases = {
         u'Nalone': u'Nalone/诺兰',
         u'Music travels': u'MUSIC TRAVELS/游乐者',

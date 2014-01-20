@@ -117,5 +117,6 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
-    shp.date = '2013-12-03'
-    shp.start()
+    shp.date = '2014-01-16'
+    #shp.start()
+    save_history_shops([57301243], '2014-01-16')
