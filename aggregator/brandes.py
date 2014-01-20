@@ -85,7 +85,7 @@ class BrandESProcess(Process):
             self.max_workers = 5
         else:
             self.step = 1000
-            self.max_workers = 20
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):

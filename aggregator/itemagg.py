@@ -20,7 +20,6 @@ import traceback
 
 def clean_brand(brand):
     aliases = {
-        u'Samsung/三星': u'SAMSUNG/三星',
         u'Nalone': u'Nalone/诺兰',
         u'Music travels': u'MUSIC TRAVELS/游乐者',
         u'詹姆斯战靴': u'詹姆斯篮球鞋',
@@ -233,7 +232,6 @@ def clean_brand(brand):
         u'华擎': u'Asrock/华擎',
         u'Aisino': u'Aisino/爱信诺',
         u'西门子SIMATIC': u'SIMATIC/西门子',
-        u'Samsung/三星': u'Samsung/三星',
         u'soncci': u'soncci/索奇',
         u'Thinkstation': u'Thinkstation/联想工作站',
         u'联想': u'lenovo/联想',
@@ -310,6 +308,8 @@ def clean_brand(brand):
         u'devids': u'devids/黛维斯',
         u'LADYSOFT': u'LADYSOFT/御棉堂',
     }
+    if isinstance(brand, str):
+        brand = brand.decode('utf-8')
 
     if brand in ['', None]:
         brand = u'无品牌'
