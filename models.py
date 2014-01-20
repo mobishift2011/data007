@@ -115,7 +115,7 @@ def update_shop(shop):
 if __name__ == '__main__':
     from crawler.tbitem import get_item
     from crawler.tbshopinfo import get_shop
-    item = get_item(35056712044) 
+    item = get_item(36305605982) 
     from pprint import pprint
     pprint(item)
     update_item(item)
