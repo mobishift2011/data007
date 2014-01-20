@@ -153,6 +153,33 @@ def retry(times, func, *args, **kwargs):
             return r
     raise e
 
+def get_tmall_price(itemid):
+    """ get tmall price from mdskip
+
+    this should only be used when mtop.wdetail.getItemDetailDynForH5 returns error
+
+    e.g. item 19094427769
+    """
+    bsession.headers['User-Agent'] = 'Mozilla/5.0'
+    bsession.headers['Referer'] = 'http://detail.tmall.com/item.htm'
+    url = 'http://mdskip.taobao.com/core/initItemDetail.htm?itemId={}'.format(itemid)
+
+    try:
+        from jsctx import get_ctx
+        ctx = get_ctx()
+        d = ctx.eval('d='+bsession.get(url).content.strip())
+        pi = d.defaultModel.itemPriceResultDO.priceInfo
+        prices = []
+        for key in pi.keys():
+            for pl in pi[key].promotionList:
+                prices.append(float(pl.price))
+        price = min(prices)
+    except:
+        traceback.print_exc()
+        price = None
+
+    return price
+
 def get_misc(shopid, sid=None, type='taobao'):
     """ get shop charge/main_sale info """
     try:
@@ -452,6 +479,13 @@ def get_item(itemid):
             return ''
 
         def get_price():
+            # fixes 19094427769
+            if u'cannotAccessItem' in p['data']:
+                if s.get('type', 'C') == 'B':
+                    price = get_tmall_price(itemid)
+                    if price:
+                        return {'price': price, 'promo': '价格促销'}
+
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
                 price = float(pu['price'].split('-')[0])
