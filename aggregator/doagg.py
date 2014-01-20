@@ -66,7 +66,7 @@ def mark_ready(date):
 def save_redis(date):
     for conn in getconn(date).conns:
         print 'bgsave on {}'.format(conn)
-        conn.bgsave()
+        conn.save()
 
 def doagg(option):
     try:

@@ -496,4 +496,5 @@ class CategoryIndex(object):
         p.sadd(hkey, brand, skey=c12)
 
 if __name__ == '__main__':
-    clear_date('2013-12-06')
+    #clear_date('2013-12-06')
+    pass

@@ -18,8 +18,6 @@ def load_bls():
     bl_thresholds = {row[1]:float(row[2]) for row in bls if row[0] == 'cateprice'}
     bl_shopwhiteids = set(int(row[1]) for row in bls if row[0] == 'shopwhite')
 
-load_bls()
-
 def get_l1_and_l2(cid):
     from crawler.cates import cates
     if cid in cates:
@@ -38,6 +36,9 @@ def in_blacklist(shopid, price, cid, num_sold30, num_reviews, credit_score, titl
     global bl_shopblackids
     global bl_shopwhiteids
     global bl_thresholds
+    if bl_thresholds == {}:
+        load_bls()
+
     ib = False
     new = True
     if type == 'tmall':

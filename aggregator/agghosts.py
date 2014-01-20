@@ -5,6 +5,7 @@ import json
 import redis
 from settings import AGGRE_URIS
 from shardredis import ShardRedis
+from datetime import datetime, timedelta
 
 from aggregator.models import getdb
 
@@ -14,7 +15,11 @@ def _getconn(date):
     r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts
                       where datestr=:date''', dict(date=date), result=True)
     if not r.results:
-        r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts''', result=True)
+        dt = datetime.strptime(date, '%Y-%m-%d')
+        dates = [(dt-timedelta(days=days)).strftime('%Y-%m-%d') for days in range(14)]
+        dates = ','.join(["'"+d+"'" for d in dates])
+        r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts where datestr in (:dates)''', 
+                       dict(dates=dates), result=True)
         alluris = [ [ds, hosts, ready] for ds, hosts, ready in sorted(r.results) if ready ]
         if not alluris:
             uris = AGGRE_URIS[0]
@@ -50,4 +55,4 @@ def getconn(date):
     return cdict[date]
 
 if __name__ == '__main__':
-    print getconn('2014-01-01')
+    print getconn('2014-01-19')
