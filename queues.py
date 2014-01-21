@@ -80,7 +80,7 @@ class Queue(object):
 
     def task_done(self, result):
         """ clear start time in redis hash, indicating the task done """
-        conn.hdel(self.hashkey, result)
+        return conn.hdel(self.hashkey, result)
 
     def clean_task(self):
         """ check task hash for unfinished long running tasks, requeue them """

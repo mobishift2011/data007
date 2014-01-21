@@ -40,6 +40,7 @@ def get_throughput():
         return throughput
 
 def gettermsize():
+    """ get console window width in python """
     def ioctl_GWINSZ(fd):
         try:
             import fcntl, termios, struct  # noqa
