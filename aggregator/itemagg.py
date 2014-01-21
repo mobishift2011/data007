@@ -475,11 +475,11 @@ def parse_iteminfo(date, itemid, items, price, cid):
     delta_active_index_mon = active_index_mon - max(0, (i31[1]-i61[1])*50 - (i31[0]-i61[0])*10 - (i31[3]-i61[3]))
     deals_mon = i1[2]
     if d31 in items:
-        deals_day = i1[2] - (i2[2] - i31[2])
+        deals_day = max(0, i1[2] - (i2[2] - i31[2]))
     else:
         deals_day = i1[2]//30
     if d32 in items:
-        deals_day1 = i2[2] - (i3[2] - i32[2])
+        deals_day1 = max(0, i2[2] - (i3[2] - i32[2]))
     else:
         deals_day1 = i2[2]//30
 
