@@ -165,9 +165,12 @@ def get_tmall_price(itemid):
     url = 'http://mdskip.taobao.com/core/initItemDetail.htm?itemId={}'.format(itemid)
 
     try:
-        from jsctx import get_ctx
+        from jsctx import get_ctx, need_decode
         ctx = get_ctx()
-        d = ctx.eval('d='+bsession.get(url).content.strip())
+        content = bsession.get(url).content.strip()
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
+        d = ctx.eval('d='+content)
         pi = d.defaultModel.itemPriceResultDO.priceInfo
         prices = []
         for key in pi.keys():
