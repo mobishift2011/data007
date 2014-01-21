@@ -27,7 +27,7 @@ def save_iteminfo(date, ii, itemid, retry=0):
     r1 = db.execute('''select title, image, shopid, brand, price, num_sold30, cid
                 from ataobao2.item where id=:itemid''',
                 dict(itemid=itemid), result=True)
-    r2 = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views
+    r2 = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views, price
                     from ataobao2.item_by_date
                     where id=:itemid and date>=:date1 and date<:date2''',
                     dict(itemid=itemid, date1=date1, date2=date2), result=True)
@@ -58,7 +58,7 @@ def save_iteminfo(date, ii, itemid, retry=0):
                 'image': image,
                 'shopid': shopid,
                 'brand': brand,
-                'price': price,
+                'price': info['price'],
                 'sales_day': info['sales_day'],
                 'sales_mon': info['sales_mon'],
                 'deals_day': info['deals_day'],
@@ -96,7 +96,7 @@ class ItemInfoProcess(Process):
 iip = ItemInfoProcess()
 
 if __name__ == '__main__':
-    #iip.date = '2013-11-14'
-    #iip.start()
-    ii = ItemIndex('2014-01-14')
-    save_iteminfo('2014-01-14', ii, 16643231993)
+    iip.date = '2014-01-20'
+    iip.start()
+    #ii = ItemIndex('2014-01-20')
+    #save_iteminfo('2014-01-20', ii, 18819313936)

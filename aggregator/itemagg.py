@@ -644,6 +644,5 @@ iap = ItemAggProcess()
 if __name__ == '__main__':
     #iap.date = '2013-12-04'
     #iap.start()
-    #aggregate_items(start=-5897829018164995167-1, end=-5897829018164995167+1, hosts=['54.199.146.135'], date='2014-01-19')
-    #aggregate_items(start=-179443801090044497-1, end=-179443801090044497+1, hosts=['54.199.146.135'], date='2014-01-18')
+    aggregate_items(start=6473764120571655310-1, end=6473764120571655310+1, hosts=['54.199.146.135'], date='2014-01-20')
     pass
