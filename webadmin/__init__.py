@@ -20,7 +20,6 @@ app.config['MONGODB_SETTINGS'] = {'DB': 'taobao',
 app.__rootdir__ = os.getcwd()
 
 
-
 # Create models
 db = MongoEngine()
 db.init_app(app)
@@ -29,8 +28,9 @@ db.init_app(app)
 app.conn = db.connection
 app.redis = redis.Redis("localhost", 6379)
 
-__all__ = ["app", "modes", "api", "views", "cqlui"]
+__all__ = ["app", "modes", "api", "views", "cqlui", "blacklist"]
 
 from webadmin import *
+
 
 

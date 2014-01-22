@@ -153,6 +153,39 @@ def retry(times, func, *args, **kwargs):
             return r
     raise e
 
+def get_tmall_price(itemid):
+    """ get tmall price from mdskip
+
+    this should only be used when mtop.wdetail.getItemDetailDynForH5 returns error
+
+    e.g. item 19094427769
+    """
+    bsession.headers['User-Agent'] = 'Mozilla/5.0'
+    bsession.headers['Referer'] = 'http://detail.tmall.com/item.htm'
+    url = 'http://mdskip.taobao.com/core/initItemDetail.htm?itemId={}'.format(itemid)
+
+    try:
+        from jsctx import get_ctx, need_decode
+        ctx = get_ctx()
+        content = bsession.get(url).content.strip()
+        if need_decode:
+            content = content.decode('gbk', 'ignore')
+        else:
+            content = content.decode('gbk', 'ignore').encode('utf-8')
+        d = ctx.eval('d='+content)
+        pi = d.defaultModel.itemPriceResultDO.priceInfo
+        prices = []
+        for key in pi.keys():
+            for pl in pi[key].promotionList:
+                prices.append([float(pl.price), pl.type])
+        price, promo = min(prices)
+        promo = promo.decode('utf-8')
+    except:
+        traceback.print_exc()
+        return
+
+    return {'price':price, 'promo':promo}
+
 def get_misc(shopid, sid=None, type='taobao'):
     """ get shop charge/main_sale info """
     try:
@@ -436,7 +469,12 @@ def get_item(itemid):
     result = {}
     try:
         j = get_json("mtop.wdetail.getItemDetailStatic", {"itemNumId":itemid})
+
+        if 'data' not in j:
+            return {'error': 'not found'}
+
         p = get_json("mtop.wdetail.getItemDetailDynForH5", {"itemNumId":itemid})
+
         i = j['data']['item']
         s = j['data']['seller']
 
@@ -447,6 +485,13 @@ def get_item(itemid):
             return ''
 
         def get_price():
+            # fixes 19094427769
+            if u'cannotAccessItem' in p['data']:
+                if s.get('type', 'C') == 'B':
+                    price = get_tmall_price(itemid)
+                    if price:
+                        return price
+
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
                 price = float(pu['price'].split('-')[0])
@@ -499,7 +544,7 @@ def get_item(itemid):
             'shopid': int(s.get('shopId', 0)),
             'title': i.get('title', ''),
             'oprice': int(i.get('price', 0))/100.,
-            'num_instock': int(p['data'].get('quantity', 0)),
+            'num_instock': max(int(i.get('quantity', 0)), int(p['data'].get('quantity', 0))),
             'num_collects': int(i.get('favcount', 0)),
             'num_sold30': int(i.get('totalSoldQuantity', 0)),
             'delivery_type': int(i.get('delivery', {}).get('deliveryFeeType', 1)),

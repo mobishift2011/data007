@@ -19,8 +19,8 @@ import datetime
 
 mongo_conn = pymongo.Connection('localhost', 27017)
 
-AWS_ACCESS_KEY = 'AKIAIQC5UD4UWIJTBB2A'
-AWS_SECRET_KEY = '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'
+AWS_ACCESS_KEY = 'AKIAICTPJFO4VKIN4ELQ'
+AWS_SECRET_KEY = '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'
 
 #conn = boto.ec2.connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
 
@@ -144,6 +144,7 @@ class EC2Monitor(threading.Thread):
                                 security_group_ids = map(str, row['security_group_ids']), 
                                 instance_type = row['instance_type'], 
                                 user_data = row['script_code'],
+                                placement=row.get('placement'),
                                 #dry_run = True
                             )
                             log.msg("run_instances:{}".format(rets))

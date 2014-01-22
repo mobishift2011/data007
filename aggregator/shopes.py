@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
 from aggregator.esindex import index_shop, flush
@@ -28,6 +28,7 @@ def es_shops(shopids, date=None):
         traceback.print_exc()
 
 def es_shop(si, date, shopid):
+    db = getdb()
     shopinfo = si.getbase(shopid)
     num_products = int(shopinfo.get('num_products', 0))
     credit_score = int(shopinfo.get('credit_score', 0)) or 1
@@ -84,7 +85,7 @@ class ShopESProcess(Process):
             self.max_workers = 5
         else:
             self.step = 2**64/10000
-            self.max_workers = 10
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):
@@ -99,5 +100,7 @@ class ShopESProcess(Process):
 sep = ShopESProcess()
 
 if __name__ == '__main__':
-    sep.date = '2013-12-18'
-    sep.start()
+    #sep.date = '2013-12-18'
+    #sep.start()
+    es_shops([60463921], date='2014-01-14')
+    flush()

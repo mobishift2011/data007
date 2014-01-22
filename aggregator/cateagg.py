@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex, CategoryIndex
 from aggregator.processes import Process
 
@@ -19,14 +19,23 @@ def aggregate_categories(date=None):
     si = ShopIndex(date)
     ci.multi()
     cates = list(l1l2s)
-    cates.extend([[c, 'all'] for c in topcids])
     for cate1, cate2 in cates:
+        info = {}
+        if cate2 != 'all':
+            r = getdb().execute('select search_index from ataobao2.cate where id=:id', 
+                                dict(id=cate2), result=True)
+            if r and r.results:
+                info['search_index'] = r.results[0][0]
+            else:
+                info['search_index'] = 0
         for mod in ['mon', 'day']:
-            info = {
+            info.update({
                 'shops': si.getshops(cate1, cate2),
                 'brands': ci.getbrands(cate1, cate2),
-            }
+            })
             info.update(ci.getinfo(cate1, cate2, mod))
+            print cate1, cate2, mod, info
+
             for field in ['deals', 'items', 'sales', 'delta_sales']:
                 if field not in info:
                     info[field] = 0
@@ -48,5 +57,5 @@ class CateAggProcess(Process):
 cap = CateAggProcess()
 
 if __name__ == '__main__':
-    cap.date = '2013-12-16'
+    cap.date = '2014-01-14'
     cap.start()

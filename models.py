@@ -33,6 +33,7 @@ def get_table_live(keyspace='ataobao2'):
         'org.apache.cassandra.db.marshal.Int32Type': 'int',
         'org.apache.cassandra.db.marshal.FloatType': 'float',
         'org.apache.cassandra.db.marshal.TimestampType': 'timestamp',
+        'org.apache.cassandra.db.marshal.BooleanType': 'boolean',
     }
     tables = {}
     cfs = db.execute('''select columnfamily_name, column_aliases, key_aliases
@@ -114,10 +115,10 @@ def update_shop(shop):
 if __name__ == '__main__':
     from crawler.tbitem import get_item
     from crawler.tbshopinfo import get_shop
-    item = get_item(35056712044) 
+    item = get_item(36305605982) 
     from pprint import pprint
     pprint(item)
     update_item(item)
-    shop = get_shop(63782021)
-    pprint(shop)
-    update_shop(shop)
+    #shop = get_shop(63782021)
+    #pprint(shop)
+    #update_shop(shop)

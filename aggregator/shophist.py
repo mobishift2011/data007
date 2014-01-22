@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex
 from aggregator.processes import Process
 from settings import ENV
@@ -29,6 +29,7 @@ def save_history_shops(shopids, date=None):
         traceback.print_exc()
 
 def save_history_shop(si, date, shopid):
+    db = getdb()
     shopinfo = si.getbase(shopid)
     if shopinfo:
         num_collects = int(shopinfo.get('num_collects', 0))
@@ -116,5 +117,6 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
-    shp.date = '2013-12-03'
-    shp.start()
+    shp.date = '2014-01-16'
+    #shp.start()
+    save_history_shops([57301243], '2014-01-16')

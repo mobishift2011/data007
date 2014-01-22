@@ -48,6 +48,9 @@ class Process(object):
         self.max_workers = max_workers
 
     def clear_redis(self):
+        self.children = []
+        self.parents = []
+        self.gened = False
         conn.sadd(self.processes, self.name)
         conn.delete(self.tasks.format(self.name))
         conn.delete(self.processing.format(self.name))
@@ -201,7 +204,7 @@ class Process(object):
 
             # check status, sleep longer if not processing, break if finished
             status = self.status()
-            # print self.name, status
+            #print self.name, status
             if status == 'F':
                 break
             elif status in ['?']:

@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ Blacklist Item from our Aggregation Process """
-from models import db
+from aggregator.models import getdb
+import threading
 
-bl_shopblackids = set()
-bl_shopwhiteids = set()
-bl_thresholds = {}
+lock = threading.Lock()
+
+db = getdb()
+
+bl_shopblackids = None
+bl_shopwhiteids = None
+bl_thresholds = None
 
 def load_bls():
     global bl_shopblackids
     global bl_shopwhiteids
     global bl_thresholds
-    bls = set([row for row in db.execute('select type, args, value from ataobao2.blacklist', result=True).results ])
-    bl_shopblackids = set(int(row[1]) for row in bls if row[0] == 'shopblack')
-    bl_thresholds = {row[1]:float(row[2]) for row in bls if row[0] == 'cateprice'}
-    bl_shopwhiteids = set(int(row[1]) for row in bls if row[0] == 'shopwhite')
-
-load_bls()
+    with lock:
+        if bl_shopblackids is None:
+            print 'loading blacklist'
+            bls = set([row for row in db.execute('select type, args, value from ataobao2.blacklist', result=True).results ])
+            bl_shopblackids = set(int(row[1]) for row in bls if row[0] == 'shopblack')
+            bl_thresholds = {row[1]:float(row[2]) for row in bls if row[0] == 'cateprice'}
+            bl_shopwhiteids = set(int(row[1]) for row in bls if row[0] == 'shopwhite')
+            print 'blacklist loaded'
 
 def get_l1_and_l2(cid):
     from crawler.cates import cates
@@ -36,6 +43,9 @@ def in_blacklist(shopid, price, cid, num_sold30, num_reviews, credit_score, titl
     global bl_shopblackids
     global bl_shopwhiteids
     global bl_thresholds
+    if bl_shopblackids is None:
+        load_bls()
+
     ib = False
     new = True
     if type == 'tmall':

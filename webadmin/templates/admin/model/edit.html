@@ -1,58 +1,25 @@
 {% extends 'admin/master.html' %}
 {% import 'admin/lib.html' as lib with context %}
 
+{% macro extra() %}
+  <input name="_continue_editing" type="submit" class="btn btn-large" value="{{ _gettext('Save and Continue') }}" />
+{% endmacro %}
+
 {% block head %}
     {{ super() }}
     <link href="{{ url_for('admin.static', filename='select2/select2.css') }}" rel="stylesheet">
-    <link href="{{ url_for('admin.static', filename='css/datepicker.css') }}" rel="stylesheet">
-<style>
-#carts-fields input[type="text"]{
-	width: 90%;
-}
-
-#test_vars-fields input[type="text"]{
-	width: 80%;
-}
-
-
-</style>
+    <link href="{{ url_for('admin.static', filename='datetimepicker/bootstrap-datetimepicker.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
-
     {% call lib.form_tag(form) %}
-	    {% if form.model_class.__name__ == "Webkit" %}
-	    	
-	    {% endif %}
-    
-        {{ lib.render_form_fields(form, widget_args=form_widget_args) }}
-        
-	    {% if form.model_class.__name__ == "Webkit" %}
-	    	
-		    <div class="control-group">
-		      <div class="controls">
-		        <input type="submit" class="btn btn-primary btn-large" value="{{ _gettext('Submit') }}" />
-				
-		        {% if return_url %}
-		        <a href="{{ return_url }}" class="btn btn-large">{{ _gettext('Cancel') }}</a>
-		        {% endif %}
-		        
-		      </div>
-		    </div>
-	    	
-	    {% else %}
-	    	{{ lib.render_form_buttons(return_url) }}
-	    {% endif %}
-        
+        {{ lib.render_form_fields(form, form_opts=form_opts, form_rules=form_rules) }}
+        {{ lib.render_form_buttons(return_url, extra()) }}
     {% endcall %}
-    
-
-    
-    
 {% endblock %}
 
 {% block tail %}
   {{ super() }}
-  <script src="{{ url_for('admin.static', filename='js/bootstrap-datepicker.js') }}"></script>
-  <script src="{{ url_for('admin.static', filename='js/form.js') }}"></script>
+  <script src="{{ url_for('admin.static', filename='datetimepicker/bootstrap-datetimepicker.js') }}"></script>
+  <script src="{{ url_for('admin.static', filename='admin/js/form.js') }}"></script>
 {% endblock %}

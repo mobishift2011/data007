@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ItemIndex
 from aggregator.processes import Process
 from aggregator.itemagg import parse_iteminfo
@@ -20,23 +20,37 @@ def save_iteminfos(date, *itemids):
         except:
             traceback.print_exc()
 
-def save_iteminfo(date, ii, itemid):
+def save_iteminfo(date, ii, itemid, retry=0):
+    db = getdb()
     date2 = datetime.strptime(date, "%Y-%m-%d")+timedelta(hours=16)
     date1 = date2 - timedelta(days=60)
     r1 = db.execute('''select title, image, shopid, brand, price, num_sold30, cid
                 from ataobao2.item where id=:itemid''',
                 dict(itemid=itemid), result=True)
-    r2 = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views
+    r2 = db.execute('''select date, num_collects, num_reviews, num_sold30, num_views, price
                     from ataobao2.item_by_date
                     where id=:itemid and date>=:date1 and date<:date2''',
                     dict(itemid=itemid, date1=date1, date2=date2), result=True)
 
     items = {(r[0]+timedelta(hours=8)).strftime("%Y-%m-%d"): r[1:]
                 for r in r2.results}
+        
+    if not r1.results:
+        from queues import ai1
+        ai1.put(itemid)
+        return
+
+    if retry < 10 and items == {}:
+        print '....retry', retry+1
+        return save_iteminfo(date, ii, itemid, retry+1)
 
     if r1.results:
         name, image, shopid, brand, price, deals_mon, cid = r1.results[0]
         info = parse_iteminfo(date, itemid, items, price, cid)
+        if info is None:
+            print 'no result from parse_iteminfo', date, itemid, items, price, cid
+            return
+
         cate1 = info['l1']
         for cate2 in set([info['l2'], 'all']):
             ii.setinfo(itemid, {
@@ -44,7 +58,7 @@ def save_iteminfo(date, ii, itemid):
                 'image': image,
                 'shopid': shopid,
                 'brand': brand,
-                'price': price,
+                'price': info['price'],
                 'sales_day': info['sales_day'],
                 'sales_mon': info['sales_mon'],
                 'deals_day': info['deals_day'],
@@ -62,7 +76,7 @@ class ItemInfoProcess(Process):
         if ENV == 'DEV':
             self.max_workers = 5
         else:
-            self.max_workers = 20
+            self.max_workers = 100
 
     def generate_tasks(self):
         self.clear_redis()
@@ -82,5 +96,7 @@ class ItemInfoProcess(Process):
 iip = ItemInfoProcess()
 
 if __name__ == '__main__':
-    iip.date = '2013-11-14'
+    iip.date = '2014-01-20'
     iip.start()
+    #ii = ItemIndex('2014-01-20')
+    #save_iteminfo('2014-01-20', ii, 18819313936)

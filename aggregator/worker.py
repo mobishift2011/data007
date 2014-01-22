@@ -13,7 +13,6 @@ import gevent
 
 from aggregator import all_processes
 from aggregator.indexes import *
-from models import db
 
 
 class Worker(object):

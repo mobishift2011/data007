@@ -223,7 +223,7 @@ class ShopInfoWorker(Worker):
                         as1.task_done(id)
                     except:
                         traceback.print_exc()
-                    return d
+                    return si
             if si and 'error' not in si:
                 update_shop(si)
 

@@ -149,8 +149,9 @@ class ShopIndex(object):
     def getrank(self, cate1, cate2, shopid, mod):
         zkey = ShopIndex.shopindex.format(self.date, cate1, cate2, 'score', mod)
         try:
-            return int(conn.zrevrank(zkey, shopid, skey=self.make_skey(cate1, cate2)))+1
+            return int(self.conn.zrevrank(zkey, shopid, skey=self.make_skey(cate1, cate2)))+1
         except:
+            traceback.print_exc()
             return 0
 
     def incrindex(self, cate1, cate2, field, monorday, shopid, amount):
@@ -496,4 +497,5 @@ class CategoryIndex(object):
         p.sadd(hkey, brand, skey=c12)
 
 if __name__ == '__main__':
-    clear_date('2013-12-06')
+    #clear_date('2013-12-06')
+    pass

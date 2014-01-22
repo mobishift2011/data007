@@ -36,6 +36,8 @@ import json
 import subprocess
 import urllib2
 
+from settings import ADMIN_HOST
+
 class SubProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, sptl, spiders, kw):
         self.sptl = sptl
@@ -164,10 +166,10 @@ class TaskClientProtocol(WampClientProtocol):
         reactor.spawnProcess(pp, 
                              sys.executable, args=args,
                              env={
-                                  'PYTHONPATH':'/root/ataobao:$PYTHONPATH',
+                                  'PYTHONPATH':'/srv/ataobao:$PYTHONPATH',
                                   'ENV':'TEST',
                                   },
-                             path='/root/ataobao/crawler')
+                             path='/srv/ataobao/crawler')
 #         for i in range(0, kw["process"]):
 #             pp = SubProcessProtocol(self, self.factory.spiders, kw)
 #             args = [sys.executable, "spider_tx.py", kw["spider"], str(kw["threads"])]
@@ -260,7 +262,7 @@ def start():
     
     
     log.startLogging(sys.stdout)
-    factory = SpiderClientFactory("ws://23.20.92.211:9000")
+    factory = SpiderClientFactory("ws://{}:9000".format(ADMIN_HOST))
     factory.protocol = TaskClientProtocol
     connectWS(factory)
     

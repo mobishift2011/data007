@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex, CategoryIndex
 from aggregator.processes import Process
 
@@ -19,6 +19,7 @@ defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
 
 def aggregate_shops(start, end, date=None):
     try:
+        db = getdb()
         if date is None:
             date = defaultdate
         si = ShopIndex(date)
@@ -65,9 +66,9 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
                 for field in ['sales', 'deals', 'active_index']:
                     shopinfo[field] = float(shopinfo[field])
                 score = shopinfo['active_index']/1000. + shopinfo['sales']/30.
-                update = {'credit_score':credit_score, 'worth':worth, 'score':score}
-                si.setinfo(cate1, cate2, mod, shopid, update)
-                shopinfo.update(update)
+                cupdate = {'credit_score':credit_score, 'worth':worth, 'score':score}
+                si.setinfo(cate1, cate2, mod, shopid, cupdate)
+                shopinfo.update(cupdate)
                 for field in ['sales', 'deals', 'active_index', 'credit_score', 'worth', 'score']:
                     si.setindex(cate1, cate2, field, mod, shopid, shopinfo[field])
 

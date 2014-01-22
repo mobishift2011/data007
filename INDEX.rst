@@ -178,7 +178,7 @@ shardredis会自动根据调用的key, 运用consistent hashing算法, 正确调
         - items: 商品总数
         - brands: 品牌总数
         - shops: 店铺总数
-        - search_index: 搜索指数(未实现)
+        - search_index: 搜索指数
 
 2. categorybrands_{date}_{cate1}_{cate2}
     * set: brand

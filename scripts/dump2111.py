@@ -87,7 +87,7 @@ def sync_table(table, fields):
 def sync_cassandra(simple=False):
     for table, fields in sorted(schemas.items(), key=lambda x: len(x[0])):
         if simple:
-            if table in ['ataobao2.top10', 'ataobao2.blacklist', 'ataobao2.agghosts']:
+            if table in ['ataobao2.top10', 'ataobao2.blacklist', 'ataobao2.agghosts', 'ataobao2.cate', 'ataobao2.brand']:
                 sync_table(table, fields)
         else:
             sync_table(table, fields)

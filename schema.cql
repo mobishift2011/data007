@@ -93,8 +93,19 @@ CREATE TABLE IF NOT EXISTS shop_by_date (
 
 CREATE TABLE IF NOT EXISTS brand (
     name            text,
+    search_index    int,
+    sales_index     int,
     logo            text,
     PRIMARY KEY (name)
+);
+
+CREATE TABLE IF NOT EXISTS cate (
+    id              int,
+    pid             int,
+    level           int,
+    name            text,
+    search_index    int,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS brand_by_date (

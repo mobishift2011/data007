@@ -19,8 +19,9 @@ from webadmin.views import *
 # Flask views
 @app.route('/')
 def index():
-    return '<a href="/admin/">Click me to get to Admin!</a> \
-        <br><a href="/cqlui/">Click me to get to CQL UI Tool!</a>'
+    return '<a href="/admin/">Click me to get to Admin!</a>\
+        <br><a href="/cqlui/">Click me to get to CQL UI Tool!</a>\
+        <br><a href="/blacklist/">Click me to get to Blacklist Tool!</a>'
 
 
 if __name__ == '__main__':

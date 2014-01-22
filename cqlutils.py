@@ -182,12 +182,13 @@ class ConnectionPool(object):
         if yielded is False:
             raise Exception('Could not obtain cursor, max retry count reached: {}'.format(retrycount))
 
-    def execute(self, query, bindings=None, result=False):
+    def execute(self, query, bindings=None, result=False, consistency_level=None):
         with self.connection() as cur:
-            if query.strip().startswith('select '):
-                consistency_level = 'ONE'
-            else:
-                consistency_level = 'ANY'
+            if consistency_level is None:
+                if query.strip().startswith('select '):
+                    consistency_level = 'ONE'
+                else:
+                    consistency_level = 'ANY'
 
             query, bindings = self.setup_bindings(query, bindings)
             resp = cur.execute(query, bindings, consistency_level=consistency_level)

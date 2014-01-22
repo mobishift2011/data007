@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+import logging
+logging.basicConfig()
+
+from aggregator.models import getdb
 from aggregator.indexes import BrandIndex, CategoryIndex
 from aggregator.processes import Process
-from aggregator.esindex import index_brand
+from aggregator.esindex import index_brand, flush, refresh
 from settings import ENV
 
 from crawler.cates import l1l2s
@@ -25,10 +28,12 @@ def es_brands(brands, date=None):
                 es_brand(bi, date, brand)
             except:
                 traceback.print_exc()
+        flush()
     except:
         traceback.print_exc()
 
 def es_brand(bi, date, brand):
+    db = getdb()
     if brand == '':
         brand = '无品牌'
 
@@ -44,6 +49,11 @@ def es_brand(bi, date, brand):
         deals += int(brandinfo.get('deals', 0))
         sales += float(brandinfo.get('sales', 0))
         delta += float(brandinfo.get('delta_sales', 0))
+
+    # we don't care about brands that do not have more than 100 items
+    if items < 100:
+        return 
+
     cate1 = [str(c) for c in c1s]
     cate2 = [str(c) for c in c2s]
     r = db.execute('select logo from ataobao2.brand where name=:name', dict(name=brand), result=True)
@@ -75,7 +85,7 @@ class BrandESProcess(Process):
             self.max_workers = 5
         else:
             self.step = 1000
-            self.max_workers = 10
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):
@@ -100,5 +110,8 @@ class BrandESProcess(Process):
 bep = BrandESProcess()
 
 if __name__ == '__main__':
-    bep.date = '2013-12-25'
-    bep.start()
+    #bep.date = '2013-12-25'
+    #bep.start()
+    es_brands(['SAMSUNG/三星'], date='2014-01-14')
+    flush()
+    refresh()

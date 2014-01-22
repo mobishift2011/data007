@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from models import db
+from aggregator.models import getdb
 from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex
 from aggregator.processes import Process
 
@@ -13,6 +13,7 @@ import json
 import traceback
 
 defaultdate = (datetime.utcnow()+timedelta(hours=-16)).strftime("%Y-%m-%d")
+db = getdb()
 
 def top10_brands(date=None):
     if date is None:
