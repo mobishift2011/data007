@@ -17,9 +17,9 @@ def _getconn(date):
     if not r.results:
         dt = datetime.strptime(date, '%Y-%m-%d')
         dates = [(dt-timedelta(days=days)).strftime('%Y-%m-%d') for days in range(14)]
-        dates = ','.join(["'"+d+"'" for d in dates])
-        r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts where datestr in (:dates)''', 
-                       dict(dates=dates), result=True)
+        dates = '('+','.join(["'"+d+"'" for d in dates])+')'
+        r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts where datestr in {dates}'''.format(dates=dates),
+                       result=True)
         alluris = [ [ds, hosts, ready] for ds, hosts, ready in sorted(r.results) if ready ]
         if not alluris:
             uris = AGGRE_URIS[0]
@@ -55,4 +55,4 @@ def getconn(date):
     return cdict[date]
 
 if __name__ == '__main__':
-    print getconn('2014-01-20')
+    print getconn('2014-01-23')
