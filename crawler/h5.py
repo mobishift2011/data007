@@ -176,10 +176,14 @@ def get_tmall_price(itemid):
         pi = d.defaultModel.itemPriceResultDO.priceInfo
         prices = []
         for key in pi.keys():
-            for pl in pi[key].promotionList:
-                prices.append([float(pl.price), pl.type])
-        price, promo = min(prices)
-        promo = promo.decode('utf-8')
+            if pi[key].promotionList:
+                for pl in pi[key].promotionList:
+                    prices.append([float(pl.price), pl.type])
+        if prices:
+            price, promo = min(prices)
+            promo = promo.decode('utf-8')
+        else:
+            return 
     except:
         traceback.print_exc()
         return
