@@ -12,11 +12,14 @@ from aggregator.indexes import ShopIndex, ItemIndex, BrandIndex, CategoryIndex, 
 from aggregator.agghosts import getconn
 from aggregator.models import getdb
 
+from settings import ENV
+
 defaultdate = (datetime.utcnow()+timedelta(hours=8)).strftime("%Y-%m-%d")
 
 def allocate_instances(num=0):
-    db = pymongo.MongoClient().taobao
-    db.e_c2__schd.update({'name':'taobao_aggregate'}, {'$set':{'instance_num':num}})
+    if ENV != 'DEV':
+        db = pymongo.MongoClient().taobao
+        db.e_c2__schd.update({'name':'taobao_aggregate'}, {'$set':{'instance_num':num}})
 
 def clearall(date):
     db = getdb('db1')
@@ -65,7 +68,7 @@ def mark_ready(date):
 
 def save_redis(date):
     for conn in getconn(date).conns:
-        print 'bgsave on {}'.format(conn)
+        print 'save on {}'.format(conn)
         conn.save()
 
 def doagg(option):
@@ -86,8 +89,9 @@ def doagg(option):
         traceback.print_exc()
 
 def doagg_daily(option):
+    offset = 8 
     while True:
-        d = datetime.utcnow() + timedelta(hours=8)
+        d = datetime.utcnow() + timedelta(hours=offset)
         try:
             if d.hour == 0 and d.minute == 0:
                 print 'runing doagg for {}'.format(d)
