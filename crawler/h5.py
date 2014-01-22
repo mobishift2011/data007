@@ -170,18 +170,21 @@ def get_tmall_price(itemid):
         content = bsession.get(url).content.strip()
         if need_decode:
             content = content.decode('gbk', 'ignore')
+        else:
+            content = content.decode('gbk', 'ignore').encode('utf-8')
         d = ctx.eval('d='+content)
         pi = d.defaultModel.itemPriceResultDO.priceInfo
         prices = []
         for key in pi.keys():
             for pl in pi[key].promotionList:
-                prices.append(float(pl.price))
-        price = min(prices)
+                prices.append([float(pl.price), pl.type])
+        price, promo = min(prices)
+        promo = promo.decode('utf-8')
     except:
         traceback.print_exc()
-        price = None
+        return
 
-    return price
+    return {'price':price, 'promo':promo}
 
 def get_misc(shopid, sid=None, type='taobao'):
     """ get shop charge/main_sale info """
@@ -487,7 +490,7 @@ def get_item(itemid):
                 if s.get('type', 'C') == 'B':
                     price = get_tmall_price(itemid)
                     if price:
-                        return {'price': price, 'promo': '价格促销'}
+                        return price
 
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
