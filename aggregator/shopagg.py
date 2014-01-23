@@ -103,5 +103,5 @@ class ShopAggProcess(Process):
 sap = ShopAggProcess()
 
 if __name__ == '__main__':
-    sap.date = '2013-11-14'
+    sap.date = '2014-01-22'
     sap.start()

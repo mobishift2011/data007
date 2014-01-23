@@ -57,5 +57,5 @@ class CateAggProcess(Process):
 cap = CateAggProcess()
 
 if __name__ == '__main__':
-    cap.date = '2014-01-14'
+    cap.date = '2014-01-22'
     cap.start()

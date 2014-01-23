@@ -102,7 +102,7 @@ class ShopHistProcess(Process):
         if ENV == 'DEV':
             self.max_workers = 10
         else:
-            self.max_workers = 50
+            self.max_workers = 100
         self.date = date
 
     def generate_tasks(self):
@@ -117,6 +117,6 @@ class ShopHistProcess(Process):
 shp = ShopHistProcess()
 
 if __name__ == '__main__':
-    shp.date = '2014-01-16'
-    #shp.start()
-    save_history_shops([57301243], '2014-01-16')
+    shp.date = '2014-01-22'
+    shp.start()
+    #save_history_shops([57301243], '2014-01-16')

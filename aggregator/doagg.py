@@ -25,6 +25,7 @@ def clearall(date):
     db = getdb('db1')
     for p in all_processes:
         p.clear_redis()
+        p.reset()
 
     db.execute('delete from ataobao2.agghosts where datestr=:date', dict(date=date))
     clear_date(date)

@@ -89,5 +89,5 @@ class BrandAggProcess(Process):
 bap = BrandAggProcess()
 
 if __name__ == '__main__':
-    bap.date = '2013-12-20'
+    bap.date = '2014-01-22'
     bap.start()

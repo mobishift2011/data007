@@ -47,10 +47,12 @@ class Process(object):
         self.gened = False
         self.max_workers = max_workers
 
-    def clear_redis(self):
+    def reset(self):
         self.children = []
         self.parents = []
         self.gened = False
+
+    def clear_redis(self):
         conn.sadd(self.processes, self.name)
         conn.delete(self.tasks.format(self.name))
         conn.delete(self.processing.format(self.name))

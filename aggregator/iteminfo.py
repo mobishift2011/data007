@@ -96,7 +96,7 @@ class ItemInfoProcess(Process):
 iip = ItemInfoProcess()
 
 if __name__ == '__main__':
-    iip.date = '2014-01-20'
+    iip.date = '2014-01-22'
     iip.start()
     #ii = ItemIndex('2014-01-20')
     #save_iteminfo('2014-01-20', ii, 18819313936)
