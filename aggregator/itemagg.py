@@ -309,6 +309,7 @@ def clean_brand(brand):
         u'yiQin 伊沁': u'yiQin/伊沁',
         u'devids': u'devids/黛维斯',
         u'LADYSOFT': u'LADYSOFT/御棉堂',
+        u'sony ericsson/索爱': u'Sony Ericsson/索尼爱立信',
     }
     if isinstance(brand, str):
         brand = brand.decode('utf-8')
