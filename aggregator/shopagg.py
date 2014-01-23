@@ -53,7 +53,13 @@ def aggregate_shop(si, ci, shopid, name, logo, type, credit_score, num_products,
         credit_score = credit_score or 0
         active_index = float(shopinfo['active_index_mon'])
         sales = float(shopinfo['sales_mon'])
-        worth = 2**credit_score + active_index/3000. + sales/30.
+        if type == 'tmall' and sales > 1000000:
+            worth = sales + active_index/100 + (3+credit_score)**5
+        else:
+            if credit_score <= 5:
+                worth = credit_score**4+50
+            else:
+                worth = 666+1000*2**(credit_score-5)*3.2/credit_score + active_index/3000. 
         update = {'name':name, 'logo':logo, 'credit_score':credit_score, 'worth':worth,
                     'type':type, 'num_products':num_products, 'good_rating':good_rating,
                     'num_collects':num_collects}
