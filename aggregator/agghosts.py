@@ -15,8 +15,9 @@ def _getconn(date):
     r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts
                       where datestr=:date''', dict(date=date), result=True)
     if not r.results:
-        dt = datetime.strptime(date, '%Y-%m-%d')
-        dates = [(dt-timedelta(days=days)).strftime('%Y-%m-%d') for days in range(14)]
+        now = datetime.utcnow().date()
+        dt = datetime.strptime(date, '%Y-%m-%d').date()
+        dates = [(now-timedelta(days=days)).strftime('%Y-%m-%d') for days in range(14+(now-dt).days)]
         dates = '('+','.join(["'"+d+"'" for d in dates])+')'
         r = db.execute('''select datestr, hosts, ready from ataobao2.agghosts where datestr in {dates}'''.format(dates=dates),
                        result=True)
@@ -55,4 +56,4 @@ def getconn(date):
     return cdict[date]
 
 if __name__ == '__main__':
-    print getconn('2014-01-23')
+    print getconn('2014-01-16')
