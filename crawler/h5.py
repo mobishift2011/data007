@@ -491,10 +491,9 @@ def get_item(itemid):
         def get_price():
             # fixes 19094427769
             if u'cannotAccessItem' in p['data']:
-                if s.get('type', 'C') == 'B':
-                    price = get_tmall_price(itemid)
-                    if price:
-                        return price
+                price = get_tmall_price(itemid)
+                if price:
+                    return price
 
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]
