@@ -107,6 +107,6 @@ class Top10AggProcess(Process):
 tap = Top10AggProcess()
 
 if __name__ == '__main__':
-    tap.date = '2013-12-27'
+    tap.date = '2014-01-22'
     #top10_brands(tap.date)
     tap.start()
