@@ -31,7 +31,7 @@ def get_ctx():
         get_ctx.ctx = ctx
     return get_ctx.ctx
 
-def get_data(data):
+def js2json(data):
     """ convert from javascript data
         to json data
     """
