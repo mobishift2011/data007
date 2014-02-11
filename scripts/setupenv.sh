@@ -15,8 +15,6 @@ else
     sudo apt-get -y install libxml2-dev libxslt-dev
     sudo apt-get -y install libevent-dev libev-dev
     sudo apt-get -y install libv8-dev libboost-python-dev
-    sudo bash "$DIR/install-redis.sh"
-    sudo bash "$DIR/install-cassandra.sh"
 fi
 
 ##################
