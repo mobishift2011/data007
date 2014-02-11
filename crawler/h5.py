@@ -129,7 +129,8 @@ vs = {
     "com.taobao.search.api.getShopItemList": 2.0,
     "com.taobao.wireless.shop.feedback.sum": 1.0,
     "mtop.wdetail.getItemDesc": 3.0,
-    "mtop.wdetail.getItemDetailDynForH5": 4.0,
+    "mtop.wdetail.getItemDetailDynForH5": 4.0, # not used anymore
+    "mtop.wdetail.getItemDetailDyn": 4.0,
     "mtop.wdetail.getItemDetailStatic": 4.0,
     "mtop.wdetail.getItemDetailOther": 4.0,
     "mtop.wdetail.getItemRates": 4.0,
@@ -335,7 +336,7 @@ def setup_token():
         2. request return "令牌过期"
     """
     with lock:
-        url = get_request_url("mtop.wdetail.getItemDetailStatic", 20006742565)
+        url = get_request_url("mtop.wdetail.getItemDetailStatic", {"itemNumId":20006742565})
         retry(3, session.get, url, timeout=30)
 
 def get_request_url(api, data):
@@ -477,7 +478,7 @@ def get_item(itemid):
         if 'data' not in j:
             return {'error': 'not found'}
 
-        p = get_json("mtop.wdetail.getItemDetailDynForH5", {"itemNumId":itemid})
+        p = get_json("mtop.wdetail.getItemDetailDyn", {"itemNumId":itemid})
 
         i = j['data']['item']
         s = j['data']['seller']
@@ -490,11 +491,10 @@ def get_item(itemid):
 
         def get_price():
             # fixes 19094427769
-            if u'cannotAccessItem' in p['data']:
-                if s.get('type', 'C') == 'B':
-                    price = get_tmall_price(itemid)
-                    if price:
-                        return price
+            if u'cannotAccessItem' in p['data'] and p['data']['cannotAccessItem'] != 'false':
+                price = get_tmall_price(itemid)
+                if price:
+                    return price
 
             if 'priceUnits' in p['data']:
                 pu = p['data']['priceUnits'][0]

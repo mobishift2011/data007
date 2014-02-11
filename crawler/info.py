@@ -8,7 +8,7 @@ import logging
 import argparse
 
 from queues import ai1, ai2, as1, af1, asi1
-from caches import LC, IF, WC
+from caches import LC, WC
 
 from settings import RECORD_URI
 import re
@@ -277,10 +277,6 @@ def show_counts(args):
         print(line)
 
         num_items += count
-
-    chart = green('|' + '█' * int(ratio * IF.count()))
-    line = '    %-12s %s %d' % ('items(num_sold30=0)', chart, IF.count())
-    print(line)
 
     chart = green('|' + '█' * int(ratio * WC.count()))
     line = '    %-12s %s %d' % ('items(wrong cate)', chart, WC.count())
