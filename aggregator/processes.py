@@ -177,9 +177,13 @@ class Process(object):
 
         # locking to make sure we only generate tasks once
         with self.lock:
-            if not self.gened:
-                self.generate_tasks()
-                self.gened = True
+            while not self.gened:
+                try:
+                    self.generate_tasks()
+                except:
+                    continue
+                else:
+                    self.gened = True
 
         while True:
             time.sleep(2)
