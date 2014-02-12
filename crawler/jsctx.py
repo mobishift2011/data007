@@ -30,3 +30,20 @@ def get_ctx():
         ctx.enter()
         get_ctx.ctx = ctx
     return get_ctx.ctx
+
+def js2json(data):
+    """ convert from javascript data
+        to json data
+    """
+    ctx = get_ctx()
+    fret = ctx.eval("""
+            function func() {
+              var data = """ + data + """;
+              var json_data = JSON.stringify(data);
+              return json_data;
+            }
+            """)
+    
+    jsond = ctx.locals.func()
+    return jsond
+

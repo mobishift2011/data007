@@ -16,7 +16,7 @@ def get_update_bin(ret_bin, info):
     '''
     latest_buy_time
              56
-        31(ts), 21(num_sold30), 4(offset)
+        31(timestamp), 21(num_sold30), 4(offset)
     '''
     if info.has_key('num_instock'):
         latest_time = int(info['num_instock'])

@@ -19,8 +19,6 @@ for uri in CACHE_URIS:
 conn = ShardRedis(conns=conns)
 
 WC = ThinSet('ataobao-wrongcategory-items', 3000*10000, connection=conn)
-IF = ThinSet('ataobao-infrequent-items', 15000*10000, connection=conn)
-
 
 from settings import RECORD_URI
 

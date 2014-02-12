@@ -258,4 +258,4 @@ class ConnectionPool(object):
             return query, bindings
         except Exception as e:
             logging.exception(e)
-            raise Exception('Binding setup failed') 
+            raise Exception('Binding setup failed')
