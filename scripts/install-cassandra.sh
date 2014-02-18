@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ `uname` == 'Linux' ]]; then
-    sudo echo > /etc/apt/sources.list.d/cassandra.list <<EOL
+    sudo cat > /etc/apt/sources.list.d/cassandra.list <<EOL
     deb http://www.apache.org/dist/cassandra/debian 10x main
     deb-src http://www.apache.org/dist/cassandra/debian 10x main
     EOL

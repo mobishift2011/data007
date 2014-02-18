@@ -101,6 +101,7 @@ class ThinSet(object):
                 if index in pointers:
                     orders.extend(pointers[index])
                 
+            # pipeline execute order is the same order with node in hash ring
             values = p.execute()
             _, values = zip(*sorted(zip(orders, values)))
             return values

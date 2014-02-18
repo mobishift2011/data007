@@ -9,4 +9,14 @@ if [[ `uname` == 'Linux' ]]; then
     rm *.tar.gz
     cd ..
     cp -r pyv8 "$DIR/../"
+elif [ `uname` == 'Darwin' ]; then
+    mkdir -p pyv8
+    cd pyv8
+    rm -rf *
+    wget https://github.com/emmetio/pyv8-binaries/raw/master/pyv8-osx.zip
+    unzip pyv8-osx.zip
+    touch __init__.py
+    rm *.zip
+    cd ..
+    cp -r pyv8 "$DIR/../"
 fi
